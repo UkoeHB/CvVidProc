@@ -1,0 +1,14 @@
+// auto-generated header for project directory configuration details
+
+#ifndef PROJECT_DIR_CONFIG_57899293_H
+#define PROJECT_DIR_CONFIG_57899293_H
+
+namespace config
+{
+
+const char *videos_dir = "${VIDEO_DIR}";
+
+}
+
+
+#endif 	//header guard
