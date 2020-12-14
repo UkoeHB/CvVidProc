@@ -31,6 +31,7 @@ Execute program.:
 
 Notes:
 - place videos in `Videos/` directory to make them easily findable by program, or pass the entire video path to `--vid_path=path/to/vid/your_vid.vid_ext`
+- use tag `--help` to learn command line options
 
 
 ## License
