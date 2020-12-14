@@ -7,10 +7,10 @@ Run cmake for debug or release:
 
 ```
 // in command line, for debug build
-cmake -S . -B Build
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 
 // in command line, for release build
-cmake -S . -B Build
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
 ```
 
 Build:
