@@ -2,6 +2,10 @@
 
 version 0.1.0
 
+Dependencies:
+	- OpenCV
+	- CMake
+
 
 ## Building and Running
 
