@@ -1,7 +1,7 @@
-// async queue for set of tokens
+// async queue for passing tokens between threads
 
-#ifndef ASYNC_TOKEN_SET_QUEUE_03944823_H
-#define ASYNC_TOKEN_SET_QUEUE_03944823_H
+#ifndef ASYNC_TOKEN_QUEUE_03944823_H
+#define ASYNC_TOKEN_QUEUE_03944823_H
 
 //local headers
 
@@ -15,35 +15,29 @@
 #include <vector>
 
 
-////
-// naive implementation
-// used to insert token batches to multiple queues at once
-///
 template <typename T>
-class AsyncTokenSetQueue final
+class AsyncTokenQueue final
 {
 //constructors
 public: 
 	/// default constructor: disabled
-	AsyncTokenSetQueue() = delete;
+	AsyncTokenQueue() = delete;
 
 	/// normal constructor
-	AsyncTokenSetQueue(const int num_queues, const int max_queue_size) :
-			m_num_queues{static_cast<std::size_t>(num_queues)},
+	AsyncTokenQueue(const int max_queue_size) :
 			m_max_queue_size{static_cast<std::size_t>(max_queue_size)}	
-	{
-		m_tokensetqueue.resize(m_num_queues);
-	}
+	{}
 
-	/// copy constructor: disabled
-	AsyncTokenSetQueue(const AsyncTokenSetQueue&) = delete;
+	/// copy constructor
+	AsyncTokenQueue(const AsyncTokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
+	{}
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	AsyncTokenSetQueue& operator=(const AsyncTokenSetQueue&) = delete;
-	AsyncTokenSetQueue& operator=(const AsyncTokenSetQueue&) const = delete;
+	AsyncTokenQueue& operator=(const AsyncTokenQueue&) = delete;
+	AsyncTokenQueue& operator=(const AsyncTokenQueue&) const = delete;
 
 //member functions
 	/// indicate the queue is shutting down (no more tokens to be added)
@@ -69,25 +63,18 @@ public:
 	}
 
 	/// insert tokens to all queues
-	void InsertAll(std::vector<T> tokens)
+	void Insert(T token)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
 
-		// add tokens
-		if (tokens.size() != m_tokensetqueue.size())
-			assert(false && "InsertAll() expects token set to match number of queues!");
-
-		for (std::size_t index{0}; index < m_tokensetqueue.size(); ++index)
+		// add token
+		while (!QueueOpen())
 		{
-			// only insert the token when its queue is open
-			while (!QueueOpen(index))
-			{
-				m_condvar_fill.wait(lock);
-			}
+			m_condvar_fill.wait(lock);
+		}
 
-			m_tokensetqueue[index].emplace_back(std::move(tokens[index]));
-		}	
+		m_tokenqueue.emplace_back(std::move(token));
 
 		// release lock
 		lock.unlock();
@@ -97,18 +84,13 @@ public:
 	}
 
 	/// get token from one of the queues
-	bool GetToken(T &return_token, const int input_index)
+	bool GetToken(T &return_token)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
 
-		std::size_t index{static_cast<std::size_t>(input_index)};
-
-		if (index < 0 || index >= m_num_queues)
-			assert(false && "GetToken() expects input indices to be in-range!");
-
 		// wait until a token is available, or until the queue shuts down
-		while (m_tokensetqueue[index].empty())
+		while (m_tokenqueue.empty())
 		{
 			// only return false when there are no tokens, and won't be more
 			if (m_shutting_down)
@@ -117,12 +99,12 @@ public:
 			m_condvar_gettoken.wait(lock);
 		}
 
-		// get the token
-		return_token = std::move(m_tokensetqueue[index].front());
-		m_tokensetqueue[index].pop_front();
+		// get the oldest token from the queue
+		return_token = std::move(m_tokenqueue.front());
+		m_tokenqueue.pop_front();
 
 		// see if inserters should be notified (check before releasing lock to avoid race conditions)
-		bool notify_inserters{QueueOpen(index)};
+		bool notify_inserters{QueueOpen()};
 
 		// release lock
 		lock.unlock();
@@ -136,19 +118,17 @@ public:
 
 private: 
 	/// see if all queues are open; not thread-safe since it should only be used by thread-safe member functions
-	bool QueueOpen(const std::size_t index) const
+	bool QueueOpen() const
 	{
-		return m_tokensetqueue[index].size() < m_max_queue_size;
+		return m_tokenqueue.size() < m_max_queue_size;
 	}
 
 //member variables
 private: 
 	/// set of token queues
-	std::vector<std::list<T>> m_tokensetqueue{};
-	/// number of token queues in set
-	std::size_t m_num_queues{};
+	std::list<T> m_tokenqueue{};
 	/// max number of tokens per sub-queue
-	std::size_t m_max_queue_size{};
+	const std::size_t m_max_queue_size{};
 	/// mutex for accessing the queues
 	std::mutex m_mutex;
 	/// help threads wait for tokens to appear

@@ -1,7 +1,7 @@
 // test file for async video stream project
 
 //local headers
-#include "async_token_set_queue.h"
+#include "async_token_queue.h"
 #include "token_processor.h"
 #include "triframe_median_algo.h"
 #include "cv_util.h"
@@ -37,9 +37,10 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 		worker_threads <= 0)
 		return cv::Mat{};
 
-	// create token queue for holding frame fragments in need of processing
+	// create token queues for holding frame fragments in need of processing
 	// must limit max queue size strictly to avoid memory problems, since video frames are large and there are a lot of them
-	AsyncTokenSetQueue<std::unique_ptr<cv::Mat>> token_queue{worker_threads, 1};
+	std::vector<AsyncTokenQueue<std::unique_ptr<cv::Mat>>> token_queues{};
+	token_queues.resize(worker_threads, AsyncTokenQueue<std::unique_ptr<cv::Mat>>{3});
 
 	// prepare result fragments
 	std::vector<std::future<cv::Mat>> fragment_result_futures{};
@@ -49,14 +50,14 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 	for (int queue_index{0}; queue_index < worker_threads; queue_index++)
 	{
 		fragment_result_futures.emplace_back(std::async(std::launch::async,
-				[&token_queue, &processor_packs, queue_index]() -> cv::Mat
+				[&token_queues, &processor_packs, queue_index]() -> cv::Mat
 				{
 					// relies on template dependency injection to decide the processor algorithm
 					TokenProcessor<FrameProcessorT, cv::Mat> worker_processor{processor_packs[queue_index]};
 					std::unique_ptr<cv::Mat> mat_fragment_shuttle{};
 
 					// get tokens asynchronously until the queue shuts down (and is empty)
-					while(token_queue.GetToken(mat_fragment_shuttle, queue_index))
+					while(token_queues[queue_index].GetToken(mat_fragment_shuttle))
 					{
 						worker_processor.Insert(std::move(mat_fragment_shuttle));
 					}
@@ -84,12 +85,12 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 		if (!cv_mat_to_chunks(frame, frame_chunks, 1, worker_threads))
 			std::cerr << "Breaking frame (" << num_frames << ") into chunks failed unexpectedly!\n";
 
-		// pass chunks to processor queue
-		token_queue.InsertAll(std::move(frame_chunks));
+		// pass chunks to processor queues
+		for (int queue_index{0}; queue_index < worker_threads; ++queue_index)
+		{
+			token_queues[queue_index].Insert(std::move(frame_chunks[queue_index]));
+		}
 	}
-
-	// inform queue that no more tokens are being added
-	token_queue.ShutDown();
 
 	// release the video since this 'videocapture' can't be used any more
 	vid.release();
@@ -99,6 +100,9 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 
 	for (int queue_index{0}; queue_index < worker_threads; queue_index++)
 	{
+		// inform queues that no more tokens are being added
+		token_queues[queue_index].ShutDown();
+
 		// get result from std::future object
 		collect_results.emplace_back(fragment_result_futures[queue_index].get());
 	}
