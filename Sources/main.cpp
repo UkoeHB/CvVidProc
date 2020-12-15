@@ -49,7 +49,7 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 	for (int queue_index{0}; queue_index < worker_threads; queue_index++)
 	{
 		fragment_result_futures.emplace_back(std::async(std::launch::async,
-				[&token_queue, &processor_pack, queue_index]() -> cv::Mat
+				[&token_queue, &processor_packs, queue_index]() -> cv::Mat
 				{
 					// relies on template dependency injection to decide the processor algorithm
 					TokenProcessor<FrameProcessorT, cv::Mat> worker_processor{processor_packs[queue_index]};
