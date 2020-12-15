@@ -2,8 +2,8 @@
 
 //local headers
 #include "async_token_set_queue.h"
-#include "background_processor.h"
-#include "bgprocessor_triframemedian.h"
+#include "token_processor.h"
+#include "triframe_median_algo.h"
 #include "cv_util.h"
 #include "project_dir_config.h"
 
@@ -29,10 +29,12 @@ const char* g_commandline_params =
 
 // get median frame from input video (copy constructed VideoCapture so original is not affected)
 // uses dependency injection via template argument to obtain the background processor algo
-template <typename BgProcessorT>
-cv::Mat get_background(cv::VideoCapture vid, const int frame_limit, const int worker_threads, const BgProcessorPack<BgProcessorT> &processor_pack)
+template <typename FrameProcessorT>
+cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const int worker_threads, const std::vector<TokenProcessorPack<FrameProcessorT>> &processor_packs)
 {
-	if (!vid.isOpened())
+	if (!vid.isOpened() ||
+		processor_packs.size() != worker_threads ||
+		worker_threads <= 0)
 		return cv::Mat{};
 
 	// create token queue for holding frame fragments in need of processing
@@ -50,7 +52,7 @@ cv::Mat get_background(cv::VideoCapture vid, const int frame_limit, const int wo
 				[&token_queue, &processor_pack, queue_index]() -> cv::Mat
 				{
 					// relies on template dependency injection to decide the processor algorithm
-					BackgroundProcessor<BgProcessorT, cv::Mat> worker_processor{processor_pack};
+					TokenProcessor<FrameProcessorT, cv::Mat> worker_processor{processor_packs[queue_index]};
 					std::unique_ptr<cv::Mat> mat_fragment_shuttle{};
 
 					// get tokens asynchronously until the queue shuts down (and is empty)
@@ -157,7 +159,10 @@ int main(int argc, char* argv[])
 		worker_threads -= 1;
 
 	// get the background of the video
-	cv::Mat background_frame{get_background<TriframeMedian>(vid, frame_limit, worker_threads, BgProcessorPack<TriframeMedian>{})};
+	std::vector<TokenProcessorPack<TriframeMedianAlgo>> empty_pack;
+	empty_pack.resize(worker_threads, TokenProcessorPack<TriframeMedianAlgo>{});
+
+	cv::Mat background_frame{filter_vid_for_frame<TriframeMedianAlgo>(vid, frame_limit, worker_threads, empty_pack)};
 
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())

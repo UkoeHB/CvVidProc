@@ -41,7 +41,7 @@ set(MAIN_LIBS "${${OPENCV}_LIBS}")
 ######################################
 #executable target
 
-add_executable(${CMAKE_PROJECT_NAME} Sources/main.cpp Sources/cv_util.cpp Sources/bgprocessor_triframemedian.cpp)
+add_executable(${CMAKE_PROJECT_NAME} Sources/main.cpp Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
 
 # connect libraries to executable target
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})

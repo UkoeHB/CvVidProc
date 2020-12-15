@@ -1,8 +1,8 @@
 // implementation of TriframeMedian background processing algorithm
 
 //local headers
-#include "background_processor.h"
-#include "bgprocessor_triframemedian.h"
+#include "token_processor.h"
+#include "triframe_median_algo.h"
 #include "cv_util.h"
 
 //third party headers
@@ -12,7 +12,7 @@
 #include <memory>
 
 
-using TFM_T = BackgroundProcessor<TriframeMedian, cv::Mat>;
+using TFM_T = TokenProcessor<TriframeMedianAlgo, cv::Mat>;
 
 bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe)
 {

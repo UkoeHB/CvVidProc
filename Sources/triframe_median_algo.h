@@ -1,10 +1,10 @@
 // background processor template for managing an image background processing algorithm
 
-#ifndef BGPROCESSOR_TRIFRAMEMEDIAN_H
-#define BGPROCESSOR_TRIFRAMEMEDIAN_H
+#ifndef TRIFRAME_MEDIAN_ALGO_098765_H
+#define TRIFRAME_MEDIAN_ALGO_098765_H
 
 //local headers
-#include "background_processor.h"
+#include "token_processor.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -19,39 +19,39 @@
 bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe);
 
 /// processor type
-struct TriframeMedian final
+struct TriframeMedianAlgo final
 {};
 
 /// not strictly necessary to specialize this, just doing so for clarity
 template<>
-struct BgProcessorPack<TriframeMedian> final
+struct TokenProcessorPack<TriframeMedianAlgo> final
 {};
 
 ////
-// unimplemented sample interface (this only works when specialized)
-// it's best to inherit from the same base for all specializations
+// implementation for algorithm: triframe median
+// passes over cv::Mat sequence and updates a 'median' value every 2 elements
 ///
 template<>
-class BackgroundProcessor<TriframeMedian, cv::Mat> final : public BackgroundProcessorBase<TriframeMedian, cv::Mat>
+class TokenProcessor<TriframeMedianAlgo, cv::Mat> final : public TokenProcessorBase<TriframeMedianAlgo, cv::Mat>
 {
 public:
 //constructors
 	/// default constructor: disabled
-	BackgroundProcessor() = delete;
+	TokenProcessor() = delete;
 
 	/// normal constructor
-	BackgroundProcessor(const BgProcessorPack<TriframeMedian> &processor_pack) : BackgroundProcessorBase<TriframeMedian, cv::Mat>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TriframeMedianAlgo> &processor_pack) : TokenProcessorBase<TriframeMedianAlgo, cv::Mat>{processor_pack}
 	{}
 
 	/// copy constructor: disabled
-	BackgroundProcessor(const BackgroundProcessor&) = delete;
+	TokenProcessor(const TokenProcessor&) = delete;
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	BackgroundProcessor& operator=(const BackgroundProcessor&) = delete;
-	BackgroundProcessor& operator=(const BackgroundProcessor&) const = delete;
+	TokenProcessor& operator=(const TokenProcessor&) = delete;
+	TokenProcessor& operator=(const TokenProcessor&) const = delete;
 
 //member functions
 	/// insert an element to be processed
