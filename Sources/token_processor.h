@@ -13,12 +13,12 @@
 
 
 /// by default, the processor pack is empty; add specializations for specific content
-template<typename T>
+template <typename T>
 struct TokenProcessorPack final
 {};
 
 /// expected interface of TokenProcessor specializations
-template<typename TokenProcessorT, typename MaterialT>
+template <typename TokenProcessorT, typename TokenT>
 class TokenProcessorBase
 {
 public:
@@ -43,10 +43,10 @@ public:
 
 //member functions
 	/// insert an element to be processed
-	virtual void Insert(std::unique_ptr<MaterialT>) = 0;
+	virtual void Insert(std::unique_ptr<TokenT>) = 0;
 
 	/// get a copy of the processing result
-	virtual MaterialT GetResult() const = 0;
+	virtual TokenT GetResult() const = 0;
 
 protected:
 //member variables
@@ -58,8 +58,8 @@ protected:
 // unimplemented sample interface (this only works when specialized)
 // it's best to inherit from the same base for all specializations
 ///
-template<typename TokenProcessorT, typename MaterialT>
-class TokenProcessor final : public TokenProcessorBase<TokenProcessorT, MaterialT>
+template <typename TokenProcessorT, typename TokenT>
+class TokenProcessor final : public TokenProcessorBase<TokenProcessorT, TokenT>
 {
 public:
 //constructors
@@ -67,7 +67,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TokenProcessorT> &processor_pack) : TokenProcessorBase<TokenProcessorT, MaterialT>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TokenProcessorT> &processor_pack) : TokenProcessorBase<TokenProcessorT, TokenT>{processor_pack}
 	{
 		assert(false && "TokenProcessor: tried to instantiate class with default template. It must be specialized!");
 	}
@@ -84,10 +84,10 @@ public:
 
 //member functions
 	/// insert an element to be processed
-	virtual void Insert(std::unique_ptr<MaterialT>) override {};
+	virtual void Insert(std::unique_ptr<TokenT>) override {};
 
 	/// get the processing result
-	virtual MaterialT GetResult() const override {return MaterialT{};};
+	virtual TokenT GetResult() const override {return TokenT{};};
 
 private:
 //member variables

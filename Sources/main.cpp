@@ -16,6 +16,7 @@
 #include <future>
 #include <memory>
 #include <thread>		//for std::thread::hardware_concurrency()
+#include <type_traits>
 #include <vector>
 
 
@@ -32,6 +33,10 @@ const char* g_commandline_params =
 template <typename FrameProcessorT>
 cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const int worker_threads, const std::vector<TokenProcessorPack<FrameProcessorT>> &processor_packs)
 {
+	using TP_T = TokenProcessor<FrameProcessorT, cv::Mat>;
+	static_assert(std::is_base_of<TokenProcessorBase<FrameProcessorT, cv::Mat>, TP_T>::value,
+			"Token processor implementation does not derive from the TokenProcessorBase!");
+
 	if (!vid.isOpened() ||
 		processor_packs.size() != worker_threads ||
 		worker_threads <= 0)
@@ -53,7 +58,7 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 				[&token_queues, &processor_packs, queue_index]() -> cv::Mat
 				{
 					// relies on template dependency injection to decide the processor algorithm
-					TokenProcessor<FrameProcessorT, cv::Mat> worker_processor{processor_packs[queue_index]};
+					TP_T worker_processor{processor_packs[queue_index]};
 					std::unique_ptr<cv::Mat> mat_fragment_shuttle{};
 
 					// get tokens asynchronously until the queue shuts down (and is empty)

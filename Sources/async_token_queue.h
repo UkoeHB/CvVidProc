@@ -43,12 +43,11 @@ public:
 	/// indicate the queue is shutting down (no more tokens to be added)
 	void ShutDown()
 	{
-		std::unique_lock<std::mutex> lock{m_mutex};
+		{
+			std::lock_guard<std::mutex> lock{m_mutex};
 
-		m_shutting_down = true;
-
-		// release lock
-		lock.unlock();
+			m_shutting_down = true;
+		}
 
 		// notify all threads in case they are stuck waiting for a token
 		m_condvar_gettoken.notify_all();
@@ -65,19 +64,18 @@ public:
 	/// insert tokens to all queues
 	void Insert(T token)
 	{
-		// lock the queue
-		std::unique_lock<std::mutex> lock{m_mutex};
-
-		// add token
-		while (!QueueOpen())
 		{
-			m_condvar_fill.wait(lock);
+			// lock the queue
+			std::unique_lock<std::mutex> lock{m_mutex};
+
+			// add token
+			while (!QueueOpen())
+			{
+				m_condvar_fill.wait(lock);
+			}
+
+			m_tokenqueue.emplace_back(std::move(token));
 		}
-
-		m_tokenqueue.emplace_back(std::move(token));
-
-		// release lock
-		lock.unlock();
 
 		// notify anyone waiting
 		m_condvar_gettoken.notify_all();
@@ -86,28 +84,29 @@ public:
 	/// get token from one of the queues
 	bool GetToken(T &return_token)
 	{
-		// lock the queue
-		std::unique_lock<std::mutex> lock{m_mutex};
+		bool notify_inserters{false};
 
-		// wait until a token is available, or until the queue shuts down
-		while (m_tokenqueue.empty())
 		{
-			// only return false when there are no tokens, and won't be more
-			if (m_shutting_down)
-				return false;
+			// lock the queue
+			std::unique_lock<std::mutex> lock{m_mutex};
 
-			m_condvar_gettoken.wait(lock);
+			// wait until a token is available, or until the queue shuts down
+			while (m_tokenqueue.empty())
+			{
+				// only return false when there are no tokens, and won't be more
+				if (m_shutting_down)
+					return false;
+
+				m_condvar_gettoken.wait(lock);
+			}
+
+			// get the oldest token from the queue
+			return_token = std::move(m_tokenqueue.front());
+			m_tokenqueue.pop_front();
+
+			// see if inserters should be notified (check before releasing lock to avoid race conditions)
+			notify_inserters = QueueOpen();
 		}
-
-		// get the oldest token from the queue
-		return_token = std::move(m_tokenqueue.front());
-		m_tokenqueue.pop_front();
-
-		// see if inserters should be notified (check before releasing lock to avoid race conditions)
-		bool notify_inserters{QueueOpen()};
-
-		// release lock
-		lock.unlock();
 
 		// notify any inserters waiting for a full queue
 		if (notify_inserters)

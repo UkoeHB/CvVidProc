@@ -3,8 +3,9 @@
 version 0.1.0
 
 Dependencies:
-	- OpenCV
-	- CMake
+
+- OpenCV
+- CMake
 
 
 ## Building and Running
@@ -16,7 +17,7 @@ Run cmake for debug or release:
 cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 
 // in command line, for release build
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
 ```
 
 Build:
