@@ -75,6 +75,8 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 	// cycle through video frames
 	cv::Mat frame{};
 	int num_frames{0};
+	int image_width{0};
+	int image_height{0};
 
 	while (num_frames++ < frame_limit)
 	{
@@ -85,9 +87,16 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 		if (!frame.data || frame.empty())
 			break;
 
+		// get frame dimensions from first frame
+		if (num_frames == 1)
+		{
+			image_width = frame.cols;
+			image_height = frame.rows;
+		}
+
 		// break frame into chunks
 		std::vector<std::unique_ptr<cv::Mat>> frame_chunks{};
-		if (!cv_mat_to_chunks(frame, frame_chunks, 1, worker_threads))
+		if (!cv_mat_to_chunks(frame, frame_chunks, 1, worker_threads, 0, 0))
 			std::cerr << "Breaking frame (" << num_frames << ") into chunks failed unexpectedly!\n";
 
 		// pass chunks to processor queues
@@ -114,7 +123,7 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 
 	// combine result fragments
 	cv::Mat final_background{};
-	if (!cv_mat_from_chunks(final_background, collect_results, 1, worker_threads))
+	if (!cv_mat_from_chunks(final_background, collect_results, 1, worker_threads, image_width, image_height, 0, 0))
 		std::cerr << "Combining final results into background image failed unexpectedly!\n";
 
 	return final_background;

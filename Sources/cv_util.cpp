@@ -18,9 +18,9 @@ struct BorderedChunk
 	/// y-coord of chunk within original 2-d matrix
 	int corner_y{};
 	/// width of chunk
-	int final_width{};
+	int chunk_width{};
 	/// height of chunk
-	int final_height{};
+	int chunk_height{};
 	/// x-coord of pre-buffer chunk within original 2-d matrix
 	int original_x{};
 	/// y-coord of pre-buffer chunk within original 2-d matrix
@@ -66,7 +66,7 @@ bool get_bordered_chunks(
 	int chunk_height{};
 	int prebuffer_chunk_width{};
 	int prebuffer_chunk_height{};
-	for (int x_pos{0}; x_pos < original_width; x_pos += new_col_width)
+	for (int x_pos{0}; x_pos < original_width - col_remainder; x_pos += new_col_width)
 	{
 		// left-hand x-coord
 		corner_x = x_pos - horizontal_buffer_pixels;
@@ -91,7 +91,7 @@ bool get_bordered_chunks(
 
 		int num_rows{0};
 		int temp_rows{new_row_height};
-		for (int y_pos{0}; y_pos < original_height; y_pos += temp_rows)
+		for (int y_pos{0}; y_pos < original_height - row_remainder; y_pos += temp_rows)
 		{
 			// upper y-coord
 			corner_y = y_pos - vertical_buffer_pixels;
@@ -152,76 +152,24 @@ bool cv_mat_to_chunks(
 	if (!row_divisor || !col_divisor)
 		return false;
 
-	// only legal pixel buffers
-	if (horizontal_buffer_pixels < 0)
-		horizontal_buffer_pixels = 0;
+	// sanity check
+	if (chunks_output.size() != 0)
+		return false;
 
-	if (vertical_buffer_pixels < 0)
-		vertical_buffer_pixels = 0;
+	// figure out location and size of all chunks within original 2-d Mat matrix
+	// if this fails then inputs are invalid
+	std::vector<BorderedChunk> chunks{};
+	if (!get_bordered_chunks(chunks, mat_input.cols, mat_input.rows, col_divisor, row_divisor, horizontal_buffer_pixels, vertical_buffer_pixels))
+		return false;
 
-	// columns and rows of Mat chunks
-	int new_col_width = mat_input.cols / col_divisor;
-	int new_row_height = mat_input.rows / row_divisor;
+	// sanity check
+	if (chunks.size() != col_divisor*row_divisor)
+		return false;
 
-	int col_remainder = mat_input.cols % col_divisor;
-	int row_remainder = mat_input.rows % row_divisor;
-
-	// create all the Mat chunks by copying from the original Mat
-	// note: point (0,0) is the upper left corner of the image by convention
-	int num_cols{0};
-	int corner_x{};
-	int corner_y{};
-	int chunk_width{};
-	int chunk_height{};
-	for (int x_pos{0}; x_pos < mat_input.cols; x_pos += new_col_width)
+	// create all the actual chunks
+	for (const auto& chunk : chunks)
 	{
-		// left-hand x-coord
-		corner_x = x_pos - horizontal_buffer_pixels;
-
-		if (corner_x < 0)
-			corner_x = 0;
-
-		// right-hand x-coordinate
-		chunk_width = x_pos + new_col_width + horizontal_buffer_pixels;
-
-		if (num_cols == col_divisor - 1)
-			chunk_width += col_remainder;
-
-		if (chunk_width > mat_input.cols)
-			chunk_width = mat_input.cols;
-
-		// get chunk width from difference between x-coords
-		chunk_width -= corner_x;
-
-		int num_rows{0};
-		int temp_rows{new_row_height};
-		for (int y_pos{0}; y_pos < mat_input.rows; y_pos += temp_rows)
-		{
-			// upper y-coord
-			corner_y = y_pos - vertical_buffer_pixels;
-
-			if (corner_y < 0)
-				corner_y = 0;
-
-			// lower y-coordinate
-			chunk_height = y_pos + new_row_height + vertical_buffer_pixels;
-
-			if (num_rows == row_divisor - 1)
-				chunk_height += row_remainder;
-
-			if (chunk_height > mat_input.rows)
-				chunk_height = mat_input.rows;
-
-			// get chunk height from difference between y-coords
-			chunk_height -= corner_y;
-
-			// get rectangle from original Mat and clone (copy) it
-			chunks_output.emplace_back(std::make_unique<cv::Mat>(mat_input(cv::Rect(corner_x, corner_y, chunk_width, chunk_height)).clone()));
-
-			++num_rows;
-		}
-
-		++num_cols;
+		chunks_output.emplace_back(std::make_unique<cv::Mat>(mat_input(cv::Rect(chunk.corner_x, chunk.corner_y, chunk.chunk_width, chunk.chunk_height)).clone()));
 	}
 
 	return true;
@@ -232,8 +180,8 @@ bool cv_mat_from_chunks(
 	const std::vector<cv::Mat> &chunks_input,
 	const int col_divisor,
 	const int row_divisor,
-	const int original_width,
-	const int original_height,
+	const int final_width,
+	const int final_height,
 	int horizontal_buffer_pixels/* = 0*/,
 	int vertical_buffer_pixels/* = 0*/)
 {
@@ -241,45 +189,46 @@ bool cv_mat_from_chunks(
 	if (!(row_divisor*col_divisor) || row_divisor*col_divisor != chunks_input.size())
 		return false;
 
-	if (!chunks_input.front().data ||
-		chunks_input.front().empty() ||
-		!chunks_input.back().data ||
-		chunks_input.back().empty())
+	// figure out location and size of all chunks within original 2-d Mat matrix
+	// if this fails then inputs are invalid
+	std::vector<BorderedChunk> chunks{};
+	if (!get_bordered_chunks(chunks, final_width, final_height, col_divisor, row_divisor, horizontal_buffer_pixels, vertical_buffer_pixels))
 		return false;
 
-	int chunk_cols = chunks_input.front().cols;
-	int chunk_rows = chunks_input.front().rows;
-
-	int col_remainder = chunks_input.back().cols - chunk_cols;
-	int row_remainder = chunks_input.back().rows - chunk_rows;
+	// sanity check
+	if (chunks.size() != chunks_input.size())
+		return false;
 
 	// initialize temp Mat with expected dimensions
-	cv::Mat temp_output(chunk_rows*row_divisor + row_remainder, chunk_cols*col_divisor + col_remainder, chunks_input.front().type());
+	if (!chunks_input.front().data ||
+		chunks_input.front().empty())
+		return false;
 
-	auto mat_element_it = chunks_input.begin();
+	cv::Mat temp_output(final_height, final_width, chunks_input.front().type());
 
-	for (int col{0}; col < col_divisor; col++)
+	// https://stackoverflow.com/questions/33239669/opencv-how-to-merge-two-images?noredirect=1&lq=1
+	// copy chunks directly into temp Mat
+	for (std::size_t chunk_index{0}; chunk_index < chunks.size(); ++chunk_index)
 	{
-		// collect the column elements into solid columns
-		for (int row{0}; row < row_divisor; row++)
-		{
-			if (!mat_element_it->data ||
-				mat_element_it->empty() ||
-				mat_element_it->cols != chunk_cols + (col == col_divisor - 1 ? col_remainder : 0) ||
-				mat_element_it->rows != chunk_rows + (row == row_divisor - 1 ? row_remainder : 0))
-				return false;
+		if (!chunks_input[chunk_index].data ||
+			chunks_input[chunk_index].empty())
+			return false;
 
-			// https://stackoverflow.com/questions/33239669/opencv-how-to-merge-two-images?noredirect=1&lq=1
-			// copy chunk directly into temp Mat
-			(*mat_element_it).copyTo(temp_output(cv::Rect(
-					col*chunk_cols,
-					row*chunk_rows,
-					mat_element_it->cols,
-					mat_element_it->rows
-				)));
+		// copy non-buffered component of input chunk into intended location in output Mat
+		// https://stackoverflow.com/questions/33239669/opencv-how-to-merge-two-images?noredirect=1&lq=1
+		const auto &input_chunk = chunks_input[chunk_index](cv::Rect(
+				chunks[chunk_index].original_x - chunks[chunk_index].corner_x,
+				chunks[chunk_index].original_y - chunks[chunk_index].corner_y,
+				chunks[chunk_index].original_width,
+				chunks[chunk_index].original_height
+			));
 
-			++mat_element_it;
-		}
+		input_chunk.copyTo(temp_output(cv::Rect(
+				chunks[chunk_index].original_x,
+				chunks[chunk_index].original_y,
+				chunks[chunk_index].original_width,
+				chunks[chunk_index].original_height
+			)));
 	}
 
 	mat_output = std::move(temp_output);
