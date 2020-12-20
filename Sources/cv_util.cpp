@@ -10,43 +10,120 @@
 #include <array>
 #include <vector>
 
-bool cv_mat_to_chunks(const cv::Mat &mat_input, std::vector<std::unique_ptr<cv::Mat>> &chunks_output, const int col_divisor, const int row_divisor)
+
+struct BorderedChunk
 {
-	// https://answers.opencv.org/question/53694/divide-an-image-into-lower-regions/
-	// check that input Mat has content
-	if (!mat_input.data || mat_input.empty())
+	/// x-coord of chunk within original 2-d matrix
+	int corner_x{};
+	/// y-coord of chunk within original 2-d matrix
+	int corner_y{};
+	/// width of chunk
+	int final_width{};
+	/// height of chunk
+	int final_height{};
+	/// x-coord of pre-buffer chunk within original 2-d matrix
+	int original_x{};
+	/// y-coord of pre-buffer chunk within original 2-d matrix
+	int original_y{};
+	/// width of pre-buffer chunk
+	int original_width{};
+	/// height of pre-buffer chunk
+	int original_height{};
+};
+
+bool get_bordered_chunks(
+	std::vector<BorderedChunk> &ret,
+	const int original_width,
+	const int original_height,
+	const int col_divisor,
+	const int row_divisor,
+	int horizontal_buffer_pixels/* = 0*/,
+	int vertical_buffer_pixels/* = 0*/)
+{
+	// validate inputs
+	if (ret.size() > 0 ||
+		original_width <= 0 || 
+		original_height <= 0 || 
+		col_divisor <= 0 || 
+		row_divisor <= 0 || 
+		horizontal_buffer_pixels < 0 || 
+		vertical_buffer_pixels < 0)
 		return false;
 
-	// must be more than zero chunks
-	if (!row_divisor || !col_divisor)
-		return false;
+	// columns and rows of chunks
+	int new_col_width = original_width / col_divisor;
+	int new_row_height = original_height / row_divisor;
 
-	// columns and rows of Mat chunks
-	int new_cols = mat_input.cols / col_divisor;
-	int new_rows = mat_input.rows / row_divisor;
+	int col_remainder = original_width % col_divisor;
+	int row_remainder = original_height % row_divisor;
 
-	int col_remainder = mat_input.cols % col_divisor;
-	int row_remainder = mat_input.rows % row_divisor;
-
-	// create all the Mat chunks by copying from the original Mat
-	// note: point (0,0) is the upper left corner of the image by convention
+	// define all chunks
+	// note: point (0,0) is the upper left corner of the chunk by convention
 	int num_cols{0};
-	for (int x_pos{0}; x_pos < mat_input.cols; x_pos += new_cols)
+	int corner_x{};
+	int corner_y{};
+	int chunk_width{};
+	int chunk_height{};
+	int prebuffer_chunk_width{};
+	int prebuffer_chunk_height{};
+	for (int x_pos{0}; x_pos < original_width; x_pos += new_col_width)
 	{
-		// tack on remainder to the last chunks in each column
+		// left-hand x-coord
+		corner_x = x_pos - horizontal_buffer_pixels;
+
+		if (corner_x < 0)
+			corner_x = 0;
+
+		// chunk width
+		prebuffer_chunk_width = new_col_width;
+
 		if (num_cols == col_divisor - 1)
-			new_cols += col_remainder;
+			prebuffer_chunk_width += col_remainder;
+
+		// right-hand x-coordinate
+		chunk_width = x_pos + prebuffer_chunk_width + horizontal_buffer_pixels;		
+
+		if (chunk_width > original_width)
+			chunk_width = original_width;
+
+		// get chunk width from difference between x-coords
+		chunk_width -= corner_x;
 
 		int num_rows{0};
-		int temp_rows{new_rows};
-		for (int y_pos{0}; y_pos < mat_input.rows; y_pos += temp_rows)
+		int temp_rows{new_row_height};
+		for (int y_pos{0}; y_pos < original_height; y_pos += temp_rows)
 		{
-			// tack on remainder to the last chunks in each row
-			if (num_rows == row_divisor - 1)
-				temp_rows += row_remainder;
+			// upper y-coord
+			corner_y = y_pos - vertical_buffer_pixels;
 
-			// get rectangle from original Mat and clone (copy) it
-			chunks_output.emplace_back(std::make_unique<cv::Mat>(mat_input(cv::Rect(x_pos, y_pos, new_cols, temp_rows)).clone()));
+			if (corner_y < 0)
+				corner_y = 0;
+
+			// chunk height
+			prebuffer_chunk_height = new_row_height;
+
+			if (num_rows == row_divisor - 1)
+				prebuffer_chunk_height += row_remainder;
+
+			// lower y-coordinate
+			chunk_height = y_pos + prebuffer_chunk_height + vertical_buffer_pixels;
+
+			if (chunk_height > original_height)
+				chunk_height = original_height;
+
+			// get chunk height from difference between y-coords
+			chunk_height -= corner_y;
+
+			ret.emplace_back(BorderedChunk{
+				corner_x,
+				corner_y,
+				chunk_width,
+				chunk_height,
+				x_pos,
+				y_pos,
+				prebuffer_chunk_width,
+				prebuffer_chunk_height
+			});
 
 			++num_rows;
 		}
@@ -57,7 +134,108 @@ bool cv_mat_to_chunks(const cv::Mat &mat_input, std::vector<std::unique_ptr<cv::
 	return true;
 }
 
-bool cv_mat_from_chunks(cv::Mat &mat_output, const std::vector<cv::Mat> &chunks_input, const int col_divisor, const int row_divisor)
+
+bool cv_mat_to_chunks(
+		const cv::Mat &mat_input,
+		std::vector<std::unique_ptr<cv::Mat>> &chunks_output,
+		const int col_divisor,
+		const int row_divisor,
+		int horizontal_buffer_pixels/* = 0*/,
+		int vertical_buffer_pixels/* = 0*/)
+{
+	// https://answers.opencv.org/question/53694/divide-an-image-into-lower-regions/
+	// check that input Mat has content
+	if (!mat_input.data || mat_input.empty())
+		return false;
+
+	// must be more than zero chunks
+	if (!row_divisor || !col_divisor)
+		return false;
+
+	// only legal pixel buffers
+	if (horizontal_buffer_pixels < 0)
+		horizontal_buffer_pixels = 0;
+
+	if (vertical_buffer_pixels < 0)
+		vertical_buffer_pixels = 0;
+
+	// columns and rows of Mat chunks
+	int new_col_width = mat_input.cols / col_divisor;
+	int new_row_height = mat_input.rows / row_divisor;
+
+	int col_remainder = mat_input.cols % col_divisor;
+	int row_remainder = mat_input.rows % row_divisor;
+
+	// create all the Mat chunks by copying from the original Mat
+	// note: point (0,0) is the upper left corner of the image by convention
+	int num_cols{0};
+	int corner_x{};
+	int corner_y{};
+	int chunk_width{};
+	int chunk_height{};
+	for (int x_pos{0}; x_pos < mat_input.cols; x_pos += new_col_width)
+	{
+		// left-hand x-coord
+		corner_x = x_pos - horizontal_buffer_pixels;
+
+		if (corner_x < 0)
+			corner_x = 0;
+
+		// right-hand x-coordinate
+		chunk_width = x_pos + new_col_width + horizontal_buffer_pixels;
+
+		if (num_cols == col_divisor - 1)
+			chunk_width += col_remainder;
+
+		if (chunk_width > mat_input.cols)
+			chunk_width = mat_input.cols;
+
+		// get chunk width from difference between x-coords
+		chunk_width -= corner_x;
+
+		int num_rows{0};
+		int temp_rows{new_row_height};
+		for (int y_pos{0}; y_pos < mat_input.rows; y_pos += temp_rows)
+		{
+			// upper y-coord
+			corner_y = y_pos - vertical_buffer_pixels;
+
+			if (corner_y < 0)
+				corner_y = 0;
+
+			// lower y-coordinate
+			chunk_height = y_pos + new_row_height + vertical_buffer_pixels;
+
+			if (num_rows == row_divisor - 1)
+				chunk_height += row_remainder;
+
+			if (chunk_height > mat_input.rows)
+				chunk_height = mat_input.rows;
+
+			// get chunk height from difference between y-coords
+			chunk_height -= corner_y;
+
+			// get rectangle from original Mat and clone (copy) it
+			chunks_output.emplace_back(std::make_unique<cv::Mat>(mat_input(cv::Rect(corner_x, corner_y, chunk_width, chunk_height)).clone()));
+
+			++num_rows;
+		}
+
+		++num_cols;
+	}
+
+	return true;
+}
+
+bool cv_mat_from_chunks(
+	cv::Mat &mat_output,
+	const std::vector<cv::Mat> &chunks_input,
+	const int col_divisor,
+	const int row_divisor,
+	const int original_width,
+	const int original_height,
+	int horizontal_buffer_pixels/* = 0*/,
+	int vertical_buffer_pixels/* = 0*/)
 {
 	// must be expected number of chunks (and nonzero)
 	if (!(row_divisor*col_divisor) || row_divisor*col_divisor != chunks_input.size())

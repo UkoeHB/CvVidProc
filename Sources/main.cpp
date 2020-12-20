@@ -1,4 +1,4 @@
-// test file for async video stream project
+// main for async video stream project
 
 //local headers
 #include "async_token_queue.h"
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 	const auto processor_cores{std::thread::hardware_concurrency()};
 	if (worker_threads <= 0)
 		worker_threads = 1;
-	else if (worker_threads > 2*processor_cores)
+	else if (worker_threads >= 2*processor_cores)
 		worker_threads = 2*processor_cores - 1;
 	else if (worker_threads > 1)
 		worker_threads -= 1;
