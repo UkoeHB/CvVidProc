@@ -90,39 +90,35 @@ public:
 	/// get token from one of the queues
 	bool GetToken(T &return_token)
 	{
-		bool notify_inserters{false};
+		// lock the queue
+		std::unique_lock<std::mutex> lock{m_mutex};
 
+		// wait until a token is available, or until the queue shuts down
+		while (m_tokenqueue.empty())
 		{
-			// lock the queue
-			std::unique_lock<std::mutex> lock{m_mutex};
+			// only return false when there are no tokens, and won't be more
+			if (m_shutting_down)
+				return false;
 
-			// wait until a token is available, or until the queue shuts down
-			while (m_tokenqueue.empty())
-			{
-				// only return false when there are no tokens, and won't be more
-				if (m_shutting_down)
-					return false;
-
-				m_condvar_gettoken.wait(lock);
-			}
-
-			// get the oldest token from the queue
-			return_token = std::move(m_tokenqueue.front());
-			m_tokenqueue.pop_front();
-
-			// see if inserters should be notified (check before releasing lock to avoid race conditions)
-			notify_inserters = QueueOpen();
+			m_condvar_gettoken.wait(lock);
 		}
 
-		// notify any inserters waiting for a full queue
-		if (notify_inserters)
-			m_condvar_fill.notify_all();
+		// try to get the token
+		return TryGetToken(return_token, std::move(lock));
+	}
 
-		return true;
+	/// get token from one of the queues
+	bool TryGetToken(T &return_token)
+	{
+		// try to lock the queue
+		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
+
+		// try to get the token
+		return TryGetToken(return_token, std::move(lock));
 	}
 
 private: 
-	/// insert token to queue
+	/// try to insert token to queue
 	bool TryInsert(T &token, std::unique_lock<std::mutex> lock)
 	{
 		// expect to own the lock by this point
@@ -141,6 +137,30 @@ private:
 
 		// notify anyone waiting
 		m_condvar_gettoken.notify_all();
+
+		return true;
+	}
+
+	/// try to get token from one of the queues
+	bool TryGetToken(T &return_token, std::unique_lock<std::mutex> lock)
+	{
+		// expect to own the lock by this point
+		if (!lock.owns_lock())
+			return false;
+
+		// expect the queue to not be empty at this point
+		if (m_tokenqueue.empty())
+			return false;
+
+		// get the oldest token from the queue
+		return_token = std::move(m_tokenqueue.front());
+		m_tokenqueue.pop_front();
+		
+		// unlock the lock so condition_var notification doesn't cause expensive collisions
+		lock.unlock();
+
+		// notify any inserters waiting for a full queue
+		m_condvar_fill.notify_all();
 
 		return true;
 	}

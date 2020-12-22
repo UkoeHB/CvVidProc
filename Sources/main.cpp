@@ -78,8 +78,10 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 	int image_width{0};
 	int image_height{0};
 
-	while (num_frames++ < frame_limit)
+	while (num_frames < frame_limit)
 	{
+		num_frames++;
+
 		// get next frame from video
 		vid >> frame;
 
