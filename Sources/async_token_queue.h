@@ -26,7 +26,10 @@ public:
 	/// normal constructor
 	AsyncTokenQueue(const int max_queue_size) :
 			m_max_queue_size{static_cast<std::size_t>(max_queue_size)}	
-	{}
+	{
+		// sanity check
+		assert(max_queue_size > 0);
+	}
 
 	/// copy constructor
 	AsyncTokenQueue(const AsyncTokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
@@ -62,7 +65,8 @@ public:
 	}
 
 	/// insert token; hangs if token can't be inserted yet (queue full)
-	bool Insert(T token)
+	/// may mutate the token passed in
+	bool InsertToken(T &token)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
@@ -74,20 +78,21 @@ public:
 		}
 
 		// once a token can be inserted, insert it
-		return TryInsert(token, std::move(lock));
+		return TryInsertToken(token, std::move(lock));
 	}
 
-	/// try to insert a token; returns false if token can't be inserted
-	bool TryInsert(T token)
+	/// try to insert a token; returns false if token can't be inserted (or can't acquire mutex)
+	/// may mutate the token passed in if insertion succeeds
+	bool TryInsertToken(T &token)
 	{
 		// try to lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
 
 		// try to insert the token
-		return TryInsert(token, std::move(lock));
+		return TryInsertToken(token, std::move(lock));
 	}
 
-	/// get token from one of the queues
+	/// get token from one of the queues; hangs if no tokens available
 	bool GetToken(T &return_token)
 	{
 		// lock the queue
@@ -107,7 +112,7 @@ public:
 		return TryGetToken(return_token, std::move(lock));
 	}
 
-	/// get token from one of the queues
+	/// try to get token from the queue; returns false if no tokens available (or can't acquire mutex)
 	bool TryGetToken(T &return_token)
 	{
 		// try to lock the queue
@@ -117,9 +122,19 @@ public:
 		return TryGetToken(return_token, std::move(lock));
 	}
 
-private: 
+	/// check if queue is empty
+	bool IsEmpty()
+	{
+		// lock the queue
+		std::lock_guard<std::mutex> lock{m_mutex};
+
+		// see if queue is empty
+		return !m_tokenqueue.size();
+	}
+
+private:
 	/// try to insert token to queue
-	bool TryInsert(T &token, std::unique_lock<std::mutex> lock)
+	bool TryInsertToken(T &token, std::unique_lock<std::mutex> lock)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())

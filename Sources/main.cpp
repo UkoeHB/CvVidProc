@@ -104,7 +104,7 @@ cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const 
 		// pass chunks to processor queues
 		for (int queue_index{0}; queue_index < worker_threads; ++queue_index)
 		{
-			token_queues[queue_index].Insert(std::move(frame_chunks[queue_index]));
+			token_queues[queue_index].InsertToken(frame_chunks[queue_index]);
 		}
 	}
 

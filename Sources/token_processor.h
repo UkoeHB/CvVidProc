@@ -18,7 +18,7 @@ struct TokenProcessorPack final
 {};
 
 /// expected interface of TokenProcessor specializations
-template <typename TokenProcessorT, typename TokenT>
+template <typename TokenProcessorAlgoT, typename TokenT, typename ResultT>
 class TokenProcessorBase
 {
 public:
@@ -27,7 +27,7 @@ public:
 	TokenProcessorBase() = delete;
 
 	/// normal constructor
-	TokenProcessorBase(const TokenProcessorPack<TokenProcessorT> &processor_pack) : m_processor_pack{processor_pack}
+	TokenProcessorBase(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : m_processor_pack{processor_pack}
 	{}
 
 	/// copy constructor: disabled
@@ -46,11 +46,11 @@ public:
 	virtual void Insert(std::unique_ptr<TokenT>) = 0;
 
 	/// get a copy of the processing result
-	virtual TokenT GetResult() const = 0;
+	virtual ResultT GetResult() const = 0;
 
 protected:
 //member variables
-	TokenProcessorPack<TokenProcessorT> m_processor_pack{};
+	TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};
 };
 
 
@@ -58,8 +58,8 @@ protected:
 // unimplemented sample interface (this only works when specialized)
 // it's best to inherit from the same base for all specializations
 ///
-template <typename TokenProcessorT, typename TokenT>
-class TokenProcessor final : public TokenProcessorBase<TokenProcessorT, TokenT>
+template <typename TokenProcessorAlgoT, typename TokenT>
+class TokenProcessor final : public TokenProcessorBase<TokenProcessorAlgoT, TokenT>
 {
 public:
 //constructors
@@ -67,7 +67,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TokenProcessorT> &processor_pack) : TokenProcessorBase<TokenProcessorT, TokenT>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT, TokenT>{processor_pack}
 	{
 		assert(false && "TokenProcessor: tried to instantiate class with default template. It must be specialized!");
 	}
