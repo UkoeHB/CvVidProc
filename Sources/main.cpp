@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 	if (frame_limit < 0 || frame_limit > total_frames)
 		frame_limit = total_frames;
 
-	// get number of threads to use
+	// get number of worker threads to use (subtract one for the main thread)
 	int worker_threads{cl_args.get<int>("max_threads")};
 	const auto processor_cores{std::thread::hardware_concurrency()};
 	if (worker_threads <= 0)

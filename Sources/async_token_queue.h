@@ -61,24 +61,30 @@ public:
 		return m_shutting_down;
 	}
 
-	/// insert tokens to all queues
-	void Insert(T token)
+	/// insert token; hangs if token can't be inserted yet (queue full)
+	bool Insert(T token)
 	{
+		// lock the queue
+		std::unique_lock<std::mutex> lock{m_mutex};
+
+		// wait until the token queue is open
+		while (!QueueOpen())
 		{
-			// lock the queue
-			std::unique_lock<std::mutex> lock{m_mutex};
-
-			// add token
-			while (!QueueOpen())
-			{
-				m_condvar_fill.wait(lock);
-			}
-
-			m_tokenqueue.emplace_back(std::move(token));
+			m_condvar_fill.wait(lock);
 		}
 
-		// notify anyone waiting
-		m_condvar_gettoken.notify_all();
+		// once a token can be inserted, insert it
+		return TryInsert(token, std::move(lock));
+	}
+
+	/// try to insert a token; returns false if token can't be inserted
+	bool TryInsert(T token)
+	{
+		// try to lock the queue
+		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
+
+		// try to insert the token
+		return TryInsert(token, std::move(lock));
 	}
 
 	/// get token from one of the queues
@@ -116,6 +122,29 @@ public:
 	}
 
 private: 
+	/// insert token to queue
+	bool TryInsert(T &token, std::unique_lock<std::mutex> lock)
+	{
+		// expect to own the lock by this point
+		if (!lock.owns_lock())
+			return false;
+
+		// expect the queue to be open at this point
+		if (!QueueOpen())
+			return false;
+
+		// insert the token
+		m_tokenqueue.emplace_back(std::move(token));
+
+		// unlock the lock so condition_var notification doesn't cause expensive collisions
+		lock.unlock();
+
+		// notify anyone waiting
+		m_condvar_gettoken.notify_all();
+
+		return true;
+	}
+
 	/// see if all queues are open; not thread-safe since it should only be used by thread-safe member functions
 	bool QueueOpen() const
 	{
