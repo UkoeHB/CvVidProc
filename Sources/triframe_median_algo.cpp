@@ -12,41 +12,8 @@
 #include <memory>
 
 
-using TFM_T = TokenProcessor<TriframeMedianAlgo, cv::Mat>;
+using TFM_T = TokenProcessor<TriframeMedianAlgo>;
 
-bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe)
-{
-	if (triframe[0].size() == 0 || !(triframe[0].size() == triframe[1].size() &&
-									triframe[0].size() == triframe[2].size()))
-	{
-		std::cerr << "Unexpected frame size mismatch!\n";
-		return false;
-	}
-
-	// set median of all indices
-	for (std::size_t index{0}; index < triframe[0].size(); ++index)
-	{
-		if (triframe[0][index] < triframe[1][index] &&
-			triframe[0][index] < triframe[2][index])
-		{
-			if (triframe[1][index] < triframe[2][index])
-				triframe[0][index] = triframe[1][index];
-			else
-				triframe[0][index] = triframe[2][index];
-		}
-
-		if (triframe[0][index] > triframe[1][index] &&
-			triframe[0][index] > triframe[2][index])
-		{
-			if (triframe[1][index] > triframe[2][index])
-				triframe[0][index] = triframe[1][index];
-			else
-				triframe[0][index] = triframe[2][index];
-		}
-	}
-
-	return true;
-}
 
 void TFM_T::Insert(std::unique_ptr<cv::Mat> new_element)
 {
@@ -81,16 +48,54 @@ void TFM_T::Insert(std::unique_ptr<cv::Mat> new_element)
 	m_frames_processed++;
 }
 
-cv::Mat TFM_T::GetResult() const
+bool TFM_T::TryGetResult(std::unique_ptr<cv::Mat>& return_result)
 {
-	// convert vector to Mat image
-	cv::Mat result_frame{};
-	cv_mat_from_std_vector_uchar(result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
+	// for triframe median, only get a result if no more frames will be sent in
+	if (!m_done_processing)
+		return false;
 
-	return result_frame;
+	// convert vector to Mat image
+	std::unique_ptr<cv::Mat> result_frame{};
+	cv_mat_from_std_vector_uchar(*result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
+
+	return_result = std::move(result_frame);
+
+	return true;
 }
 
+bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe)
+{
+	if (triframe[0].size() == 0 || !(triframe[0].size() == triframe[1].size() &&
+									triframe[0].size() == triframe[2].size()))
+	{
+		std::cerr << "Unexpected frame size mismatch!\n";
+		return false;
+	}
 
+	// set median of all indices
+	for (std::size_t index{0}; index < triframe[0].size(); ++index)
+	{
+		if (triframe[0][index] < triframe[1][index] &&
+			triframe[0][index] < triframe[2][index])
+		{
+			if (triframe[1][index] < triframe[2][index])
+				triframe[0][index] = triframe[1][index];
+			else
+				triframe[0][index] = triframe[2][index];
+		}
+
+		if (triframe[0][index] > triframe[1][index] &&
+			triframe[0][index] > triframe[2][index])
+		{
+			if (triframe[1][index] > triframe[2][index])
+				triframe[0][index] = triframe[1][index];
+			else
+				triframe[0][index] = triframe[2][index];
+		}
+	}
+
+	return true;
+}
 
 
 

@@ -66,19 +66,19 @@ public:
 
 	/// insert token; hangs if token can't be inserted yet (queue full)
 	/// may mutate the token passed in
-	bool InsertToken(T &token)
+	bool InsertToken(T &token, bool force_insert = false)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
 
 		// wait until the token queue is open
-		while (!QueueOpen())
+		while (!force_insert && !QueueOpen())
 		{
 			m_condvar_fill.wait(lock);
 		}
 
 		// once a token can be inserted, insert it
-		return TryInsertToken(token, std::move(lock));
+		return TryInsertToken(token, std::move(lock), force_insert);
 	}
 
 	/// try to insert a token; returns false if token can't be inserted (or can't acquire mutex)
@@ -134,14 +134,15 @@ public:
 
 private:
 	/// try to insert token to queue
-	bool TryInsertToken(T &token, std::unique_lock<std::mutex> lock)
+	/// allows force inserting to avoid deadlocks in some cases (use with caution)
+	bool TryInsertToken(T &token, std::unique_lock<std::mutex> lock, bool force_insert)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())
 			return false;
 
 		// expect the queue to be open at this point
-		if (!QueueOpen())
+		if (!force_insert && !QueueOpen())
 			return false;
 
 		// insert the token

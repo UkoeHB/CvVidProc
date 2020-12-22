@@ -15,12 +15,12 @@
 #include <vector>
 
 
-/// set first vector in trio to element-wise median of three vectors
-bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe);
-
-/// processor type
+/// processor algorithm type
 struct TriframeMedianAlgo final
-{};
+{
+	using token_type = cv::Mat;
+	using result_type = cv::Mat;
+};
 
 /// not strictly necessary to specialize this, just doing so for clarity
 template<>
@@ -32,7 +32,7 @@ struct TokenProcessorPack<TriframeMedianAlgo> final
 // passes over cv::Mat sequence and updates a 'median' value every 2 elements
 ///
 template<>
-class TokenProcessor<TriframeMedianAlgo, cv::Mat> final : public TokenProcessorBase<TriframeMedianAlgo, cv::Mat>
+class TokenProcessor<TriframeMedianAlgo> final : public TokenProcessorBase<TriframeMedianAlgo>
 {
 public:
 //constructors
@@ -40,7 +40,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TriframeMedianAlgo> &processor_pack) : TokenProcessorBase<TriframeMedianAlgo, cv::Mat>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TriframeMedianAlgo> &processor_pack) : TokenProcessorBase<TriframeMedianAlgo>{processor_pack}
 	{}
 
 	/// copy constructor: disabled
@@ -55,10 +55,13 @@ public:
 
 //member functions
 	/// insert an element to be processed
-	void Insert(std::unique_ptr<cv::Mat> new_element) override;
+	virtual void Insert(std::unique_ptr<cv::Mat> new_element) override;
 
 	/// get the processing result
-	cv::Mat GetResult() const override;
+	virtual bool TryGetResult(std::unique_ptr<cv::Mat>&) override;
+
+	/// get notified there are no more elements
+	virtual void NotifyNoMoreTokens() override { m_done_processing = true; }
 
 private:
 //member variables
@@ -73,9 +76,14 @@ private:
 	int m_triframe_position{0};
 	/// triframe for processing median frame
 	std::array<std::vector<unsigned char>, 3> m_triframe{};
+
+	/// no more frames will be inserted
+	bool m_done_processing{false};
 };
 
 
+/// set first vector in trio to element-wise median of three vectors
+bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe);
 
 
 #endif //header guard

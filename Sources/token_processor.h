@@ -17,11 +17,20 @@ template <typename T>
 struct TokenProcessorPack final
 {};
 
-/// expected interface of TokenProcessor specializations
-template <typename TokenProcessorAlgoT, typename TokenT, typename ResultT>
+////
+// interface for TokenProcessor specializations
+// expected usage:
+// 		- TokenProcessorAlgoT::token_type must be defined
+//		- TokenProcessorAlgoT::result_type must be defined
+///
+template <typename TokenProcessorAlgoT>
 class TokenProcessorBase
 {
 public:
+//member types
+	using TokenT = TokenProcessorAlgoT::token_type;
+	using ResultT = TokenProcessorAlgoT::result_type;
+
 //constructors
 	/// default constructor: disabled
 	TokenProcessorBase() = delete;
@@ -46,7 +55,10 @@ public:
 	virtual void Insert(std::unique_ptr<TokenT>) = 0;
 
 	/// get a copy of the processing result
-	virtual ResultT GetResult() const = 0;
+	virtual bool TryGetResult(std::unique_ptr<ResultT>&) = 0;
+
+	/// get notified there won't be any more tokens
+	virtual void NotifyNoMoreTokens() = 0;
 
 protected:
 //member variables
@@ -58,8 +70,8 @@ protected:
 // unimplemented sample interface (this only works when specialized)
 // it's best to inherit from the same base for all specializations
 ///
-template <typename TokenProcessorAlgoT, typename TokenT>
-class TokenProcessor final : public TokenProcessorBase<TokenProcessorAlgoT, TokenT>
+template <typename TokenProcessorAlgoT>
+class TokenProcessor final : public TokenProcessorBase<TokenProcessorAlgoT>
 {
 public:
 //constructors
@@ -67,7 +79,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT, TokenT>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT, TokenT, ResultT>{processor_pack}
 	{
 		assert(false && "TokenProcessor: tried to instantiate class with default template. It must be specialized!");
 	}
@@ -86,8 +98,11 @@ public:
 	/// insert an element to be processed
 	virtual void Insert(std::unique_ptr<TokenT>) override {};
 
-	/// get the processing result
-	virtual TokenT GetResult() const override {return TokenT{};};
+	/// try to get a processing result
+	virtual bool TryGetResult(std::unique_ptr<ResultT>&) override {return false;};
+
+	/// get notified there won't be more tokens
+	virtual void NotifyNoMoreTokens() override {};
 
 private:
 //member variables

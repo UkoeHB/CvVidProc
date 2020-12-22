@@ -17,29 +17,27 @@
 
 
 ////
-// expected interface:
-// - the class specialization TokenProcessor<TokenProcessorAlgoT> must
-//		- have typedef ::token_type
-//		- have typedef ::result_type
-//		- be derived from TokenProcessorBase<TokenProcessorAlgoT, token_type, result_type>
+// expected usage:
+// 		- the class specialization TokenProcessor<TokenProcessorAlgoT> must
+//			be derived from TokenProcessorBase<TokenProcessorAlgoT>
 //		note: c++20 contracts would make this easier...
 /// 
 template <typename TokenProcessorAlgoT>
 class TokenProcessingUnit final
 {
+public:
 //member types
+	/// token processor type
+	using TokenProcessorT = TokenProcessor<TokenProcessorAlgoT>;
 	/// get token type from token processor impl
-	using TokenT = TokenProcessorAlgoT::token_type;
+	using TokenT = TokenProcessorT::TokenT;
 	/// get result type from token processor impl
-	using ResultT = TokenProcessorAlgoT::result_type;
+	using ResultT = TokenProcessorT::ResultT;
 	/// token queue type
 	using TokenQueueT = AsyncTokenQueue<std::unique_ptr<TokenT>>;
 	/// result queue type
 	using ResultQueueT = AsyncTokenQueue<std::unique_ptr<ResultT>>;
-	/// token processor type
-	using TokenProcessorT = TokenProcessor<TokenProcessorAlgoT>;
 
-public:
 //constructors
 	/// default constructor: disabled
 	TokenProcessingUnit() = delete;
@@ -86,7 +84,11 @@ public:
 	/// try insert wrapper for insert queue
 	bool TryInsert(std::unique_ptr<TokenT> &insert_token)
 	{
-		return m_token_queue.TryInsertToken(insert_token);
+		// make sure there is a token inside the unique_ptr
+		if (insert_token)
+			return m_token_queue.TryInsertToken(insert_token);
+		else
+			return false;
 	}
 
 	/// try get result wrapper for result queue
@@ -113,7 +115,7 @@ private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
 	{
-		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorT>::value,
+		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessorT>::value,
 			"Token processor implementation does not derive from the TokenProcessorBase!");
 
 		// relies on template dependency injection to decide the processor algorithm
@@ -140,7 +142,8 @@ private:
 
 		// obtain final result if it exists
 		if (worker_processor.TryGetResult(result_shuttle))
-				result_queue.InsertToken(result_shuttle);
+				// force insert result to avoid deadlocks in shutdown procedure
+				result_queue.InsertToken(result_shuttle, true);
 	}
 
 //member variables
@@ -154,30 +157,6 @@ private:
 	std::thread m_worker{};
 };
 
-
-
-/*
-
-- spawn set of processing units
-
-while(tokens left)
-
-	- get token set
-
-	while (token set not emptied)
-	{
-		- iterate through token set
-			- try to insert token
-			- try to get result
-	}
-
-- shut down units
-
-- wait until units are stopped
-
-- clear out remaining results
-
-*/
 
 #endif //header guard
 
