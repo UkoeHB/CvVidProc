@@ -45,8 +45,8 @@ public:
 	AsyncTokenProcess() = delete;
 
 	/// normal constructor
-	AsyncTokenProcess(const int worker_threads, const int token_storage_limit, const int result_storage_limit) : 
-		m_worker_threads{worker_threads},
+	AsyncTokenProcess(const int worker_thread_limit, const int token_storage_limit, const int result_storage_limit) : 
+		m_worker_thread_limit{worker_thread_limit},
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit}
 	{}
@@ -75,10 +75,11 @@ public:
 		// get processor packs for processing units
 		auto processing_packs{GetProcessingPacks()};
 
-		// assume token batch size equals number of packs obtained
-		std::size_t batch_size{processing_packs.size()};
+		// get batch size
+		std::size_t batch_size{static_cast<std::size_t>(GetBatchSize())};
 
-		assert(batch_size > 0 && batch_size <= m_worker_threads);
+		assert(batch_size > 0 && batch_size <= m_worker_thread_limit);
+		assert(batch_size == processing_packs.size());
 
 		// spawn set of processing units (creates threads)
 		std::vector<TokenProcessingUnit<TokenProcessorAlgoT>> processing_units{};
@@ -98,7 +99,7 @@ public:
 
 		while (true)
 		{
-			// get token set or leave
+			// get token set or leave if no more will be created
 			if (!GetTokenSet(token_set_shuttle))
 				break;
 
@@ -107,6 +108,9 @@ public:
 			int remaining_tokens{batch_size};
 			while (remaining_tokens > 0)
 			{
+				// recount the number of uninserted tokens each round
+				remaining_tokens = 0;
+
 				// iterate through token set to empty it
 				for (std::size_t unit_index{0}; unit_index < batch_size; unit_index++)
 				{
@@ -114,7 +118,12 @@ public:
 					if (token_set_shuttle[unit_index])
 					{
 						if (processing_units[unit_index].TryInsert(token_set_shuttle[unit_index]))
-							remaining_tokens--;
+						{
+							// sanity check - successful insertions should remove the token
+							assert(!token_set_shuttle[unit_index]);
+						}
+						else
+							remaining_tokens++;
 					}
 
 					// try to get a result from the processing unit
@@ -152,11 +161,14 @@ public:
 		return std::move(GetFinalResult());
 	}
 
+	/// get batch size (number of tokens in each batch)
+	virtual int GetBatchSize() = 0;
+
 	/// get processing packs for processing units (num packs = intended batch size)
 	virtual std::vector<TokenProcessorPack<TokenProcessorAlgoT>> GetProcessingPacks() = 0;
 
-	/// get token set from generator
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() = 0;
+	/// get token set from generator; should return false when no more token sets to get
+	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) = 0;
 
 	/// consume an intermediate result from one of the token processing units
 	virtual void ConsumeResult(std::unique_ptr<ResultT> &intermediate_result, const std::size_t index_in_batch) = 0;
@@ -167,39 +179,18 @@ public:
 
 private:
 //member variables
-	/// number of worker threads allowed
-	const int m_worker_threads{};
+	/// max number of worker threads allowed
+	const int m_worker_thread_limit{};
 	/// keep track of the process state
 	ProcessState m_process_state{ProcessState::UNUSED};
 
 	/// max number of tokens that can be stored in each processing unit
-	const int m_token_storage_limit{}
+	const int m_token_storage_limit{};
 	/// max number of results that can be stored in each processing unit
-	const int m_result_storage_limit{}
+	const int m_result_storage_limit{};
 
 };
-/*
 
-- spawn set of processing units
-
-while(tokens left)
-
-	- get token set
-
-	while (token set not emptied)
-	{
-		- iterate through token set
-			- try to insert token
-			- try to get result
-	}
-
-- shut down units
-
-- wait until units are stopped
-
-- clear out remaining results
-
-*/
 
 #endif //header guard
 
