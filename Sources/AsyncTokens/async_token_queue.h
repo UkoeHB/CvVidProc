@@ -79,7 +79,7 @@ public:
 		}
 
 		// once a token can be inserted, insert it
-		return TryInsertToken(token, std::move(lock), force_insert);
+		return TryInsertTokenImpl(token, std::move(lock), force_insert);
 	}
 
 	/// try to insert a token; returns false if token can't be inserted (or can't acquire mutex)
@@ -90,7 +90,7 @@ public:
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
 
 		// try to insert the token
-		return TryInsertToken(token, std::move(lock), false);
+		return TryInsertTokenImpl(token, std::move(lock), false);
 	}
 
 	/// get token from one of the queues; hangs if no tokens available
@@ -110,7 +110,7 @@ public:
 		}
 
 		// try to get the token
-		return TryGetToken(return_token, std::move(lock));
+		return TryGetTokenImpl(return_token, std::move(lock));
 	}
 
 	/// try to get token from the queue; returns false if no tokens available (or can't acquire mutex)
@@ -120,7 +120,7 @@ public:
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
 
 		// try to get the token
-		return TryGetToken(return_token, std::move(lock));
+		return TryGetTokenImpl(return_token, std::move(lock));
 	}
 
 	/// check if queue is empty
@@ -136,7 +136,7 @@ public:
 private:
 	/// try to insert token to queue
 	/// allows force inserting to avoid deadlocks in some cases (use with caution)
-	bool TryInsertToken(T &token, std::unique_lock<std::mutex> lock, bool force_insert)
+	bool TryInsertTokenImpl(T &token, std::unique_lock<std::mutex> lock, bool force_insert)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())
@@ -159,7 +159,7 @@ private:
 	}
 
 	/// try to get token from one of the queues
-	bool TryGetToken(T &return_token, std::unique_lock<std::mutex> lock)
+	bool TryGetTokenImpl(T &return_token, std::unique_lock<std::mutex> lock)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())

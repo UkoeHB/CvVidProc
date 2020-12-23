@@ -6,6 +6,7 @@ Dependencies:
 
 - OpenCV
 - CMake
+- compiler with c++14 support
 
 
 ## Building and Running
@@ -13,20 +14,20 @@ Dependencies:
 Run cmake for debug or release:
 
 ```
-// in command line, for debug build
+// in command line, for debug build (slow version)
 cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 
-// in command line, for release build
+// in command line, for release build (fast version)
 cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
 ```
 
 Build:
 
 ```
-// in command line, for debug build
+// in command line, for debug build (slow version)
 cmake --build Build
 
-// in command line, for release build
+// in command line, for release build (fast version)
 cmake --build BuildR
 ```
 

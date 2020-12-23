@@ -133,8 +133,11 @@ public:
 					// try to get a result from the processing unit
 					if (processing_units[unit_index].TryGetResult(result_shuttle))
 					{
+						// sanity check: if a result is obtained, it should exist
+						assert(result_shuttle);
+
 						// consume the result
-						ConsumeResult(result_shuttle, unit_index);
+						ConsumeResult(std::move(result_shuttle), unit_index);
 					}
 				}
 			}
@@ -156,7 +159,10 @@ public:
 			// clear remaining results
 			while (processing_units[unit_index].ExtractFinalResults(result_shuttle))
 			{
-				ConsumeResult(result_shuttle, unit_index);
+				// sanity check: if a result is obtained, it should exist
+				assert(result_shuttle);
+
+				ConsumeResult(std::move(result_shuttle), unit_index);
 			}
 		}
 
@@ -175,7 +181,7 @@ public:
 	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) = 0;
 
 	/// consume an intermediate result from one of the token processing units
-	virtual void ConsumeResult(std::unique_ptr<ResultT> &intermediate_result, const std::size_t index_in_batch) = 0;
+	virtual void ConsumeResult(std::unique_ptr<ResultT> intermediate_result, const std::size_t index_in_batch) = 0;
 
 	/// get final result
 	virtual std::unique_ptr<FinalResultT> GetFinalResult() = 0;

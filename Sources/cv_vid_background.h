@@ -67,7 +67,7 @@ public:
 
 	/// consume an intermediate result from one of the token processing units
 	/// replaces previous result for a given batch index with new results, so that in the end there is only one 'result batch'
-	virtual void ConsumeResult(std::unique_ptr<ResultT> &intermediate_result, const std::size_t index_in_batch) override
+	virtual void ConsumeResult(std::unique_ptr<ResultT> intermediate_result, const std::size_t index_in_batch) override
 	{
 		assert(index_in_batch < static_cast<std::size_t>(m_batch_size));
 
