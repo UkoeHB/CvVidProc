@@ -1,23 +1,17 @@
 // main for async video stream project
 
 //local headers
-#include "async_token_queue.h"
-#include "cv_util.h"
 #include "cv_vid_background.h"
 #include "project_dir_config.h"
-#include "token_processor.h"
 #include "triframe_median_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 
 //standard headers
-#include <array>
 #include <iostream>
-#include <future>
 #include <memory>
 #include <thread>		//for std::thread::hardware_concurrency()
-#include <type_traits>
 #include <vector>
 
 

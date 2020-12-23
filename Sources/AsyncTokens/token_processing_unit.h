@@ -132,7 +132,13 @@ public:
 		// get tokens asynchronously until the queue shuts down (and is empty)
 		while(m_token_queue.GetToken(token_shuttle))
 		{
+			// sanity check: if a token is obtained then it should exist
+			assert(token_shuttle);
+
 			worker_processor.Insert(std::move(token_shuttle));
+
+			// sanity check: inserted tokens should not exist here any more
+			assert(!token_shuttle);
 
 			// see if the token processor has a result ready, and add it to the result queue if it does
 			// possible deadlock: result queue full and this thread stalls on insert, but token queue is full so thread that
@@ -140,7 +146,20 @@ public:
 			//	ANSWER: inserter should alternate between 'tryinsert()' and 'trygetresult()' whenever they have a new token
 			// 		- in practice only TryInsert() and TryGetResult() are exposed to users of the processing unit
 			if (worker_processor.TryGetResult(result_shuttle))
+			{
+				// sanity check: successfully obtained results should exist
+				assert(result_shuttle);
+
 				m_result_queue.InsertToken(result_shuttle);
+
+				// sanity check: inserted tokens should not exist
+				assert(!result_shuttle);
+			}
+			else
+			{
+				// sanity check: unsuccessfully obtained results should not exist
+				assert(!result_shuttle);
+			}
 		}
 
 		// tell token processor there are no more tokens so it can prepare final results
@@ -149,8 +168,19 @@ public:
 		// obtain final result if it exists
 		if (worker_processor.TryGetResult(result_shuttle))
 		{
+			// sanity check: successfully obtained results should exist
+			assert(result_shuttle);
+
 			// force insert result to avoid deadlocks in shutdown procedure
 			m_result_queue.InsertToken(result_shuttle, true);
+
+			// sanity check: inserted tokens should not exist
+			assert(!result_shuttle);
+		}
+		else
+		{
+			// sanity check: unsuccessfully obtained results should not exist
+			assert(!result_shuttle);
 		}
 	}
 
