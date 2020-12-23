@@ -10,6 +10,7 @@
 //standard headers
 #include <cassert>
 #include <condition_variable>
+#include <iostream>
 #include <list>
 #include <mutex>
 #include <vector>
@@ -20,8 +21,8 @@ class AsyncTokenQueue final
 {
 //constructors
 public: 
-	/// default constructor: disabled
-	AsyncTokenQueue() = delete;
+	/// default constructor: default
+	AsyncTokenQueue() = default;
 
 	/// normal constructor
 	AsyncTokenQueue(const int max_queue_size) :
@@ -89,7 +90,7 @@ public:
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
 
 		// try to insert the token
-		return TryInsertToken(token, std::move(lock));
+		return TryInsertToken(token, std::move(lock), false);
 	}
 
 	/// get token from one of the queues; hangs if no tokens available
@@ -129,7 +130,7 @@ public:
 		std::lock_guard<std::mutex> lock{m_mutex};
 
 		// see if queue is empty
-		return !m_tokenqueue.size();
+		return m_tokenqueue.empty();
 	}
 
 private:

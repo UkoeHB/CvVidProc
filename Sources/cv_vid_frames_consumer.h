@@ -23,7 +23,7 @@ class CvVidFramesConsumer : public AsyncTokenProcess<FrameProcessorAlgoT, FinalR
 {
 //member types
 public:
-	using TokenT = TokenProcessorAlgoT::token_type;
+	using TokenT = typename FrameProcessorAlgoT::token_type;
 
 //constructors
 	/// default constructor: disabled
@@ -31,17 +31,19 @@ public:
 
 	/// normal constructor
 	CvVidFramesConsumer(cv::VideoCapture &vid,
+			const int frame_limit,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,		
 			const int worker_thread_limit,
 			const int token_storage_limit,
 			const int result_storage_limit) : 
 		AsyncTokenProcess<FrameProcessorAlgoT, FinalResultT>{worker_thread_limit, token_storage_limit, result_storage_limit},
+		m_frame_limit{frame_limit},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
 		m_vid{vid}
 	{
-		static_assert(std::is_same<FrameProcessorAlgoT::token_type, cv::Mat>::value,
+		static_assert(std::is_same<typename FrameProcessorAlgoT::token_type, cv::Mat>::value,
 			"Frame processor implementation does not have token type cv::Mat!");
 
 		// sanity checks
@@ -62,10 +64,17 @@ public:
 	CvVidFramesConsumer& operator=(const CvVidFramesConsumer&) const = delete;
 
 //member functions
+	/// get batch size (number of tokens in each batch)
+	virtual int GetBatchSize() override = 0;
+
 	/// get token set from generator (set of frame segments)
 	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) override
 	{
 		cv::Mat frame{};
+
+		// leave if reached frame limit
+		if (m_frame_limit > 0 && m_frame_limit <= m_frames_consumed)
+			return false;
 
 		// get next frame from video
 		m_vid >> frame;
@@ -106,6 +115,8 @@ protected:
 private:
 	/// opencv video to get frames from
 	cv::VideoCapture m_vid{};
+	/// max number of frames to process (negative means go until end of vid)
+	const int m_frame_limit{};
 
 	/// frame counter
 	int m_frames_consumed{0};

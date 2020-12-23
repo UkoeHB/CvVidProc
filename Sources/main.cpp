@@ -2,10 +2,11 @@
 
 //local headers
 #include "async_token_queue.h"
+#include "cv_util.h"
+#include "cv_vid_background.h"
+#include "project_dir_config.h"
 #include "token_processor.h"
 #include "triframe_median_algo.h"
-#include "cv_util.h"
-#include "project_dir_config.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -28,108 +29,6 @@ const char* g_commandline_params =
 	"{ frame_limit | -1 | Max number of frames to analyze }"
 	"{ max_threads |  8 | Max number of threads to use for analyzing the video }";
 
-// get median frame from input video (copy constructed VideoCapture so original is not affected)
-// uses dependency injection via template argument to obtain the background processor algo
-template <typename FrameProcessorT>
-cv::Mat filter_vid_for_frame(cv::VideoCapture vid, const int frame_limit, const int worker_threads, const std::vector<TokenProcessorPack<FrameProcessorT>> &processor_packs)
-{
-	using TP_T = TokenProcessor<FrameProcessorT, cv::Mat>;
-	static_assert(std::is_base_of<TokenProcessorBase<FrameProcessorT, cv::Mat>, TP_T>::value,
-			"Token processor implementation does not derive from the TokenProcessorBase!");
-
-	if (!vid.isOpened() ||
-		processor_packs.size() != worker_threads ||
-		worker_threads <= 0)
-		return cv::Mat{};
-
-	// create token queues for holding frame fragments in need of processing
-	// must limit max queue size strictly to avoid memory problems, since video frames are large and there are a lot of them
-	std::vector<AsyncTokenQueue<std::unique_ptr<cv::Mat>>> token_queues{};
-	token_queues.resize(worker_threads, AsyncTokenQueue<std::unique_ptr<cv::Mat>>{3});
-
-	// prepare result fragments
-	std::vector<std::future<cv::Mat>> fragment_result_futures{};
-	fragment_result_futures.reserve(worker_threads);
-
-	// launch worker threads for processing fragments
-	for (int queue_index{0}; queue_index < worker_threads; queue_index++)
-	{
-		fragment_result_futures.emplace_back(std::async(std::launch::async,
-				[&token_queues, &processor_packs, queue_index]() -> cv::Mat
-				{
-					// relies on template dependency injection to decide the processor algorithm
-					TP_T worker_processor{processor_packs[queue_index]};
-					std::unique_ptr<cv::Mat> mat_fragment_shuttle{};
-
-					// get tokens asynchronously until the queue shuts down (and is empty)
-					while(token_queues[queue_index].GetToken(mat_fragment_shuttle))
-					{
-						worker_processor.Insert(std::move(mat_fragment_shuttle));
-					}
-
-					return worker_processor.GetResult();
-				}
-			));
-	}
-
-	// cycle through video frames
-	cv::Mat frame{};
-	int num_frames{0};
-	int image_width{0};
-	int image_height{0};
-
-	while (num_frames < frame_limit)
-	{
-		num_frames++;
-
-		// get next frame from video
-		vid >> frame;
-
-		// leave if reached the end of the video or frame is corrupted
-		if (!frame.data || frame.empty())
-			break;
-
-		// get frame dimensions from first frame
-		if (num_frames == 1)
-		{
-			image_width = frame.cols;
-			image_height = frame.rows;
-		}
-
-		// break frame into chunks
-		std::vector<std::unique_ptr<cv::Mat>> frame_chunks{};
-		if (!cv_mat_to_chunks(frame, frame_chunks, 1, worker_threads, 0, 0))
-			std::cerr << "Breaking frame (" << num_frames << ") into chunks failed unexpectedly!\n";
-
-		// pass chunks to processor queues
-		for (int queue_index{0}; queue_index < worker_threads; ++queue_index)
-		{
-			token_queues[queue_index].InsertToken(frame_chunks[queue_index]);
-		}
-	}
-
-	// release the video since this 'videocapture' can't be used any more
-	vid.release();
-
-	// collect all the result fragments
-	std::vector<cv::Mat> collect_results{};
-
-	for (int queue_index{0}; queue_index < worker_threads; queue_index++)
-	{
-		// inform queues that no more tokens are being added
-		token_queues[queue_index].ShutDown();
-
-		// get result from std::future object
-		collect_results.emplace_back(fragment_result_futures[queue_index].get());
-	}
-
-	// combine result fragments
-	cv::Mat final_background{};
-	if (!cv_mat_from_chunks(final_background, collect_results, 1, worker_threads, image_width, image_height, 0, 0))
-		std::cerr << "Combining final results into background image failed unexpectedly!\n";
-
-	return final_background;
-}
 
 int main(int argc, char* argv[])
 {
@@ -179,14 +78,16 @@ int main(int argc, char* argv[])
 		worker_threads -= 1;
 
 	// get the background of the video
-	std::vector<TokenProcessorPack<TriframeMedianAlgo>> empty_pack;
-	empty_pack.resize(worker_threads, TokenProcessorPack<TriframeMedianAlgo>{});
+	std::vector<TokenProcessorPack<TriframeMedianAlgo>> empty_packs;
+	empty_packs.resize(worker_threads, TokenProcessorPack<TriframeMedianAlgo>{});
 
-	cv::Mat background_frame{filter_vid_for_frame<TriframeMedianAlgo>(vid, frame_limit, worker_threads, empty_pack)};
+	CvVidBackground<TriframeMedianAlgo> get_background_process{empty_packs, vid, frame_limit, 0, 0, worker_threads, 3, 3};
+
+	std::unique_ptr<cv::Mat> background_frame{get_background_process.Run()};
 
 	// display the final median image
-	if (background_frame.data && !background_frame.empty())
-		cv::imshow("Median Frame", background_frame);
+	if (background_frame && background_frame->data && !background_frame->empty())
+		cv::imshow("Median Frame", *background_frame);
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
 

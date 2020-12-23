@@ -28,8 +28,8 @@ class TokenProcessorBase
 {
 public:
 //member types
-	using TokenT = TokenProcessorAlgoT::token_type;
-	using ResultT = TokenProcessorAlgoT::result_type;
+	using TokenT = typename TokenProcessorAlgoT::token_type;
+	using ResultT = typename TokenProcessorAlgoT::result_type;
 
 //constructors
 	/// default constructor: disabled
@@ -74,12 +74,16 @@ template <typename TokenProcessorAlgoT>
 class TokenProcessor final : public TokenProcessorBase<TokenProcessorAlgoT>
 {
 public:
+//member types
+	using TokenT = typename TokenProcessorBase<TokenProcessorAlgoT>::TokenT;
+	using ResultT = typename TokenProcessorBase<TokenProcessorAlgoT>::ResultT;
+
 //constructors
 	/// default constructor: disabled
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT, TokenT, ResultT>{processor_pack}
+	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT>{processor_pack}
 	{
 		assert(false && "TokenProcessor: tried to instantiate class with default template. It must be specialized!");
 	}

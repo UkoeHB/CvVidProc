@@ -1,4 +1,4 @@
-// implementation of TriframeMedian background processing algorithm
+// implementation of TriframeMedianAlgo background processing algorithm
 
 //local headers
 #include "token_processor.h"
@@ -55,10 +55,10 @@ bool TFM_T::TryGetResult(std::unique_ptr<cv::Mat>& return_result)
 		return false;
 
 	// convert vector to Mat image
-	std::unique_ptr<cv::Mat> result_frame{};
-	cv_mat_from_std_vector_uchar(*result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
+	cv::Mat result_frame{};
+	cv_mat_from_std_vector_uchar(result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
 
-	return_result = std::move(result_frame);
+	return_result = std::make_unique<cv::Mat>(std::move(result_frame));
 
 	return true;
 }

@@ -30,28 +30,30 @@ public:
 	/// token processor type
 	using TokenProcessorT = TokenProcessor<TokenProcessorAlgoT>;
 	/// get token type from token processor impl
-	using TokenT = TokenProcessorT::TokenT;
+	using TokenT = typename TokenProcessorT::TokenT;
 	/// get result type from token processor impl
-	using ResultT = TokenProcessorT::ResultT;
+	using ResultT = typename TokenProcessorT::ResultT;
 	/// token queue type
 	using TokenQueueT = AsyncTokenQueue<std::unique_ptr<TokenT>>;
 	/// result queue type
 	using ResultQueueT = AsyncTokenQueue<std::unique_ptr<ResultT>>;
 
 //constructors
-	/// default constructor: disabled
-	TokenProcessingUnit() = delete;
+	/// default constructor: default (not meant to be used, just for placeholding)
+	TokenProcessingUnit() = default;
 
 	/// normal constructor
 	TokenProcessingUnit(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack, const int token_queue_limit, const int result_queue_limit) :
 			m_processor_pack{processor_pack},
 			m_token_queue{token_queue_limit},
 			m_result_queue{result_queue_limit}
-			m_worker{WorkerFunction}	// worker thread starts here (must be initialized last)
-	{}
+	{
+		// worker thread starts here
+		m_worker = std::thread{&TokenProcessingUnit<TokenProcessorAlgoT>::WorkerFunction, this};
+	}
 
-	/// copy constructor: disabled
-	TokenProcessingUnit(const TokenProcessingUnit&) = delete;
+	/// copy constructor: default construct
+	TokenProcessingUnit(const TokenProcessingUnit&) {}
 
 	/// destructor
 	~TokenProcessingUnit()
@@ -65,7 +67,6 @@ public:
 	/// asignment operator: disabled
 	TokenProcessingUnit& operator=(const TokenProcessingUnit&) = delete;
 	TokenProcessingUnit& operator=(const TokenProcessingUnit&) const = delete;
-
 
 //member functions
 	/// shut down the unit (no more tokens to be added)
@@ -98,7 +99,7 @@ public:
 	}
 
 	/// extract results lingering in queue when unit is stopped
-	/// returns true if there are more results to extract
+	/// returns true if a result was extracted
 	bool ExtractFinalResults(std::unique_ptr<ResultT> &return_val)
 	{
 		assert(!m_worker.joinable() && "ExtractFinalResults() can only be called after WaitUntilUnitStops()!");
@@ -106,12 +107,17 @@ public:
 		// if there are elements remaining in the queue, grab one
 		// this should not block because no threads should be competing for the result queue (worker thread is shut down)
 		if (!m_result_queue.IsEmpty())
+		{
 			m_result_queue.GetToken(return_val);
 
-		return !m_result_queue.IsEmpty();
+			return true;
+		}
+		else
+		{
+			return !m_result_queue.IsEmpty();
+		}
 	}
 
-private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
 	{
@@ -124,7 +130,7 @@ private:
 		std::unique_ptr<ResultT> result_shuttle{};
 
 		// get tokens asynchronously until the queue shuts down (and is empty)
-		while(token_queue.GetToken(token_shuttle))
+		while(m_token_queue.GetToken(token_shuttle))
 		{
 			worker_processor.Insert(std::move(token_shuttle));
 
@@ -134,7 +140,7 @@ private:
 			//	ANSWER: inserter should alternate between 'tryinsert()' and 'trygetresult()' whenever they have a new token
 			// 		- in practice only TryInsert() and TryGetResult() are exposed to users of the processing unit
 			if (worker_processor.TryGetResult(result_shuttle))
-				result_queue.InsertToken(result_shuttle);
+				m_result_queue.InsertToken(result_shuttle);
 		}
 
 		// tell token processor there are no more tokens so it can prepare final results
@@ -142,10 +148,13 @@ private:
 
 		// obtain final result if it exists
 		if (worker_processor.TryGetResult(result_shuttle))
-				// force insert result to avoid deadlocks in shutdown procedure
-				result_queue.InsertToken(result_shuttle, true);
+		{
+			// force insert result to avoid deadlocks in shutdown procedure
+			m_result_queue.InsertToken(result_shuttle, true);
+		}
 	}
 
+private:
 //member variables
 	/// variable pack for initializing the token processor
 	const TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};

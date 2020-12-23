@@ -38,8 +38,8 @@ class AsyncTokenProcess
 	};
 
 public:
-	using TokenT = TokenProcessorAlgoT::token_type;
-	using ResultT = TokenProcessorAlgoT::result_type;
+	using TokenT = typename TokenProcessorAlgoT::token_type;
+	using ResultT = typename TokenProcessorAlgoT::result_type;
 
 //constructors
 	/// default constructor: disabled
@@ -51,7 +51,7 @@ public:
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit}
 	{
-		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessorT>::value,
+		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessor<TokenProcessorAlgoT>>::value,
 			"Token processor implementation does not derive from the TokenProcessorBase!");
 	}
 
@@ -109,7 +109,7 @@ public:
 
 			// pass token set to processing units
 			// it spins through 'try' functions to avoid deadlocks between token and result queues
-			int remaining_tokens{batch_size};
+			std::size_t remaining_tokens{batch_size};
 			while (remaining_tokens > 0)
 			{
 				// recount the number of uninserted tokens each round
