@@ -83,9 +83,8 @@ public:
 
 		// break frame into chunks
 		return_token_set.clear();		//expectation of cv_mat_to_chunks()
-		int batch_size{GetBatchSize()};
 
-		if (!cv_mat_to_chunks(frame, return_token_set, 1, batch_size, m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
+		if (!cv_mat_to_chunks(frame, return_token_set, 1, GetBatchSize(), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
 			std::cerr << "Breaking frame (" << m_frames_consumed + 1 << ") into chunks failed unexpectedly!\n";
 
 		m_frames_consumed++;
@@ -114,12 +113,6 @@ private:
 
 
 #endif //header guard
-
-
-//generates frames
-//converts frames to batches (frame segments = tokens in batch)
-//specified algo is used to consume segments
-//unspecified: how results are handled (must have derived class)
 
 
 

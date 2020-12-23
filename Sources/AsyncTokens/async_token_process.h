@@ -4,6 +4,7 @@
 #define ASYNC_TOKEN_PROCESS_4567898765_H
 
 //local headers
+#include "token_processor.h"
 #include "token_processing_unit.h"
 
 //third party headers
@@ -49,7 +50,10 @@ public:
 		m_worker_thread_limit{worker_thread_limit},
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit}
-	{}
+	{
+		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessorT>::value,
+			"Token processor implementation does not derive from the TokenProcessorBase!");
+	}
 
 	/// copy constructor: disabled
 	AsyncTokenProcess(const AsyncTokenProcess&) = delete;
