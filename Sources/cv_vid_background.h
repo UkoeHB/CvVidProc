@@ -33,7 +33,7 @@ public:
 	/// normal constructor
 	CvVidBackground(PPackSetT &processor_packs,
 			cv::VideoCapture &vid,
-			const int frame_limit,
+			const long long frame_limit,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const bool use_grayscale,		

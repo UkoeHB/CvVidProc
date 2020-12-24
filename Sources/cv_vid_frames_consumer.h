@@ -32,7 +32,7 @@ public:
 
 	/// normal constructor
 	CvVidFramesConsumer(cv::VideoCapture &vid,
-			const int frame_limit,
+			const long long frame_limit,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const bool use_grayscale,
@@ -125,8 +125,8 @@ protected:
 	/// reset in case the token process is restarted
 	virtual void Reset() override
 	{
-		// reinitialize video; automatically calls '.release()'
-		vid.open();
+		// point video back to first frame
+		m_vid.set(cv::CAP_PROP_FRAME_COUNT, 0);
 
 		m_frames_consumed = 0;
 	}
@@ -146,12 +146,12 @@ private:
 	/// opencv video to get frames from
 	cv::VideoCapture m_vid{};
 	/// max number of frames to process (negative means go until end of vid)
-	const int m_frame_limit{};
+	const long long m_frame_limit{};
 	/// if frames should be converted to grayscale before being tokenized
 	const bool m_convert_to_grayscale{false};
 
 	/// frame counter
-	int m_frames_consumed{0};
+	long long m_frames_consumed{0};
 };
 
 

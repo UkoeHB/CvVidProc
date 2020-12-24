@@ -23,18 +23,38 @@ const char* g_commandline_params =
 	"{ vid          |         | Video name (with extension) }"
 	"{ vid_path     |         | Full path for video }"
 	"{ max_threads  |     8   | Max number of threads to use for analyzing the video }"
+	"{ grayscale    |  false  | Treat the video as grayscale (true/false) }"
 	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
-	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }"
-	"{ grayscale    |  false  | Treat the video as grayscale (true/false) }";
+	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }";
 
 struct CommandLinePack
 {
-	cv::String video_path{};
-	unsigned long frame_limit{};
+	cv::String vid_path{};
 	int worker_threads{};
-	bool use_grayscale{};
+	bool grayscale{};
+	long long bg_frame_lim{};
+	cv::String bg_algo{};
 };
 
+/// background algorithms available
+enum class BGAlgo
+{
+	HISTOGRAM,
+	TRIFRAME,
+	UNKNOWN
+};
+
+BGAlgo GetBGAlgo(const cv::String &algo)
+{
+	if (algo == "hist")
+		return BGAlgo::HISTOGRAM;
+	else if (algo == "tri")
+		return BGAlgo::TRIFRAME;
+	else
+		return BGAlgo::UNKNOWN;
+}
+
+/// interpret the command line arguments
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 {
 	CommandLinePack pack{};
@@ -53,9 +73,6 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	else if (cl_args.get<cv::String>("vid_path") != "")
 		pack.vid_path = cl_args.get<cv::String>("vid_path");
 
-	// get frame limit
-	pack.frame_limit = cl_args.get<int>("bg_frame_lim");
-
 	// get number of worker threads to use (subtract one for the main thread)
 	int worker_threads{cl_args.get<int>("max_threads")};
 	const auto processor_cores{std::thread::hardware_concurrency()};
@@ -70,58 +87,76 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 
 	// get grayscale setting
 	pack.grayscale = cl_args.get<bool>("grayscale");
+
+	// get background algorithm
+	pack.bg_algo = cl_args.get<cv::String>("bg_algo");
+
+	// get frame limit
+	pack.bg_frame_lim = static_cast<long long>(cl_args.get<double>("bg_frame_lim"));
+
+	return pack;
 }
 
+/// encapsulates call to async tokenized video background analysis
+template <typename MedianAlgo>
+std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const CommandLinePack &cl_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
+{
+	CvVidBackground<MedianAlgo> get_background_process{processor_packs, vid, cl_pack.bg_frame_lim, 0, 0, cl_pack.grayscale, cl_pack.worker_threads, 3, 3};
+
+	return get_background_process.Run();
+}
+
+/// get a video background
 std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const CommandLinePack &cl_pack)
 {
 	// algo is user-specified
-	switch (cl_pack.bg_algo)
+	switch (GetBGAlgo(cl_pack.bg_algo))
 	{
-		case "hist" :
+		case BGAlgo::HISTOGRAM :
+		{
+			// use cheapest histogram algorithm
+			if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<unsigned char>(-1)))
 			{
-				// use cheapest histogram algorithm
-				if (cl_pack.frame_limit <= static_cast<unsigned long>(static_cast<unsigned char>(-1)))
-				{
-					using MedianAlgo = HistogramMedianAlgo8;
-
-					std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-					empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-					return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
-				}
-				else if (cl_pack.frame_limit <= static_cast<unsigned long>(static_cast<std::uint16_t>(-1)))
-				{
-					using MedianAlgo = HistogramMedianAlgo16;
-
-					std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-					empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-					return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
-				}
-				else if (cl_pack.frame_limit <= static_cast<unsigned long>(static_cast<std::uint32_t>(-1)))
-				{
-					using MedianAlgo = HistogramMedianAlgo32;
-
-					std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-					empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-					return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
-				}
-				else
-				{
-					std::cerr << "warning, video appears to have over 2^32 frames! (" << cl_pack.frame_limit << ") is way too many!\n";
-				}
-			}
-
-		case "tri" :
-			{
-				using MedianAlgo = TriframeMedianAlgo;
+				using MedianAlgo = HistogramMedianAlgo8;
 
 				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
 				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
 
 				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
 			}
+			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
+			{
+				using MedianAlgo = HistogramMedianAlgo16;
+
+				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
+
+				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+			}
+			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
+			{
+				using MedianAlgo = HistogramMedianAlgo32;
+
+				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
+
+				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+			}
+			else
+			{
+				std::cerr << "warning, video appears to have over 2^32 frames! (" << cl_pack.bg_frame_lim << ") is way too many!\n";
+			}
+		}
+
+		case BGAlgo::TRIFRAME :
+		{
+			using MedianAlgo = TriframeMedianAlgo;
+
+			std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+			empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
+
+			return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+		}
 
 		default :
 		{
@@ -132,14 +167,6 @@ std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const Command
 	return std::unique_ptr<cv::Mat>{};
 }
 
-template <typename MedianAlgo>
-std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const CommandLinePack &cl_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
-{
-	CvVidBackground<MedianAlgo> get_background_process{processor_packs, vid, cl_pack.frame_limit, 0, 0, cl_pack.grayscale, cl_pack.worker_threads, 3, 3};
-
-	return get_background_process.Run();
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -148,24 +175,24 @@ int main(int argc, char* argv[])
 	CommandLinePack cl_pack{HandleCLArgs(cl_args)};
 
 	// open video file (move assigns from temporary constructed by string, presumably)
-	cv::VideoCapture vid{cl_pack.video_path};
+	cv::VideoCapture vid{cl_pack.vid_path};
 
 	if (!vid.isOpened())
 	{
-		std::cerr << "Video file not detected: " << cl_pack.video_path << '\n';
+		std::cerr << "Video file not detected: " << cl_pack.vid_path << '\n';
 
 		return 0;
 	}
 
 	// print info about the video
-	unsigned long total_frames{static_cast<unsigned long>(vid.get(cv::CAP_PROP_FRAME_COUNT))};
+	long long total_frames{static_cast<long long>(vid.get(cv::CAP_PROP_FRAME_COUNT))};
 	std::cout << "Frames: " << total_frames <<
 				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT) <<
 				  "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
 
-	// clean up frame limit
-	if (cl_pack.frame_limit < 0 || cl_pack.frame_limit > total_frames)
-		cl_pack.frame_limit = total_frames;
+	// clean up background algo frame limit
+	if (cl_pack.bg_frame_lim < 0 || cl_pack.bg_frame_lim > total_frames)
+		cl_pack.bg_frame_lim = total_frames;
 
 	// get the background of the video
 	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, cl_pack)};
