@@ -35,12 +35,13 @@ public:
 			cv::VideoCapture &vid,
 			const int frame_limit,
 			const int horizontal_buffer_pixels,
-			const int vertical_buffer_pixels,		
+			const int vertical_buffer_pixels,
+			const bool use_grayscale,		
 			const int worker_thread_limit,
 			const int token_storage_limit,
 			const int result_storage_limit) : 
 		m_processor_packs{processor_packs},
-		CvVidFramesConsumer<FrameProcessorAlgoT, cv::Mat>{vid, frame_limit, horizontal_buffer_pixels, vertical_buffer_pixels, worker_thread_limit, token_storage_limit, result_storage_limit},
+		CvVidFramesConsumer<FrameProcessorAlgoT, cv::Mat>{vid, frame_limit, horizontal_buffer_pixels, vertical_buffer_pixels, use_grayscale, worker_thread_limit, token_storage_limit, result_storage_limit},
 		m_batch_size{worker_thread_limit}
 	{
 		assert(m_processor_packs.size() == static_cast<std::size_t>(worker_thread_limit));
@@ -58,6 +59,7 @@ public:
 	CvVidBackground& operator=(const CvVidBackground&) = delete;
 	CvVidBackground& operator=(const CvVidBackground&) const = delete;
 
+protected:
 //member functions
 	/// get batch size (number of tokens in each batch)
 	virtual int GetBatchSize() override { return m_batch_size; }

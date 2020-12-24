@@ -67,6 +67,7 @@ public:
 	AsyncTokenProcess& operator=(const AsyncTokenProcess&) const = delete;
 
 	/// parens operator, for running the asynctokenprocess in its own thread
+	/// WARNING: if the master process owns shared resources with the caller, then running in a new thread is UB
 	std::unique_ptr<FinalResultT> operator()() { return std::move(Run()); }
 
 //member functions
@@ -169,11 +170,18 @@ public:
 			}
 		}
 
+		// get final result (before resetting generator for safety)
+		auto final_result{std::move(GetFinalResult())};
+
+		// reset the token generator
+		Reset();
+
 		// return final result
 		m_process_state = ProcessState::COMPLETE;
-		return std::move(GetFinalResult());
+		return std::move(final_result);
 	}
 
+protected:
 	/// get batch size (number of tokens in each batch)
 	virtual int GetBatchSize() = 0;
 
@@ -188,6 +196,9 @@ public:
 
 	/// get final result
 	virtual std::unique_ptr<FinalResultT> GetFinalResult() = 0;
+
+	/// reset the token generator
+	virtual void Reset() = 0;
 
 
 private:
