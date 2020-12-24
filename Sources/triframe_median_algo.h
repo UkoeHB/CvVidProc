@@ -40,7 +40,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TriframeMedianAlgo> &processor_pack) : TokenProcessorBase<TriframeMedianAlgo>{processor_pack}
+	TokenProcessor(TokenProcessorPack<TriframeMedianAlgo> processor_pack) : TokenProcessorBase<TriframeMedianAlgo>{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled

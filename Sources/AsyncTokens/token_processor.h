@@ -13,6 +13,8 @@
 
 
 /// by default, the processor pack is empty; add specializations for specific content
+/// WARNING: if you want to put a pointer in the pack, only use std::unique_ptr to avoid undefined behavior
+/// - note: packs are passed around with move constructors until they reach TokenProcessorBase
 template <typename T>
 struct TokenProcessorPack final
 {};
@@ -36,7 +38,7 @@ public:
 	TokenProcessorBase() = delete;
 
 	/// normal constructor
-	TokenProcessorBase(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : m_processor_pack{processor_pack}
+	TokenProcessorBase(TokenProcessorPack<TokenProcessorAlgoT> processor_pack) : m_processor_pack{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
@@ -83,7 +85,7 @@ public:
 	TokenProcessor() = delete;
 
 	/// normal constructor
-	TokenProcessor(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack) : TokenProcessorBase<TokenProcessorAlgoT>{processor_pack}
+	TokenProcessor(TokenProcessorPack<TokenProcessorAlgoT> processor_pack) : TokenProcessorBase<TokenProcessorAlgoT>{std::move(processor_pack)}
 	{
 		assert(false && "TokenProcessor: tried to instantiate class with default template. It must be specialized!");
 	}

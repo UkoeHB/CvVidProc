@@ -43,8 +43,8 @@ public:
 	TokenProcessingUnit() = default;
 
 	/// normal constructor
-	TokenProcessingUnit(const TokenProcessorPack<TokenProcessorAlgoT> &processor_pack, const int token_queue_limit, const int result_queue_limit) :
-			m_processor_pack{processor_pack},
+	TokenProcessingUnit(TokenProcessorPack<TokenProcessorAlgoT> processor_pack, const int token_queue_limit, const int result_queue_limit) :
+			m_processor_pack{std::move(processor_pack)},
 			m_token_queue{token_queue_limit},
 			m_result_queue{result_queue_limit}
 	{
@@ -125,7 +125,7 @@ public:
 			"Token processor implementation does not derive from the TokenProcessorBase!");
 
 		// relies on template dependency injection to decide the processor algorithm
-		TokenProcessorT worker_processor{m_processor_pack};
+		TokenProcessorT worker_processor{std::move(m_processor_pack)};
 		std::unique_ptr<TokenT> token_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
 
@@ -187,7 +187,7 @@ public:
 private:
 //member variables
 	/// variable pack for initializing the token processor
-	const TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};
+	TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};
 	/// queue of tokens, which are inserted by users
 	TokenQueueT m_token_queue{};
 	/// queue of results, which are obtained from token processor

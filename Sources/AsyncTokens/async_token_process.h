@@ -93,7 +93,7 @@ public:
 		{
 			// according to https://stackoverflow.com/questions/5410035/when-does-a-stdvector-reallocate-its-memory-array
 			// this will not reallocate the vector unless the .reserve() amount is exceeded, so it should be thread safe
-			processing_units.emplace_back(pack, m_token_storage_limit, m_result_storage_limit);
+			processing_units.emplace_back(std::move(pack), m_token_storage_limit, m_result_storage_limit);
 		}
 
 		// consume tokens until no more are generated
