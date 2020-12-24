@@ -14,7 +14,7 @@
 
 /// by default, the processor pack is empty; add specializations for specific content
 /// WARNING: if you want to put a pointer in the pack, only use std::unique_ptr to avoid undefined behavior
-/// - note: packs are passed around with move constructors until they reach TokenProcessorBase
+/// - note: packs are passed around with move constructors and move assignment operators until they reach TokenProcessorBase
 template <typename T>
 struct TokenProcessorPack final
 {};

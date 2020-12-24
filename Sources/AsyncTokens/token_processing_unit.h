@@ -43,14 +43,10 @@ public:
 	TokenProcessingUnit() = default;
 
 	/// normal constructor
-	TokenProcessingUnit(TokenProcessorPack<TokenProcessorAlgoT> processor_pack, const int token_queue_limit, const int result_queue_limit) :
-			m_processor_pack{std::move(processor_pack)},
+	TokenProcessingUnit(const int token_queue_limit, const int result_queue_limit) :
 			m_token_queue{token_queue_limit},
 			m_result_queue{result_queue_limit}
-	{
-		// worker thread starts here
-		m_worker = std::thread{&TokenProcessingUnit<TokenProcessorAlgoT>::WorkerFunction, this};
-	}
+	{}
 
 	/// copy constructor: default construct
 	TokenProcessingUnit(const TokenProcessingUnit&) {}
@@ -69,6 +65,27 @@ public:
 	TokenProcessingUnit& operator=(const TokenProcessingUnit&) const = delete;
 
 //member functions
+	/// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() and ExtractFinalResults() used)
+	bool Start(TokenProcessorPack<TokenProcessorAlgoT> processor_pack)
+	{
+		// unit can't be started if already running or left in bad state
+		assert(!m_worker.joinable());
+		assert(m_token_queue.IsEmpty());
+		assert(m_result_queue.IsEmpty());
+
+		// worker thread starts here
+		if (!m_worker.joinable() && m_token_queue.IsEmpty() && m_result_queue.IsEmpty())
+		{
+			m_processor_pack = std::move(processor_pack);
+
+			m_worker = std::thread{&TokenProcessingUnit<TokenProcessorAlgoT>::WorkerFunction, this};
+
+			return true;
+		}
+		else
+			return false;
+	}
+
 	/// shut down the unit (no more tokens to be added)
 	void ShutDown()
 	{
@@ -118,6 +135,7 @@ public:
 		}
 	}
 
+private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
 	{
@@ -184,7 +202,6 @@ public:
 		}
 	}
 
-private:
 //member variables
 	/// variable pack for initializing the token processor
 	TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};

@@ -89,11 +89,14 @@ public:
 		std::vector<TokenProcessingUnit<TokenProcessorAlgoT>> processing_units{};
 		processing_units.reserve(batch_size);
 
-		for (auto &pack : processing_packs)
+		for (std::size_t unit_index{0}; unit_index < batch_size; unit_index++)
 		{
 			// according to https://stackoverflow.com/questions/5410035/when-does-a-stdvector-reallocate-its-memory-array
 			// this will not reallocate the vector unless the .reserve() amount is exceeded, so it should be thread safe
-			processing_units.emplace_back(std::move(pack), m_token_storage_limit, m_result_storage_limit);
+			processing_units.emplace_back(m_token_storage_limit, m_result_storage_limit);
+
+			// start the unit's thread
+			processing_units[unit_index].Start(std::move(processing_packs[unit_index]));
 		}
 
 		// consume tokens until no more are generated
