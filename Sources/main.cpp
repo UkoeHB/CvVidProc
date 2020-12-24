@@ -2,6 +2,7 @@
 
 //local headers
 #include "cv_vid_background.h"
+#include "histogram_median_algo.h"
 #include "project_dir_config.h"
 #include "triframe_median_algo.h"
 
@@ -72,10 +73,12 @@ int main(int argc, char* argv[])
 		worker_threads -= 1;
 
 	// get the background of the video
-	std::vector<TokenProcessorPack<TriframeMedianAlgo>> empty_packs;
-	empty_packs.resize(worker_threads, TokenProcessorPack<TriframeMedianAlgo>{});
+	using MedianAlgo = HistogramMedianAlgo16;
 
-	CvVidBackground<TriframeMedianAlgo> get_background_process{empty_packs, vid, frame_limit, 0, 0, worker_threads, 3, 3};
+	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+	empty_packs.resize(worker_threads, TokenProcessorPack<MedianAlgo>{});
+
+	CvVidBackground<MedianAlgo> get_background_process{empty_packs, vid, frame_limit, 0, 0, worker_threads, 3, 3};
 
 	std::unique_ptr<cv::Mat> background_frame{get_background_process.Run()};
 

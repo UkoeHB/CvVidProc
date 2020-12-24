@@ -52,7 +52,7 @@ public:
 	/// normal constructor
 	TokenProcessor(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) : TokenProcessorBase<HistogramMedianAlgo<T>>{std::move(processor_pack)}
 	{
-		static_assert(std::is_unsigned<T>::value && "HistogramMedianAlgo only works with unsigned integrals for histogram elements!");
+		static_assert(std::is_unsigned<T>::value, "HistogramMedianAlgo only works with unsigned integrals for histogram elements!");
 	}
 
 	/// copy constructor: disabled
@@ -121,7 +121,7 @@ public:
 			assert(new_elements.size() > 0);
 
 			std::vector<T> element_histograms{};
-			unsigned char max_char{-1};
+			unsigned char max_char{static_cast<unsigned char>(-1)};
 			element_histograms.resize(max_char, T{0});
 			m_histograms.resize(new_elements.size(), element_histograms);
 
@@ -133,7 +133,7 @@ public:
 		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
 		{
 			// only increment histogram if it won't cause roll-over
-			if (m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])] != T{-1})
+			if (m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])] != T{static_cast<T>(-1)})
 			{
 				m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])]++;
 			}
@@ -145,7 +145,7 @@ public:
 	{
 		std::vector<unsigned char> return_vec{};
 		return_vec.resize(m_histograms.size());
-		unsigned char max_char{-1};
+		unsigned char max_char{static_cast<unsigned char>(-1)};
 		unsigned long accumulator_cap{static_cast<unsigned long>(m_frames_processed)};
 
 		assert(m_histograms.size() > 0);
@@ -170,7 +170,7 @@ public:
 				// set temp cap to actual number of items counted
 				unsigned long temp_cap{accumulator};
 
-				for (std::size_t histogram_index{halfway_index}; histogram_index != std::size_t{-1}; histogram_index--)
+				for (std::size_t histogram_index{halfway_index}; histogram_index != std::size_t{static_cast<std::size_t>(-1)}; histogram_index--)
 				{
 					accumulator -= static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
 
