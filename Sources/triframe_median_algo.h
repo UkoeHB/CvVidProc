@@ -1,4 +1,5 @@
-// background processor template for managing an image background processing algorithm
+// filters arrays of uchars by getting median of 3 arrays, then rolling that median into next two arrays for a new median, etc.
+// - intended for computing the background image of a statically-positioned video recording
 
 #ifndef TRIFRAME_MEDIAN_ALGO_098765_H
 #define TRIFRAME_MEDIAN_ALGO_098765_H
@@ -58,7 +59,7 @@ public:
 	virtual void Insert(std::unique_ptr<cv::Mat> new_element) override;
 
 	/// get the processing result
-	virtual bool TryGetResult(std::unique_ptr<cv::Mat>&) override;
+	virtual bool TryGetResult(std::unique_ptr<cv::Mat> &return_result) override;
 
 	/// get notified there are no more elements
 	virtual void NotifyNoMoreTokens() override { m_done_processing = true; }
