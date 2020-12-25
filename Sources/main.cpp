@@ -74,12 +74,14 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 		pack.vid_path = cl_args.get<cv::String>("vid_path");
 
 	// get number of worker threads to use (subtract one for the main thread)
+	// note: min threads is 2 (1 for main thread, 1 for worker)
 	int worker_threads{cl_args.get<int>("max_threads")};
-	const auto processor_cores{std::thread::hardware_concurrency()};
+	const auto supported_thread_count{std::thread::hardware_concurrency()};
 	if (worker_threads <= 0)
 		worker_threads = 1;
-	else if (worker_threads >= 2*processor_cores)
-		worker_threads = 2*processor_cores - 1;
+	// check if hardware_concurrency() actually returned a value
+	else if (supported_thread_count > 0 && worker_threads >= supported_thread_count)
+		worker_threads = supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
 	else if (worker_threads > 1)
 		worker_threads -= 1;
 
