@@ -48,7 +48,7 @@ public:
 			m_result_queue{result_queue_limit}
 	{}
 
-	/// copy constructor: default construct
+	/// copy constructor: default construct (do not copy)
 	TokenProcessingUnit(const TokenProcessingUnit&) {}
 
 	/// destructor
@@ -68,11 +68,6 @@ public:
 	/// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() and ExtractFinalResults() used)
 	bool Start(TokenProcessorPack<TokenProcessorAlgoT> processor_pack)
 	{
-		// unit can't be started if already running or left in bad state
-		assert(!m_worker.joinable());
-		assert(m_token_queue.IsEmpty());
-		assert(m_result_queue.IsEmpty());
-
 		// worker thread starts here
 		if (!m_worker.joinable() && m_token_queue.IsEmpty() && m_result_queue.IsEmpty())
 		{
@@ -83,7 +78,11 @@ public:
 			return true;
 		}
 		else
+		{
+			assert(false && "unit can't be started if already running or left in bad state!");
+
 			return false;
+		}
 	}
 
 	/// shut down the unit (no more tokens to be added)
@@ -121,18 +120,22 @@ public:
 	{
 		assert(!m_worker.joinable() && "ExtractFinalResults() can only be called after WaitUntilUnitStops()!");
 
+		// sanity check; return val shouldn't have a value since it will be destroyed (not responsibility of this object)
+		assert(!return_val);
+
 		// if there are elements remaining in the queue, grab one
 		// this should not block because no threads should be competing for the result queue (worker thread is shut down)
 		if (!m_result_queue.IsEmpty())
 		{
 			m_result_queue.GetToken(return_val);
 
+			// sanity check; GetToken() should always succeed if the queue isn't empty
+			assert(return_val);
+
 			return true;
 		}
 		else
-		{
-			return !m_result_queue.IsEmpty();
-		}
+			return false;
 	}
 
 private:

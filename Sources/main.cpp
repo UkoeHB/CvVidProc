@@ -106,6 +106,16 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const Comm
 	return get_background_process.Run();
 }
 
+/// encapsulates call to async tokenized video background analysis using empty processor packs
+template <typename MedianAlgo>
+std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const CommandLinePack &cl_pack)
+{
+	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+	empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
+
+	return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+}
+
 /// get a video background
 std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const CommandLinePack &cl_pack)
 {
@@ -117,30 +127,15 @@ std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const Command
 			// use cheapest histogram algorithm
 			if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<unsigned char>(-1)))
 			{
-				using MedianAlgo = HistogramMedianAlgo8;
-
-				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo8>(vid, cl_pack);
 			}
 			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
 			{
-				using MedianAlgo = HistogramMedianAlgo16;
-
-				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo16>(vid, cl_pack);
 			}
 			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
 			{
-				using MedianAlgo = HistogramMedianAlgo32;
-
-				std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-				empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-				return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo32>(vid, cl_pack);
 			}
 			else
 			{
@@ -150,12 +145,7 @@ std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const Command
 
 		case BGAlgo::TRIFRAME :
 		{
-			using MedianAlgo = TriframeMedianAlgo;
-
-			std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-			empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-			return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
+			return VidBackgroundWithAlgoEmptyPacks<TriframeMedianAlgo>(vid, cl_pack);
 		}
 
 		default :

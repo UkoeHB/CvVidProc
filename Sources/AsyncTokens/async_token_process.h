@@ -10,6 +10,7 @@
 //third party headers
 
 //standard headers
+#include <atomic>
 #include <memory>
 #include <type_traits>
 
@@ -32,9 +33,8 @@ class AsyncTokenProcess
 //member types
 	enum class ProcessState
 	{
-		UNUSED,
-		RUNNING,
-		COMPLETE
+		AVAILABLE,
+		RUNNING
 	};
 
 public:
@@ -66,7 +66,7 @@ public:
 	AsyncTokenProcess& operator=(const AsyncTokenProcess&) = delete;
 	AsyncTokenProcess& operator=(const AsyncTokenProcess&) const = delete;
 
-	/// parens operator, for running the asynctokenprocess in its own thread
+	/// parens operator, for running the AsyncTokenProcess in its own thread
 	/// WARNING: if the master process owns shared resources with the caller, then running in a new thread is UB
 	std::unique_ptr<FinalResultT> operator()() { return std::move(Run()); }
 
@@ -74,7 +74,13 @@ public:
 	/// run the async token process
 	std::unique_ptr<FinalResultT> Run()
 	{
-		assert(m_process_state == ProcessState::UNUSED && "async token process can only be run once!");
+		if (m_process_state != ProcessState::AVAILABLE)
+		{
+			assert(false && "async token process can only be run from one thread at a time!");
+
+			return std::unique_ptr<FinalResultT>{};
+		}
+
 		m_process_state = ProcessState::RUNNING;
 
 		// get processor packs for processing units
@@ -105,12 +111,9 @@ public:
 		std::unique_ptr<ResultT> result_shuttle{};
 		token_set_shuttle.reserve(batch_size);
 
-		while (true)
+		// get token set or leave if no more will be created
+		while (GetTokenSet(token_set_shuttle))
 		{
-			// get token set or leave if no more will be created
-			if (!GetTokenSet(token_set_shuttle))
-				break;
-
 			// pass token set to processing units
 			// it spins through 'try' functions to avoid deadlocks between token and result queues
 			std::size_t remaining_tokens{batch_size};
@@ -177,7 +180,7 @@ public:
 		Reset();
 
 		// return final result
-		m_process_state = ProcessState::COMPLETE;
+		m_process_state = ProcessState::AVAILABLE;
 		return std::move(final_result);
 	}
 
@@ -206,7 +209,7 @@ private:
 	/// max number of worker threads allowed
 	const int m_worker_thread_limit{};
 	/// keep track of the process state
-	ProcessState m_process_state{ProcessState::UNUSED};
+	std::atomic<ProcessState> m_process_state{ProcessState::AVAILABLE};
 
 	/// max number of tokens that can be stored in each processing unit
 	const int m_token_storage_limit{};

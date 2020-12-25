@@ -25,6 +25,7 @@ public:
 	using TokenT = typename FrameProcessorAlgoT::token_type;
 	using ResultT = typename FrameProcessorAlgoT::result_type;
 	using PPackSetT = std::vector<TokenProcessorPack<FrameProcessorAlgoT>>;
+	using ParentT = CvVidFramesConsumer<FrameProcessorAlgoT, cv::Mat>;
 
 //constructors
 	/// default constructor: disabled
@@ -41,7 +42,7 @@ public:
 			const int token_storage_limit,
 			const int result_storage_limit) : 
 		m_processor_packs{processor_packs},
-		CvVidFramesConsumer<FrameProcessorAlgoT, cv::Mat>{vid, frame_limit, horizontal_buffer_pixels, vertical_buffer_pixels, use_grayscale, worker_thread_limit, token_storage_limit, result_storage_limit},
+		ParentT{vid, frame_limit, horizontal_buffer_pixels, vertical_buffer_pixels, use_grayscale, worker_thread_limit, token_storage_limit, result_storage_limit},
 		m_batch_size{worker_thread_limit}
 	{
 		assert(m_processor_packs.size() == static_cast<std::size_t>(worker_thread_limit));
@@ -80,8 +81,6 @@ protected:
 	/// assembles final image fragments into a complete image
 	virtual std::unique_ptr<cv::Mat> GetFinalResult() override
 	{
-		using ParentT = CvVidFramesConsumer<FrameProcessorAlgoT, cv::Mat>;
-
 		// combine result fragments
 		cv::Mat final_background{};
 		if (!cv_mat_from_chunks(final_background,
