@@ -68,7 +68,7 @@ public:
 
 	/// parens operator, for running the AsyncTokenProcess in its own thread
 	/// WARNING: if the master process owns shared resources with the caller, then running in a new thread is UB
-	std::unique_ptr<FinalResultT> operator()() { return std::move(Run()); }
+	std::unique_ptr<FinalResultT> operator()() { return Run(); }
 
 //member functions
 	/// run the async token process
@@ -174,14 +174,14 @@ public:
 		}
 
 		// get final result (before resetting generator for safety)
-		auto final_result{std::move(GetFinalResult())};
+		auto final_result{GetFinalResult()};
 
 		// reset the token generator
 		Reset();
 
 		// return final result
 		m_process_state = ProcessState::AVAILABLE;
-		return std::move(final_result);
+		return final_result;
 	}
 
 protected:

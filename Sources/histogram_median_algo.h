@@ -185,7 +185,7 @@ public:
 			return_vec[element_index] = static_cast<unsigned char>(halfway_index);
 		}
 
-		return std::move(return_vec);
+		return return_vec;
 	}
 
 private:
