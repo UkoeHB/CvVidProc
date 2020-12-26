@@ -48,19 +48,17 @@ void TFM_T::Insert(std::unique_ptr<cv::Mat> new_element)
 	m_frames_processed++;
 }
 
-bool TFM_T::TryGetResult(std::unique_ptr<cv::Mat>& return_result)
+std::unique_ptr<cv::Mat> TFM_T::TryGetResult()
 {
 	// for triframe median, only get a result if no more frames will be sent in
 	if (!m_done_processing)
-		return false;
+		return nullptr;
 
 	// convert vector to Mat image
 	cv::Mat result_frame{};
 	cv_mat_from_std_vector_uchar(result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
 
-	return_result = std::make_unique<cv::Mat>(std::move(result_frame));
-
-	return true;
+	return std::make_unique<cv::Mat>(std::move(result_frame));
 }
 
 bool set_triframe_median(std::array<std::vector<unsigned char>, 3> &triframe)

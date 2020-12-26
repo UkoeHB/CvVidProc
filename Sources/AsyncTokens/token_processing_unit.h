@@ -166,19 +166,13 @@ private:
 			//	removes results is stalled on token insert
 			//	ANSWER: inserter should alternate between 'tryinsert()' and 'trygetresult()' whenever they have a new token
 			// 		- in practice only TryInsert() and TryGetResult() are exposed to users of the processing unit
-			if (worker_processor.TryGetResult(result_shuttle))
-			{
-				// sanity check: successfully obtained results should exist
-				assert(result_shuttle);
+			result_shuttle = worker_processor.TryGetResult();
 
+			if (result_shuttle)
+			{
 				m_result_queue.InsertToken(result_shuttle);
 
 				// sanity check: inserted tokens should not exist
-				assert(!result_shuttle);
-			}
-			else
-			{
-				// sanity check: unsuccessfully obtained results should not exist
 				assert(!result_shuttle);
 			}
 		}
@@ -187,20 +181,14 @@ private:
 		worker_processor.NotifyNoMoreTokens();
 
 		// obtain final result if it exists
-		if (worker_processor.TryGetResult(result_shuttle))
-		{
-			// sanity check: successfully obtained results should exist
-			assert(result_shuttle);
+		result_shuttle = worker_processor.TryGetResult();
 
+		if (result_shuttle)
+		{
 			// force insert result to avoid deadlocks in shutdown procedure
 			m_result_queue.InsertToken(result_shuttle, true);
 
 			// sanity check: inserted tokens should not exist
-			assert(!result_shuttle);
-		}
-		else
-		{
-			// sanity check: unsuccessfully obtained results should not exist
 			assert(!result_shuttle);
 		}
 	}

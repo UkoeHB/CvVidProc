@@ -59,7 +59,7 @@ public:
 	virtual void Insert(std::unique_ptr<cv::Mat> new_element) override;
 
 	/// get the processing result
-	virtual bool TryGetResult(std::unique_ptr<cv::Mat> &return_result) override;
+	virtual std::unique_ptr<cv::Mat> TryGetResult() override;
 
 	/// get notified there are no more elements
 	virtual void NotifyNoMoreTokens() override { m_done_processing = true; }

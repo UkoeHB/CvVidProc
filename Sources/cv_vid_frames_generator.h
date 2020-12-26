@@ -79,20 +79,20 @@ public:
 
 //member functions
 	/// get token set from generator (set of frame segments)
-	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) override
+	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override
 	{
 		cv::Mat frame{};
 
 		// leave if reached frame limit
 		if (m_frame_limit > 0 && m_frame_limit <= m_frames_consumed)
-			return false;
+			return std::vector<std::unique_ptr<TokenT>>{};
 
 		// get next frame from video
 		m_vid >> frame;
 
 		// leave if reached the end of the video or frame is corrupted
 		if (!frame.data || frame.empty())
-			return false;
+			return std::vector<std::unique_ptr<TokenT>>{};
 
 		// convert to grayscale if desired
 		// this should always work since the vid's CAP_PROP_CONVERT_RGB property was set
@@ -102,14 +102,14 @@ public:
 		}
 
 		// break frame into chunks
-		return_token_set.clear();		//expectation of cv_mat_to_chunks()
+		std::vector<std::unique_ptr<TokenT>> return_token_set{};
 
 		if (!cv_mat_to_chunks(frame, return_token_set, 1, static_cast<int>(GetBatchSize()), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
 			std::cerr << "Breaking frame (" << m_frames_consumed + 1 << ") into chunks failed unexpectedly!\n";
 
 		m_frames_consumed++;
 
-		return true;
+		return return_token_set;
 	}
 
 	/// reset in case the token process is restarted

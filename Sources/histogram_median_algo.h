@@ -91,11 +91,11 @@ public:
 	}
 
 	/// get the processing result
-	virtual bool TryGetResult(std::unique_ptr<cv::Mat> &return_result) override
+	virtual std::unique_ptr<cv::Mat> TryGetResult() override
 	{
 		// for triframe median, only get a result if no more frames will be sent in
 		if (!m_done_processing)
-			return false;
+			return nullptr;
 
 		// collect histogram results
 		std::vector<unsigned char> result_vec{MedianFromHistograms()};
@@ -104,9 +104,7 @@ public:
 		cv::Mat result_frame{};
 		cv_mat_from_std_vector_uchar(result_frame, result_vec, m_frame_rows_count, m_frame_channel_count);
 
-		return_result = std::make_unique<cv::Mat>(std::move(result_frame));
-
-		return true;
+		return std::make_unique<cv::Mat>(std::move(result_frame));
 	}
 
 	/// get notified there are no more elements

@@ -38,7 +38,7 @@ public:
 	using ResultT = typename TokenProcessorAlgoT::result_type;
 	using PPackSetT = std::vector<TokenProcessorPack<TokenProcessorAlgoT>>;
 	using TokenGenT = std::shared_ptr<TokenBatchGenerator<TokenT>>;
-	using TokenConsumeT = std::shared_ptr<TokenBatchConsumer<ResultT, FinalResultT>>;
+	using TokenConsumerT = std::shared_ptr<TokenBatchConsumer<ResultT, FinalResultT>>;
 
 //constructors
 	/// default constructor: disabled
@@ -49,7 +49,7 @@ public:
 			const int token_storage_limit,
 			const int result_storage_limit,
 			TokenGenT token_generator,
-			TokenConsumeT token_consumer) : 
+			TokenConsumerT token_consumer) : 
 		m_worker_thread_limit{worker_thread_limit},
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit},
@@ -116,11 +116,18 @@ public:
 		// consume tokens until no more are generated
 		std::vector<std::unique_ptr<TokenT>> token_set_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
-		token_set_shuttle.reserve(m_batch_size);
 
 		// get token set or leave if no more will be created
-		while (m_token_generator->GetTokenSet(token_set_shuttle))
+		while (true)
 		{
+			token_set_shuttle = m_token_generator->GetTokenSet();
+
+			if (!token_set_shuttle.size())
+				break;
+
+			// sanity check: token generator should provide expected number of tokens
+			assert(token_set_shuttle.size() == m_batch_size);
+
 			// pass token set to processing units
 			// it spins through 'try' functions to avoid deadlocks between token and result queues
 			std::size_t remaining_tokens{m_batch_size};
@@ -205,7 +212,7 @@ private:
 	/// token set generator
 	TokenGenT m_token_generator{};
 	/// token consumer
-	TokenConsumeT m_token_consumer{};
+	TokenConsumerT m_token_consumer{};
 
 	/// mutex in case this object is used asynchronously
 	std::mutex m_mutex;
@@ -214,45 +221,6 @@ private:
 
 #endif //header guard
 
-
-
-
-/*
-concept for chaining two async token processes together:
-
-// helper to override Process interface
-// https://stackoverflow.com/questions/2004820/inherit-interfaces-which-share-a-method-name
-class ProcessHelper1 : public Process
-{
-	ProcessHelper1(...) : Process(...)
-	{}
-
-	virtual GetTokenSet(...) override
-	{
-		GetTokenSet1(...);
-	}
-
-	...
-}
-
-// same for ProcessHelper2
-
-// it launches two threads to manage the two Process subobjects Run() methods
-// which call down to mutex-protected methods in the main object
-class Chain : public ProcessHelper1, public ProcessHelper2
-{
-
-	
-
-	std::mutex m_mutex;	
-}
-
-GetTokenSet1() --(new tokens to Process1)--> ConsumeToken1() --(tokens to mutex-protected queue)-->
-GetTokenSet2() --(tokens from queue to Process2)--> ConsumeToken2()
-
-
-
-*/
 
 
 

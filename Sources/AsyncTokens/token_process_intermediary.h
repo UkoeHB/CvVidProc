@@ -74,9 +74,13 @@ public:
 	}
 
 	/// gets a token set when it is available (blocks)
-	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) override
+	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override
 	{
-		return (m_shuttle_queue.GetToken(return_token_set));
+		std::vector<std::unique_ptr<TokenT>> return_token_set{};
+
+		m_shuttle_queue.GetToken(return_token_set);
+
+		return return_token_set;
 	}
 
 private:

@@ -56,8 +56,8 @@ public:
 	/// insert an element to be processed
 	virtual void Insert(std::unique_ptr<TokenT>) = 0;
 
-	/// get a copy of the processing result
-	virtual bool TryGetResult(std::unique_ptr<ResultT>&) = 0;
+	/// try to get a processing result; should return empty ptr on failure
+	virtual std::unique_ptr<ResultT> TryGetResult() = 0;
 
 	/// get notified there won't be any more tokens
 	virtual void NotifyNoMoreTokens() = 0;
@@ -105,7 +105,7 @@ public:
 	virtual void Insert(std::unique_ptr<TokenT>) override {};
 
 	/// try to get a processing result
-	virtual bool TryGetResult(std::unique_ptr<ResultT>&) override {return false;};
+	virtual std::unique_ptr<ResultT> TryGetResult() override {return nullptr;};
 
 	/// get notified there won't be more tokens
 	virtual void NotifyNoMoreTokens() override {};
