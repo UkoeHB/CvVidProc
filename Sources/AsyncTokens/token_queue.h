@@ -10,10 +10,8 @@
 //standard headers
 #include <cassert>
 #include <condition_variable>
-#include <iostream>
 #include <list>
 #include <mutex>
-#include <vector>
 
 
 template <typename T>
@@ -158,7 +156,7 @@ private:
 		return true;
 	}
 
-	/// try to get token from one of the queues
+	/// try to get token from the queue
 	bool TryGetTokenImpl(T &return_token, std::unique_lock<std::mutex> lock)
 	{
 		// expect to own the lock by this point

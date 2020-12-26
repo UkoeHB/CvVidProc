@@ -1,7 +1,9 @@
 // main for async video stream project
 
 //local headers
-#include "cv_vid_background.h"
+#include "cv_vid_frames_generator.h"
+#include "cv_vid_background_consumer.h"
+#include "async_token_process.h"
 #include "histogram_median_algo.h"
 #include "project_dir_config.h"
 #include "triframe_median_algo.h"
@@ -103,9 +105,35 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 template <typename MedianAlgo>
 std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const CommandLinePack &cl_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
 {
-	CvVidBackground<MedianAlgo> get_background_process{processor_packs, vid, cl_pack.bg_frame_lim, 0, 0, cl_pack.grayscale, cl_pack.worker_threads, 3, 3};
+	const int horizontal_buffer_pixels{0};
+	const int vertical_buffer_pixels{0};
+	const int batch_size{cl_pack.worker_threads};
 
-	return get_background_process.Run();
+	// create frame generator
+	auto frame_gen = std::make_shared<CvVidFramesGenerator>{vid,
+		horizontal_buffer_pixels,
+		vertical_buffer_pixels,
+		cl_pack.bg_frame_lim,
+		cl_pack.grayscale,
+		batch_size};
+
+	// create fragment consumer
+	auto bg_frag_consumer = std::make_shared<CvVidBackgroundConsumer>{vid,
+		horizontal_buffer_pixels,
+		vertical_buffer_pixels,
+		batch_size};
+
+	// create process
+	const int token_storage_limit{3};
+	const int result_storage_limit{3};
+
+	AsyncTokenProcess<MedianAlgo, cv::Mat> vid_bg_prod{batch_size,
+		token_storage_limit,
+		result_storage_limit,
+		frame_gen,
+		bg_frag_consumer};
+
+	return vid_bg_prod.Run(st::move(processor_packs));
 }
 
 /// encapsulates call to async tokenized video background analysis using empty processor packs

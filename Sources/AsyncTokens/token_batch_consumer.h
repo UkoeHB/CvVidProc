@@ -41,7 +41,7 @@ public:
 
 //member functions
 	/// get batch size (number of tokens in each batch)
-	std::size_t ConsumeBatchSize() { return m_batch_size; }
+	std::size_t GetBatchSize() { return m_batch_size; }
 
 	/// consume a token
 	virtual void ConsumeToken(std::unique_ptr<TokenT> input_token, const std::size_t index_in_batch) = 0;

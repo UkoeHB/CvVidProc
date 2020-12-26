@@ -4,14 +4,17 @@
 #define ASYNC_TOKEN_PROCESS_4567898765_H
 
 //local headers
+#include "token_batch_generator.h"
+#include "token_batch_consumer.h"
 #include "token_processor.h"
 #include "token_processing_unit.h"
 
 //third party headers
 
 //standard headers
-#include <atomic>
+#include <cassert>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 
 
@@ -30,18 +33,12 @@ template <typename TokenProcessorAlgoT, typename FinalResultT>
 class AsyncTokenProcess final
 {
 //member types
-	enum class ProcessState
-	{
-		AVAILABLE,
-		RUNNING
-	};
-
 public:
 	using TokenT = typename TokenProcessorAlgoT::token_type;
 	using ResultT = typename TokenProcessorAlgoT::result_type;
 	using PPackSetT = std::vector<TokenProcessorPack<TokenProcessorAlgoT>>;
 	using TokenGenT = std::shared_ptr<TokenBatchGenerator<TokenT>>;
-	using TokenConsumeT = std::shared_ptr<TokenBatchConsumer<ResultT>>;
+	using TokenConsumeT = std::shared_ptr<TokenBatchConsumer<ResultT, FinalResultT>>;
 
 //constructors
 	/// default constructor: disabled
@@ -58,7 +55,7 @@ public:
 		m_result_storage_limit{result_storage_limit},
 		m_token_generator{token_generator},
 		m_token_consumer{token_consumer},
-		m_batch_size{m_token_generator ? m_token_generator->GenBatchSize() : 0}
+		m_batch_size{m_token_generator ? m_token_generator->GetBatchSize() : 0}
 	{
 		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessor<TokenProcessorAlgoT>>::value,
 			"Token processor implementation does not derive from the TokenProcessorBase!");
@@ -67,7 +64,7 @@ public:
 		assert(m_token_consumer);
 		assert(m_batch_size > 0);
 		assert(m_batch_size <= m_worker_thread_limit);
-		assert(m_batch_size == m_token_consumer->ConsumeBatchSize());
+		assert(m_batch_size == m_token_consumer->GetBatchSize());
 	}
 
 	/// copy constructor: disabled
@@ -86,14 +83,15 @@ public:
 	/// WARNING: if the packs contain shared resources, then running in a new thread may be UB
 	std::unique_ptr<FinalResultT> Run(PPackSetT processing_packs)
 	{
-		if (m_process_state != ProcessState::AVAILABLE)
+		// only one thread can use this object at a time
+		std::lock_guard<std::mutex> lock{m_mutex, std::try_to_lock};
+
+		if (!lock.owns_lock())
 		{
 			assert(false && "async token process can only be run from one thread at a time!");
 
 			return std::unique_ptr<FinalResultT>{};
 		}
-
-		m_process_state = ProcessState::RUNNING;
 
 		// make sure processor packs are the right size
 		assert(processing_packs.size() == m_batch_size);
@@ -183,10 +181,9 @@ public:
 		auto final_result{m_token_consumer->GetFinalResult()};
 
 		// reset the token generator
-		m_token_generator->Reset();
+		m_token_generator->ResetGenerator();
 
 		// return final result
-		m_process_state = ProcessState::AVAILABLE;
 		return final_result;
 	}
 
@@ -194,8 +191,6 @@ private:
 //member variables
 	/// max number of worker threads allowed
 	const int m_worker_thread_limit{};
-	/// keep track of the process state
-	std::atomic<ProcessState> m_process_state{ProcessState::AVAILABLE};
 
 	/// max number of tokens that can be stored in each processing unit
 	const int m_token_storage_limit{};
@@ -208,6 +203,9 @@ private:
 	TokenGenT m_token_generator{};
 	/// token consumer
 	TokenConsumeT m_token_consumer{};
+
+	/// mutex in case this object is used asynchronously
+	std::mutex m_mutex;
 };
 
 

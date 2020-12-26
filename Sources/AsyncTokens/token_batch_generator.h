@@ -41,13 +41,13 @@ public:
 
 //member functions
 	/// get batch size (number of tokens in each batch)
-	std::size_t GenBatchSize() { return m_batch_size; }
+	std::size_t GetBatchSize() { return m_batch_size; }
 
 	/// get token set from generator; should return false when no more token sets to get
 	virtual bool GetTokenSet(std::vector<std::unique_ptr<TokenT>> &return_token_set) = 0;
 
 	/// reset the token generator so it can be reused
-	virtual void Reset() = 0;
+	virtual void ResetGenerator() = 0;
 
 private:
 //member variables
