@@ -4,7 +4,7 @@
 #define TOKEN_PROCESSING_UNIT_32573592_H
 
 //local headers
-#include "async_token_queue.h"
+#include "token_queue.h"
 #include "token_processor.h"
 
 //third party headers
@@ -34,9 +34,9 @@ public:
 	/// get result type from token processor impl
 	using ResultT = typename TokenProcessorT::ResultT;
 	/// token queue type
-	using TokenQueueT = AsyncTokenQueue<std::unique_ptr<TokenT>>;
+	using TokenQueueT = TokenQueue<std::unique_ptr<TokenT>>;
 	/// result queue type
-	using ResultQueueT = AsyncTokenQueue<std::unique_ptr<ResultT>>;
+	using ResultQueueT = TokenQueue<std::unique_ptr<ResultT>>;
 
 //constructors
 	/// default constructor: default (not meant to be used, just for placeholding)

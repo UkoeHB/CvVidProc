@@ -1,7 +1,7 @@
-// async queue for passing tokens between threads
+// queue for passing tokens between threads
 
-#ifndef ASYNC_TOKEN_QUEUE_03944823_H
-#define ASYNC_TOKEN_QUEUE_03944823_H
+#ifndef TOKEN_QUEUE_03944823_H
+#define TOKEN_QUEUE_03944823_H
 
 //local headers
 
@@ -17,15 +17,15 @@
 
 
 template <typename T>
-class AsyncTokenQueue final
+class TokenQueue final
 {
 //constructors
 public: 
 	/// default constructor: default
-	AsyncTokenQueue() = default;
+	TokenQueue() = default;
 
 	/// normal constructor
-	AsyncTokenQueue(const int max_queue_size) :
+	TokenQueue(const int max_queue_size) :
 			m_max_queue_size{static_cast<std::size_t>(max_queue_size)}	
 	{
 		// sanity check
@@ -33,15 +33,15 @@ public:
 	}
 
 	/// copy constructor
-	AsyncTokenQueue(const AsyncTokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
+	TokenQueue(const TokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
 	{}
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	AsyncTokenQueue& operator=(const AsyncTokenQueue&) = delete;
-	AsyncTokenQueue& operator=(const AsyncTokenQueue&) const = delete;
+	TokenQueue& operator=(const TokenQueue&) = delete;
+	TokenQueue& operator=(const TokenQueue&) const = delete;
 
 //member functions
 	/// indicate the queue is shutting down (no more tokens to be added)
