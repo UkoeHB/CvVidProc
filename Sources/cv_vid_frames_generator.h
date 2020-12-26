@@ -33,12 +33,12 @@ public:
 	CvVidFramesGenerator() = delete;
 
 	/// normal constructor
-	CvVidFramesGenerator(cv::VideoCapture &vid,
+	CvVidFramesGenerator(const int batch_size,
+			cv::VideoCapture &vid,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const long long frame_limit,
-			const bool use_grayscale,
-			const int batch_size) : 
+			const bool use_grayscale) : 
 		ParentT{batch_size},
 		m_vid{vid},
 		m_frame_limit{frame_limit},

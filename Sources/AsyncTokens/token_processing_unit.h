@@ -88,7 +88,11 @@ public:
 	/// shut down the unit (no more tokens to be added)
 	void ShutDown()
 	{
+		// shut down token queue
 		m_token_queue.ShutDown();
+
+		// shut down result queue
+		m_result_queue.ShutDown();
 	}
 
 	/// wait until the unit's thread ends
@@ -119,23 +123,14 @@ public:
 	bool ExtractFinalResults(std::unique_ptr<ResultT> &return_val)
 	{
 		assert(!m_worker.joinable() && "ExtractFinalResults() can only be called after WaitUntilUnitStops()!");
+		assert(m_result_queue.IsShuttingDown() && "ExtractFinalResults() can only be called after ShutDown()!");
 
-		// sanity check; return val shouldn't have a value since it will be destroyed (not responsibility of this object)
+		// sanity check; return val shouldn't have a value since it would be destroyed (not responsibility of this object)
 		assert(!return_val);
 
 		// if there are elements remaining in the queue, grab one
-		// this should not block because no threads should be competing for the result queue (worker thread is shut down)
-		if (!m_result_queue.IsEmpty())
-		{
-			m_result_queue.GetToken(return_val);
-
-			// sanity check; GetToken() should always succeed if the queue isn't empty
-			assert(return_val);
-
-			return true;
-		}
-		else
-			return false;
+		// this should not block because the queue should be shutting down, and the worker thread has ended
+		return m_result_queue.GetToken(return_val);
 	}
 
 private:
@@ -162,8 +157,8 @@ private:
 			assert(!token_shuttle);
 
 			// see if the token processor has a result ready, and add it to the result queue if it does
-			// possible deadlock: result queue full and this thread stalls on insert, but token queue is full so thread that
-			//	removes results is stalled on token insert
+			// possible deadlock: result queue full and this thread stalls on result insert, but token queue is full
+			//	so thread that removes results is stalled on token insert
 			//	ANSWER: inserter should alternate between 'tryinsert()' and 'trygetresult()' whenever they have a new token
 			// 		- in practice only TryInsert() and TryGetResult() are exposed to users of the processing unit
 			result_shuttle = worker_processor.TryGetResult();
@@ -186,6 +181,7 @@ private:
 		if (result_shuttle)
 		{
 			// force insert result to avoid deadlocks in shutdown procedure
+			// i.e. where the unit's owner isn't clearing out the queue
 			m_result_queue.InsertToken(result_shuttle, true);
 
 			// sanity check: inserted tokens should not exist

@@ -17,6 +17,7 @@
 #include <vector>
 
 
+/// tied to CvVidFramesGenerator implementation
 class CvVidBackgroundConsumer final : public TokenBatchConsumer<cv::Mat, cv::Mat>
 {
 //member types
@@ -29,10 +30,10 @@ public:
 	CvVidBackgroundConsumer() = delete;
 
 	/// normal constructor
-	CvVidBackgroundConsumer(cv::VideoCapture &vid,
+	CvVidBackgroundConsumer(const int batch_size,
+			cv::VideoCapture &vid,
 			const int horizontal_buffer_pixels,
-			const int vertical_buffer_pixels,
-			const int batch_size) : 
+			const int vertical_buffer_pixels) : 
 		ParentT{batch_size},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},

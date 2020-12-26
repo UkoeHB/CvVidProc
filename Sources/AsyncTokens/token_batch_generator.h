@@ -45,7 +45,7 @@ public:
 	/// get batch size (number of tokens in each batch)
 	std::size_t GetBatchSize() { return m_batch_size; }
 
-	/// get token set from generator; should return false when no more token sets to get
+	/// get token set from generator; should return empty vector when no more token sets to get
 	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() = 0;
 
 	/// reset the token generator so it can be reused
