@@ -54,14 +54,17 @@ public:
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit},
 		m_token_generator{token_generator},
-		m_token_consumer{token_consumer},
-		m_batch_size{m_token_generator ? m_token_generator->GetBatchSize() : 0}
+		m_token_consumer{token_consumer}
 	{
 		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessor<TokenProcessorAlgoT>>::value,
 			"Token processor implementation does not derive from the TokenProcessorBase!");
 
 		assert(m_token_generator);
 		assert(m_token_consumer);
+
+		if (m_token_generator)
+			m_batch_size = m_token_generator->GetBatchSize();
+
 		assert(m_batch_size > 0);
 		assert(m_batch_size <= m_worker_thread_limit);
 		assert(m_batch_size == m_token_consumer->GetBatchSize());
@@ -84,7 +87,7 @@ public:
 	std::unique_ptr<FinalResultT> Run(PPackSetT processing_packs)
 	{
 		// only one thread can use this object at a time
-		std::lock_guard<std::mutex> lock{m_mutex, std::try_to_lock};
+		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
 
 		if (!lock.owns_lock())
 		{
@@ -148,7 +151,7 @@ public:
 						assert(result_shuttle);
 
 						// consume the result
-						m_token_consumer->ConsumeResult(std::move(result_shuttle), unit_index);
+						m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
 					}
 				}
 			}
@@ -173,7 +176,7 @@ public:
 				// sanity check: if a result is obtained, it should exist
 				assert(result_shuttle);
 
-				m_token_consumer->ConsumeResult(std::move(result_shuttle), unit_index);
+				m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
 			}
 		}
 
@@ -197,7 +200,7 @@ private:
 	/// max number of results that can be stored in each processing unit
 	const int m_result_storage_limit{};
 	/// batch size (number of tokens per batch)
-	const std::size_t m_batch_size{};
+	std::size_t m_batch_size{0};
 
 	/// token set generator
 	TokenGenT m_token_generator{};
@@ -244,8 +247,8 @@ class Chain : public ProcessHelper1, public ProcessHelper2
 	std::mutex m_mutex;	
 }
 
-GetTokenSet1() --(new tokens to Process1)--> ConsumeResult1() --(tokens to mutex-protected queue)-->
-GetTokenSet2() --(tokens from queue to Process2)--> ConsumeResult2()
+GetTokenSet1() --(new tokens to Process1)--> ConsumeToken1() --(tokens to mutex-protected queue)-->
+GetTokenSet2() --(tokens from queue to Process2)--> ConsumeToken2()
 
 
 

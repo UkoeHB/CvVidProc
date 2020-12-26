@@ -45,8 +45,8 @@ public:
 		m_convert_to_grayscale{use_grayscale},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
-		m_frame_width{m_vid.get(cv::CAP_PROP_FRAME_WIDTH)},
-		m_frame_height{m_vid.get(cv::CAP_PROP_FRAME_HEIGHT)}
+		m_frame_width{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH))},
+		m_frame_height{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))}
 	{
 		// sanity checks
 		assert(m_vid.isOpened());

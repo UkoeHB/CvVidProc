@@ -110,18 +110,18 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const Comm
 	const int batch_size{cl_pack.worker_threads};
 
 	// create frame generator
-	auto frame_gen = std::make_shared<CvVidFramesGenerator>{vid,
+	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vid,
 		horizontal_buffer_pixels,
 		vertical_buffer_pixels,
 		cl_pack.bg_frame_lim,
 		cl_pack.grayscale,
-		batch_size};
+		batch_size)};
 
 	// create fragment consumer
-	auto bg_frag_consumer = std::make_shared<CvVidBackgroundConsumer>{vid,
+	auto bg_frag_consumer{std::make_shared<CvVidBackgroundConsumer>(vid,
 		horizontal_buffer_pixels,
 		vertical_buffer_pixels,
-		batch_size};
+		batch_size)};
 
 	// create process
 	const int token_storage_limit{3};
@@ -133,7 +133,7 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const Comm
 		frame_gen,
 		bg_frag_consumer};
 
-	return vid_bg_prod.Run(st::move(processor_packs));
+	return vid_bg_prod.Run(std::move(processor_packs));
 }
 
 /// encapsulates call to async tokenized video background analysis using empty processor packs

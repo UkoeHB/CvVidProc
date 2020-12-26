@@ -8,7 +8,9 @@
 //third party headers
 
 //standard headers
+#include <cassert>
 #include <memory>
+#include <vector>
 
 
 template <typename TokenT>

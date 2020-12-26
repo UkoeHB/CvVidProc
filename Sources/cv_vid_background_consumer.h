@@ -22,7 +22,6 @@ class CvVidBackgroundConsumer final : public TokenBatchConsumer<cv::Mat, cv::Mat
 //member types
 public:
 	using TokenT = cv::Mat;
-	using ResultT = cv::Mat;
 	using ParentT = TokenBatchConsumer<TokenT, cv::Mat>;
 
 //constructors
@@ -37,8 +36,8 @@ public:
 		ParentT{batch_size},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
-		m_frame_width{vid.get(cv::CAP_PROP_FRAME_WIDTH)},
-		m_frame_height{vid.get(cv::CAP_PROP_FRAME_HEIGHT)}
+		m_frame_width{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH))},
+		m_frame_height{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))}
 	{
 		// sanity checks
 		assert(m_horizontal_buffer_pixels >= 0);
@@ -63,7 +62,7 @@ protected:
 //member functions
 	/// consume an intermediate result from one of the token processing units
 	/// replaces previous result for a given batch index with new results, so that in the end there is only one 'result batch'
-	virtual void ConsumeResult(std::unique_ptr<ResultT> intermediate_result, const std::size_t index_in_batch) override
+	virtual void ConsumeToken(std::unique_ptr<TokenT> intermediate_result, const std::size_t index_in_batch) override
 	{
 		assert(index_in_batch < GetBatchSize());
 
@@ -103,7 +102,7 @@ private:
 	const int m_frame_height{};
 
 	/// store results (image fragment background) until they are ready to be used
-	std::vector<ResultT> m_results{};
+	std::vector<TokenT> m_results{};
 };
 
 
