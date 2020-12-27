@@ -1,22 +1,15 @@
 // main for async video stream project
 
 //local headers
-#include "cv_vid_frames_generator.h"
-#include "cv_vid_background_consumer.h"
-#include "async_token_process.h"
-#include "histogram_median_algo.h"
+#include "cv_vid_bg_helpers.h"
 #include "project_dir_config.h"
-#include "triframe_median_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 
 //standard headers
-#include <cstdint>
 #include <iostream>
-#include <memory>
 #include <thread>		//for std::thread::hardware_concurrency()
-#include <vector>
 
 
 // command line parameters (compatible with cv::CommandLineParser)
@@ -37,24 +30,6 @@ struct CommandLinePack
 	long long bg_frame_lim{};
 	cv::String bg_algo{};
 };
-
-/// background algorithms available
-enum class BGAlgo
-{
-	HISTOGRAM,
-	TRIFRAME,
-	UNKNOWN
-};
-
-BGAlgo GetBGAlgo(const cv::String &algo)
-{
-	if (algo == "hist")
-		return BGAlgo::HISTOGRAM;
-	else if (algo == "tri")
-		return BGAlgo::TRIFRAME;
-	else
-		return BGAlgo::UNKNOWN;
-}
 
 /// interpret the command line arguments
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
@@ -101,92 +76,15 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	return pack;
 }
 
-/// encapsulates call to async tokenized video background analysis
-template <typename MedianAlgo>
-std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const CommandLinePack &cl_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
+VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int reserve_threads = 0)
 {
-	const int horizontal_buffer_pixels{0};
-	const int vertical_buffer_pixels{0};
-	const int batch_size{cl_pack.worker_threads};
-
-	// create frame generator
-	auto frame_gen{std::make_shared<CvVidFramesGenerator>(batch_size,
-		vid,
-		horizontal_buffer_pixels,
-		vertical_buffer_pixels,
-		cl_pack.bg_frame_lim,
-		cl_pack.grayscale)};
-
-	// create fragment consumer
-	auto bg_frag_consumer{std::make_shared<CvVidBackgroundConsumer>(batch_size,
-		vid,
-		horizontal_buffer_pixels,
-		vertical_buffer_pixels)};
-
-	// create process
-	const int token_storage_limit{3};
-	const int result_storage_limit{3};
-
-	AsyncTokenProcess<MedianAlgo, cv::Mat> vid_bg_prod{batch_size,
-		token_storage_limit,
-		result_storage_limit,
-		frame_gen,
-		bg_frag_consumer};
-
-	return vid_bg_prod.Run(std::move(processor_packs));
+	return VidBgPack{
+			GetBGAlgo(cl_pack.bg_algo),
+			cl_pack.worker_threads - reserve_threads,
+			cl_pack.bg_frame_lim,
+			cl_pack.grayscale
+		};
 }
-
-/// encapsulates call to async tokenized video background analysis using empty processor packs
-template <typename MedianAlgo>
-std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const CommandLinePack &cl_pack)
-{
-	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-	empty_packs.resize(cl_pack.worker_threads, TokenProcessorPack<MedianAlgo>{});
-
-	return VidBackgroundWithAlgo<MedianAlgo>(vid, cl_pack, empty_packs);
-}
-
-/// get a video background
-std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const CommandLinePack &cl_pack)
-{
-	// algo is user-specified
-	switch (GetBGAlgo(cl_pack.bg_algo))
-	{
-		case BGAlgo::HISTOGRAM :
-		{
-			// use cheapest histogram algorithm
-			if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<unsigned char>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo8>(vid, cl_pack);
-			}
-			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo16>(vid, cl_pack);
-			}
-			else if (cl_pack.bg_frame_lim <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo32>(vid, cl_pack);
-			}
-			else
-			{
-				std::cerr << "warning, video appears to have over 2^32 frames! (" << cl_pack.bg_frame_lim << ") is way too many!\n";
-			}
-		}
-
-		case BGAlgo::TRIFRAME :
-		{
-			return VidBackgroundWithAlgoEmptyPacks<TriframeMedianAlgo>(vid, cl_pack);
-		}
-
-		default :
-		{
-			std::cerr << "Unknown background algorithm detected: " << cl_pack.bg_algo << '\n';
-		}
-	};
-
-	return std::unique_ptr<cv::Mat>{};
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -215,7 +113,7 @@ int main(int argc, char* argv[])
 		cl_pack.bg_frame_lim = total_frames;
 
 	// get the background of the video
-	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, cl_pack)};
+	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, vidbgpack_from_clpack(cl_pack))};
 
 	// display the final median image
 	if (background_frame && background_frame->data && !background_frame->empty())
