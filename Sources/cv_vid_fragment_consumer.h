@@ -21,12 +21,7 @@
 /// tied to CvVidFramesGenerator implementation
 class CvVidFragmentConsumer final : public TokenBatchConsumer<cv::Mat, std::list<cv::Mat>>
 {
-//member types
 public:
-	using TokenT = cv::Mat;
-	using FinalResultT = std::list<cv::Mat>;
-	using ParentT = TokenBatchConsumer<TokenT, FinalResultT>;
-
 //constructors
 	/// default constructor: disabled
 	CvVidFragmentConsumer() = delete;
@@ -36,7 +31,7 @@ public:
 			cv::VideoCapture &vid,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels) : 
-		ParentT{batch_size},
+		TokenBatchConsumer{batch_size},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
 		m_frame_width{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH))},
@@ -65,7 +60,7 @@ protected:
 //member functions
 	/// consume an image fragment
 	/// WARNING: tied to implementation of fragment generator
-	virtual void ConsumeToken(std::unique_ptr<TokenT> intermediate_result, const std::size_t index_in_batch) override
+	virtual void ConsumeToken(std::unique_ptr<token_type> intermediate_result, const std::size_t index_in_batch) override
 	{
 		assert(index_in_batch < GetBatchSize());
 
@@ -111,14 +106,14 @@ protected:
 				std::cerr << "Combining img fragments into image failed unexpectedly!\n";
 
 			if (!m_results)
-				m_results = std::make_unique<FinalResultT>();
+				m_results = std::make_unique<final_result_type>();
 
 			m_results->emplace_back(std::move(result_img));
 		}
 	}
 
 	/// get final result (list of reassembled cv::Mat imgs, aged oldest to youngest)
-	virtual std::unique_ptr<FinalResultT> GetFinalResult() override
+	virtual std::unique_ptr<final_result_type> GetFinalResult() override
 	{
 		return std::move(m_results);
 	}
@@ -135,9 +130,9 @@ private:
 	const int m_frame_height{};
 
 	/// store image fragments until they are ready to be used
-	std::vector<std::list<TokenT>> m_fragments{};
+	std::vector<std::list<token_type>> m_fragments{};
 	/// store assembled images
-	std::unique_ptr<FinalResultT> m_results{};
+	std::unique_ptr<final_result_type> m_results{};
 };
 
 

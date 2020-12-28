@@ -88,7 +88,7 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidB
 		vidbg_pack.vertical_buffer_pixels)};
 
 	// create process
-	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::FinalResultT> vid_bg_prod{vidbg_pack.batch_size,
+	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,
 		vidbg_pack.token_storage_limit,
 		vidbg_pack.result_storage_limit,
 		frame_gen,

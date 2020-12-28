@@ -5,7 +5,7 @@
 #define TRIFRAME_MEDIAN_ALGO_098765_H
 
 //local headers
-#include "token_processor.h"
+#include "token_processor_algo_base.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -16,12 +16,8 @@
 #include <vector>
 
 
-/// processor algorithm type
-struct TriframeMedianAlgo final
-{
-	using token_type = cv::Mat;
-	using result_type = cv::Mat;
-};
+/// processor algorithm type declaration
+class TriframeMedianAlgo;
 
 /// not strictly necessary to specialize this, just doing so for clarity
 template<>
@@ -32,34 +28,34 @@ struct TokenProcessorPack<TriframeMedianAlgo> final
 // implementation for algorithm: triframe median
 // passes over cv::Mat sequence and updates a 'median' value every 2 elements
 ///
-template<>
-class TokenProcessor<TriframeMedianAlgo> final : public TokenProcessorBase<TriframeMedianAlgo>
+class TriframeMedianAlgo final : public TokenProcessorAlgoBase<TriframeMedianAlgo, cv::Mat, cv::Mat>
 {
 public:
 //constructors
 	/// default constructor: disabled
-	TokenProcessor() = delete;
+	TriframeMedianAlgo() = delete;
 
 	/// normal constructor
-	TokenProcessor(TokenProcessorPack<TriframeMedianAlgo> processor_pack) : TokenProcessorBase<TriframeMedianAlgo>{std::move(processor_pack)}
+	TriframeMedianAlgo(TokenProcessorPack<TriframeMedianAlgo> processor_pack) :
+		TokenProcessorAlgoBase{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
-	TokenProcessor(const TokenProcessor&) = delete;
+	TriframeMedianAlgo(const TriframeMedianAlgo&) = delete;
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	TokenProcessor& operator=(const TokenProcessor&) = delete;
-	TokenProcessor& operator=(const TokenProcessor&) const = delete;
+	TriframeMedianAlgo& operator=(const TriframeMedianAlgo&) = delete;
+	TriframeMedianAlgo& operator=(const TriframeMedianAlgo&) const = delete;
 
 //member functions
 	/// insert an element to be processed
-	virtual void Insert(std::unique_ptr<cv::Mat> new_element) override;
+	virtual void Insert(std::unique_ptr<token_type> new_element) override;
 
 	/// get the processing result
-	virtual std::unique_ptr<cv::Mat> TryGetResult() override;
+	virtual std::unique_ptr<result_type> TryGetResult() override;
 
 	/// get notified there are no more elements
 	virtual void NotifyNoMoreTokens() override { m_done_processing = true; }

@@ -21,9 +21,6 @@ class TokenProcessIntermediary : public TokenBatchConsumer<InTokenT, FinalResult
 {
 //member types
 public:
-	using ConsumerT = TokenBatchConsumer<InTokenT, FinalResultT>;
-	using GeneratorT = TokenBatchGenerator<OutTokenT>;
-
 //constructors
 	/// default constructor: disabled
 	TokenProcessIntermediary() = delete;
@@ -32,8 +29,8 @@ public:
 	TokenProcessIntermediary(const int consumer_batch_size,
 			const int generator_batch_size,
 			const int max_shuttle_queue_size) :
-		ConsumerT{consumer_batch_size},
-		GeneratorT{generator_batch_size},
+		TokenBatchConsumer{consumer_batch_size},
+		TokenBatchGenerator{generator_batch_size},
 		m_shuttle_queue{max_shuttle_queue_size}
 	{}
 

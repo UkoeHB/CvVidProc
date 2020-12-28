@@ -23,11 +23,7 @@
 /// assumes pixels are defined with unsigned chars
 class CvVidFramesGenerator final : public TokenBatchGenerator<typename cv::Mat>
 {
-//member types
 public:
-	using TokenT = typename cv::Mat;
-	using ParentT = TokenBatchGenerator<TokenT>;
-
 //constructors
 	/// default constructor: disabled
 	CvVidFramesGenerator() = delete;
@@ -39,7 +35,7 @@ public:
 			const int vertical_buffer_pixels,
 			const long long frame_limit,
 			const bool use_grayscale) : 
-		ParentT{batch_size},
+		TokenBatchGenerator{batch_size},
 		m_vid{vid},
 		m_frame_limit{frame_limit},
 		m_convert_to_grayscale{use_grayscale},
@@ -79,9 +75,9 @@ public:
 
 //member functions
 	/// get token set from generator (set of frame segments)
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override
+	virtual std::vector<std::unique_ptr<token_type>> GetTokenSet() override
 	{
-		std::vector<std::unique_ptr<TokenT>> return_token_set{};
+		std::vector<std::unique_ptr<token_type>> return_token_set{};
 
 		// leave if reached frame limit
 		if (m_frame_limit > 0 && m_frames_consumed >= m_frame_limit)

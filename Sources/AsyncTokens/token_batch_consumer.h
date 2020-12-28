@@ -16,6 +16,8 @@ class TokenBatchConsumer
 {
 //member types
 public:
+	using token_type = TokenT;
+	using final_result_type = FinalResultT;
 
 //constructors
 	/// default constructor: disabled

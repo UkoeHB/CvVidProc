@@ -5,7 +5,7 @@
 #define HISTOGRAM_MEDIAN_ALGO_5776890_H
 
 //local headers
-#include "token_processor.h"
+#include "token_processor_algo_base.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -17,13 +17,9 @@
 #include <vector>
 
 
-/// processor algorithm type
+/// processor algorithm type declaration
 template <typename T>
-struct HistogramMedianAlgo final
-{
-	using token_type = cv::Mat;
-	using result_type = cv::Mat;
-};
+class HistogramMedianAlgo;
 
 /// main types to use for interacting with the histogram median algorithm
 /// - prefer larger types if dealing with more elements, otherwise the median will be less accurate
@@ -39,31 +35,31 @@ struct TokenProcessorPack<HistogramMedianAlgo<T>> final
 
 ////
 // implementation for algorithm: histogram median
-// collects 
+// collects cv::Mat frames, increments histograms for each pixel value, then gets median of each histogram for element-wise cv::Mat median
 ///
 template <typename T>
-class TokenProcessor<HistogramMedianAlgo<T>> final : public TokenProcessorBase<HistogramMedianAlgo<T>>
+class HistogramMedianAlgo final : public TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>
 {
 public:
 //constructors
 	/// default constructor: disabled
-	TokenProcessor() = delete;
+	HistogramMedianAlgo() = delete;
 
 	/// normal constructor
-	TokenProcessor(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) : TokenProcessorBase<HistogramMedianAlgo<T>>{std::move(processor_pack)}
+	HistogramMedianAlgo(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) : TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>{std::move(processor_pack)}
 	{
 		static_assert(std::is_unsigned<T>::value, "HistogramMedianAlgo only works with unsigned integrals for histogram elements!");
 	}
 
 	/// copy constructor: disabled
-	TokenProcessor(const TokenProcessor&) = delete;
+	HistogramMedianAlgo(const HistogramMedianAlgo&) = delete;
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	TokenProcessor& operator=(const TokenProcessor&) = delete;
-	TokenProcessor& operator=(const TokenProcessor&) const = delete;
+	HistogramMedianAlgo& operator=(const HistogramMedianAlgo&) = delete;
+	HistogramMedianAlgo& operator=(const HistogramMedianAlgo&) const = delete;
 
 //member functions
 	/// insert an element to be processed
@@ -124,12 +120,12 @@ public:
 			assert(new_elements.size() > 0);
 
 			std::vector<T> element_histograms{};
-			std::size_t max_char{static_cast<unsigned char>(-1)};
-			element_histograms.resize(max_char + 1, T{0});
+			std::size_t max_uchar{static_cast<unsigned char>(-1)};
+			element_histograms.resize(max_uchar + 1, T{0});
 			m_histograms.resize(new_elements.size(), element_histograms);
 
 			// check that it worked
-			assert(m_histograms[0].size() == max_char + 1);
+			assert(m_histograms[0].size() == max_uchar + 1);
 		}
 
 		// increment all the histograms
@@ -148,7 +144,7 @@ public:
 	{
 		std::vector<unsigned char> return_vec{};
 		return_vec.resize(m_histograms.size());
-		std::size_t max_char{static_cast<unsigned char>(-1)};
+		std::size_t max_uchar{static_cast<unsigned char>(-1)};
 		unsigned long accumulator_cap{static_cast<unsigned long>(m_final_frames_processed)};
 
 		assert(m_histograms.size() > 0);
@@ -156,14 +152,14 @@ public:
 		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
 		{
 			unsigned long accumulator{0};
-			std::size_t halfway_index{max_char + 1};
+			std::size_t halfway_index{max_uchar};
 
 			// find the histogram index that sits in the middle of all items added
-			for (std::size_t histogram_index{0}; histogram_index < max_char + 1; histogram_index++)
+			for (std::size_t histogram_index{0}; histogram_index < max_uchar + 1; histogram_index++)
 			{
 				accumulator += static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
 
-				if ((halfway_index == max_char + 1) && (accumulator > accumulator_cap/2))
+				if ((halfway_index == max_uchar) && (accumulator > accumulator_cap/2))
 					halfway_index = histogram_index;
 			}
 
@@ -172,10 +168,6 @@ public:
 			{
 				// set temp cap to actual number of items counted
 				unsigned long temp_cap{accumulator};
-
-				// check edge condition
-				if (halfway_index == max_char + 1)
-					halfway_index = max_char;
 
 				for (std::size_t histogram_index{halfway_index}; histogram_index != static_cast<std::size_t>(-1); histogram_index--)
 				{
@@ -190,7 +182,7 @@ public:
 			}
 
 			// sanity check
-			assert(halfway_index < max_char + 1);
+			assert(halfway_index < max_uchar + 1);
 
 			return_vec[element_index] = static_cast<unsigned char>(halfway_index);
 		}

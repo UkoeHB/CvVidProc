@@ -6,7 +6,7 @@
 //local headers
 #include "token_batch_generator.h"
 #include "token_batch_consumer.h"
-#include "token_processor.h"
+#include "token_processor_algo_base.h"
 #include "token_processing_unit.h"
 
 //third party headers
@@ -56,8 +56,8 @@ public:
 		m_token_generator{token_generator},
 		m_token_consumer{token_consumer}
 	{
-		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessor<TokenProcessorAlgoT>>::value,
-			"Token processor implementation does not derive from the TokenProcessorBase!");
+		static_assert(std::is_base_of<TokenProcessorAlgoBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
+			"Token processor implementation does not derive from the TokenProcessorAlgoBase!");
 
 		assert(m_token_generator);
 		assert(m_token_consumer);

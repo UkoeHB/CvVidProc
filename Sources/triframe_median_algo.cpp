@@ -1,7 +1,7 @@
 // implementation of TriframeMedianAlgo background processing algorithm
 
 //local headers
-#include "token_processor.h"
+#include "token_processor_algo_base.h"
 #include "triframe_median_algo.h"
 #include "cv_util.h"
 
@@ -12,7 +12,7 @@
 #include <memory>
 
 
-using TFM_T = TokenProcessor<TriframeMedianAlgo>;
+using TFM_T = TriframeMedianAlgo;
 
 
 void TFM_T::Insert(std::unique_ptr<cv::Mat> new_element)

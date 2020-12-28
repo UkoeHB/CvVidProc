@@ -5,7 +5,7 @@
 
 //local headers
 #include "token_queue.h"
-#include "token_processor.h"
+#include "token_processor_algo_base.h"
 
 //third party headers
 
@@ -18,8 +18,8 @@
 
 ////
 // expected usage:
-// 		- the class specialization TokenProcessor<TokenProcessorAlgoT> must
-//			be derived from TokenProcessorBase<TokenProcessorAlgoT>
+// 		- the class TokenProcessorAlgoT must
+//			be derived from TokenProcessorAlgoBase<TokenProcessorAlgoT>
 //		note: c++20 contracts would make this easier...
 /// 
 template <typename TokenProcessorAlgoT>
@@ -27,12 +27,10 @@ class TokenProcessingUnit final
 {
 public:
 //member types
-	/// token processor type
-	using TokenProcessorT = TokenProcessor<TokenProcessorAlgoT>;
 	/// get token type from token processor impl
-	using TokenT = typename TokenProcessorT::TokenT;
+	using TokenT = typename TokenProcessorAlgoT::token_type;
 	/// get result type from token processor impl
-	using ResultT = typename TokenProcessorT::ResultT;
+	using ResultT = typename TokenProcessorAlgoT::result_type;
 	/// token queue type
 	using TokenQueueT = TokenQueue<std::unique_ptr<TokenT>>;
 	/// result queue type
@@ -137,11 +135,11 @@ private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
 	{
-		static_assert(std::is_base_of<TokenProcessorBase<TokenProcessorAlgoT>, TokenProcessorT>::value,
-			"Token processor implementation does not derive from the TokenProcessorBase!");
+		static_assert(std::is_base_of<TokenProcessorAlgoBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
+			"Token processor implementation does not derive from the TokenProcessorAlgoBase!");
 
-		// relies on template dependency injection to decide the processor algorithm
-		TokenProcessorT worker_processor{std::move(m_processor_pack)};
+		// create token processor algorithm object
+		TokenProcessorAlgoT worker_processor{std::move(m_processor_pack)};
 		std::unique_ptr<TokenT> token_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
 

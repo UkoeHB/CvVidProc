@@ -18,6 +18,7 @@ class TokenBatchGenerator
 {
 //member types
 public:
+	using token_type = TokenT;
 
 //constructors
 	/// default constructor: disabled
