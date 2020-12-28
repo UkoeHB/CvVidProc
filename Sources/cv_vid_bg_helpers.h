@@ -51,6 +51,8 @@ struct VidBgPack
 	// number of fragments each frame should be broken into (i.e. number of threads to use)
 	const int batch_size{};
 
+	// total number of frames in the video
+	const long long total_frames{0};
 	// max number of frames to analyze for getting the vig bg (<= 0 means use all frames in video)
 	const long long frame_limit{-1};
 	// whether to convert frames to grayscale before analyzing them
@@ -62,9 +64,9 @@ struct VidBgPack
 	const int vertical_buffer_pixels{0};
 
 	// max number of input fragments to store at a time (memory conservation vs efficiency)
-	const int token_storage_limit{3};
+	const int token_storage_limit{-1};
 	// max number of output fragments to store at a time (memory conservation vs efficiency)
-	const int result_storage_limit{3};
+	const int result_storage_limit{-1};
 };
 
 /// encapsulates call to async tokenized video background analysis
@@ -120,21 +122,21 @@ std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPa
 		case BGAlgo::HISTOGRAM :
 		{
 			// use cheapest histogram algorithm
-			if (vidbg_pack.frame_limit <= static_cast<long long>(static_cast<unsigned char>(-1)))
+			if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<unsigned char>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo8>(vid, vidbg_pack);
 			}
-			else if (vidbg_pack.frame_limit <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
+			else if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo16>(vid, vidbg_pack);
 			}
-			else if (vidbg_pack.frame_limit <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
+			else if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo32>(vid, vidbg_pack);
 			}
 			else
 			{
-				std::cerr << "warning, video appears to have over 2^32 frames! (" << vidbg_pack.frame_limit << ") is way too many!\n";
+				std::cerr << "warning, video appears to have over 2^32 frames! (" << vidbg_pack.total_frames << ") is way too many!\n";
 			}
 		}
 

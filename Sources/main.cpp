@@ -76,13 +76,18 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	return pack;
 }
 
-VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int reserve_threads = 0)
+VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int threads, const long long total_frames)
 {
 	return VidBgPack{
 			GetBGAlgo(cl_pack.bg_algo),
-			cl_pack.worker_threads - reserve_threads,
+			threads,
+			total_frames,
 			cl_pack.bg_frame_lim,
-			cl_pack.grayscale
+			cl_pack.grayscale,
+			0,
+			0,
+			-1,
+			-1
 		};
 }
 
@@ -92,7 +97,7 @@ int main(int argc, char* argv[])
 	cv::CommandLineParser cl_args{argc, argv, g_commandline_params};
 	CommandLinePack cl_pack{HandleCLArgs(cl_args)};
 
-	// open video file (move assigns from temporary constructed by string, presumably)
+	// open video file
 	cv::VideoCapture vid{cl_pack.vid_path};
 
 	if (!vid.isOpened())
@@ -108,12 +113,8 @@ int main(int argc, char* argv[])
 				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT) <<
 				  "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
 
-	// clean up background algo frame limit
-	if (cl_pack.bg_frame_lim < 0 || cl_pack.bg_frame_lim > total_frames)
-		cl_pack.bg_frame_lim = total_frames;
-
 	// get the background of the video
-	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, vidbgpack_from_clpack(cl_pack))};
+	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads, total_frames))};
 
 	// display the final median image
 	if (background_frame && background_frame->data && !background_frame->empty())

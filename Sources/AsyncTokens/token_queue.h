@@ -24,11 +24,8 @@ public:
 
 	/// normal constructor
 	TokenQueue(const int max_queue_size) :
-			m_max_queue_size{static_cast<std::size_t>(max_queue_size)}	
-	{
-		// sanity check
-		assert(max_queue_size > 0);
-	}
+			m_max_queue_size{max_queue_size > 0 ? static_cast<std::size_t>(max_queue_size) : static_cast<std::size_t>(-1)}	
+	{}
 
 	/// copy constructor
 	TokenQueue(const TokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
@@ -190,7 +187,7 @@ private:
 private: 
 	/// set of token queues
 	std::list<T> m_tokenqueue{};
-	/// max number of tokens per sub-queue
+	/// max number of tokens per sub-queue; queue size <=0 means unlimited
 	const std::size_t m_max_queue_size{};
 	/// mutex for accessing the queues
 	std::mutex m_mutex;

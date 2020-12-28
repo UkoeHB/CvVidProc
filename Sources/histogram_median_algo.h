@@ -108,7 +108,12 @@ public:
 	}
 
 	/// get notified there are no more elements
-	virtual void NotifyNoMoreTokens() override { m_done_processing = true; }
+	virtual void NotifyNoMoreTokens() override
+	{ 
+		m_done_processing = true;
+		m_final_frames_processed = m_frames_processed;
+		m_frames_processed = 0;
+	}
 
 	/// increment histograms
 	void ConsumeVector(const std::vector<unsigned char> &new_elements)
@@ -119,12 +124,12 @@ public:
 			assert(new_elements.size() > 0);
 
 			std::vector<T> element_histograms{};
-			unsigned char max_char{static_cast<unsigned char>(-1)};
-			element_histograms.resize(max_char, T{0});
+			std::size_t max_char{static_cast<unsigned char>(-1)};
+			element_histograms.resize(max_char + 1, T{0});
 			m_histograms.resize(new_elements.size(), element_histograms);
 
 			// check that it worked
-			assert(m_histograms[0].size() == static_cast<std::size_t>(max_char));
+			assert(m_histograms[0].size() == max_char + 1);
 		}
 
 		// increment all the histograms
@@ -143,22 +148,22 @@ public:
 	{
 		std::vector<unsigned char> return_vec{};
 		return_vec.resize(m_histograms.size());
-		unsigned char max_char{static_cast<unsigned char>(-1)};
-		unsigned long accumulator_cap{static_cast<unsigned long>(m_frames_processed)};
+		std::size_t max_char{static_cast<unsigned char>(-1)};
+		unsigned long accumulator_cap{static_cast<unsigned long>(m_final_frames_processed)};
 
 		assert(m_histograms.size() > 0);
 
 		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
 		{
 			unsigned long accumulator{0};
-			std::size_t halfway_index{0};
+			std::size_t halfway_index{max_char + 1};
 
 			// find the histogram index that sits in the middle of all items added
-			for (std::size_t histogram_index{0}; histogram_index < static_cast<std::size_t>(max_char); histogram_index++)
+			for (std::size_t histogram_index{0}; histogram_index < max_char + 1; histogram_index++)
 			{
 				accumulator += static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
 
-				if (!halfway_index && accumulator > accumulator_cap/2)
+				if ((halfway_index == max_char + 1) && (accumulator > accumulator_cap/2))
 					halfway_index = histogram_index;
 			}
 
@@ -168,7 +173,11 @@ public:
 				// set temp cap to actual number of items counted
 				unsigned long temp_cap{accumulator};
 
-				for (std::size_t histogram_index{halfway_index}; histogram_index != std::size_t{static_cast<std::size_t>(-1)}; histogram_index--)
+				// check edge condition
+				if (halfway_index == max_char + 1)
+					halfway_index = max_char;
+
+				for (std::size_t histogram_index{halfway_index}; histogram_index != static_cast<std::size_t>(-1); histogram_index--)
 				{
 					accumulator -= static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
 
@@ -179,6 +188,9 @@ public:
 					halfway_index--;
 				}
 			}
+
+			// sanity check
+			assert(halfway_index < max_char + 1);
 
 			return_vec[element_index] = static_cast<unsigned char>(halfway_index);
 		}
@@ -195,6 +207,8 @@ private:
 
 	/// number of frames processed
 	int m_frames_processed{0};
+	/// total number of frames processed when the algo ends
+	int m_final_frames_processed{0};
 
 	/// histograms for processing median of each element; parent vector is all image elements, child vector is histogram
 	std::vector<std::vector<T>> m_histograms{};

@@ -59,7 +59,7 @@ public:
 	virtual void ResetGenerator() override {}
 
 	/// wrapper for getting the final result
-	virtual std::unique_ptr<FinalResultT> GetFinalResult() override
+	virtual std::unique_ptr<FinalResultT> GetFinalResult() override final
 	{
 		// shut down the shuttle queue (GetFinalResult() should be called after the last ConsumeToken())
 		m_shuttle_queue.ShutDown();
@@ -74,7 +74,7 @@ public:
 	}
 
 	/// gets a token set when it is available (blocks)
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override
+	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override final
 	{
 		std::vector<std::unique_ptr<TokenT>> return_token_set{};
 
