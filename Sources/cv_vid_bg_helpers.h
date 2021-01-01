@@ -36,13 +36,13 @@ BGAlgo GetBGAlgo(const std::string &algo);
 /// settings necessary to get a vid background
 struct VidBgPack
 {
+	// path to video
+	const std::string vid_path{};
 	// algorithm to use for getting vid bg
 	const std::string bg_algo{};
 	// number of fragments each frame should be broken into (i.e. number of threads to use)
 	const int batch_size{};
 
-	// total number of frames in the video
-	const long long total_frames{0};
 	// max number of frames to analyze for getting the vig bg (<= 0 means use all frames in video)
 	const long long frame_limit{-1};
 	// whether to convert frames to grayscale before analyzing them
@@ -61,7 +61,7 @@ struct VidBgPack
 
 /// encapsulates call to async tokenized video background analysis
 template <typename MedianAlgo>
-std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
+cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
 {
 	// create frame generator
 	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vidbg_pack.batch_size,
@@ -88,14 +88,14 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidB
 	auto bg_img{vid_bg_prod.Run(std::move(processor_packs))};
 
 	if (bg_img && !bg_img->empty())
-		return std::make_unique<cv::Mat>(std::move(bg_img->back()));
+		return std::move(bg_img->back());
 	else
-		return nullptr;
+		return cv::Mat{};
 }
 
 /// encapsulates call to async tokenized video background analysis using empty processor packs
 template <typename MedianAlgo>
-std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
+cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
 {
 	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
 	empty_packs.resize(vidbg_pack.batch_size, TokenProcessorPack<MedianAlgo>{});
@@ -104,7 +104,7 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, 
 }
 
 /// get a video background
-std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPack &vidbg_pack);
+cv::Mat GetVideoBackground(const VidBgPack &vidbg_pack);
 
 
 #endif //header guard

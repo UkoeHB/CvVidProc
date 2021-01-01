@@ -49,7 +49,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     set(DUMMY "${PYTHON_VERSION_STRING}")  # Not needed, silences a warning
 
     set(Python_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
-    find_package(Python REQUIRED COMPONENTS Interpreter Development)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
 
     # Scikit-Build does not add your site-packages to the search path automatically,
     # so we need to add it _or_ the pybind11 specific directory here.
@@ -83,14 +83,14 @@ set(COMMON_INC Sources/AsyncTokens)
 
 # only create python bindings in Release mode
 if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
-    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
+    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp Sources/ndarray_converter.cpp)
 
     # connect headers to module target
     target_include_directories(_core PUBLIC ${COMMON_INC})
 
     # connect libraries to module target
     target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(_core PUBLIC ${MAIN_LIBS})
+    target_link_libraries(_core PUBLIC ${MAIN_LIBS} Python::NumPy)
 
     # install the module
     install(TARGETS _core DESTINATION .)

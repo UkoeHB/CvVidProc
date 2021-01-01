@@ -12,12 +12,12 @@ Dependencies:
 
 ## Install Python module `cvvidproc`
 
-As simple as (can use `pip` or `pip3`):
+As simple as (can use `python` or `python3`):
 ```
-pip install .
+python3 setup.py --force-cmake --quiet install 
 ```
 
-Note: rerunning `pip install .` will uninstall the existing installation and reinstall the new one, which makes it easy to install new versions (`git pull origin master` -> `git merge origin/master` -> `pip install .`). Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone i.e. in Github).
+Note: rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python setup.py ...`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone i.e. in Github).
 
 
 ## Building and Running

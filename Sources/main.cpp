@@ -49,8 +49,7 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 		cl_args.printMessage();
 	}
 
-	// open video file (move assigns from temporary constructed by string, presumably)
-	cv::VideoCapture vid;
+	// get path to video
 	if (cl_args.get<cv::String>("vid") != "")
 		pack.vid_path = std::string{config::videos_dir} + cl_args.get<cv::String>("vid");
 	else if (cl_args.get<cv::String>("vid_path") != "")
@@ -72,12 +71,12 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	return pack;
 }
 
-VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int threads, const long long total_frames)
+VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int threads)
 {
 	return VidBgPack{
+			cl_pack.vid_path,
 			cl_pack.bg_algo,
 			threads,
-			total_frames,
 			cl_pack.bg_frame_lim,
 			cl_pack.grayscale,
 			0,
@@ -93,28 +92,12 @@ int main(int argc, char* argv[])
 	cv::CommandLineParser cl_args{argc, argv, g_commandline_params};
 	CommandLinePack cl_pack{HandleCLArgs(cl_args)};
 
-	// open video file
-	cv::VideoCapture vid{cl_pack.vid_path};
-
-	if (!vid.isOpened())
-	{
-		std::cerr << "Video file not detected: " << cl_pack.vid_path << '\n';
-
-		return 0;
-	}
-
-	// print info about the video
-	long long total_frames{static_cast<long long>(vid.get(cv::CAP_PROP_FRAME_COUNT))};
-	std::cout << "Frames: " << total_frames <<
-				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT) <<
-				  "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
-
 	// get the background of the video
-	std::unique_ptr<cv::Mat> background_frame{GetVideoBackground(vid, vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads, total_frames))};
+	cv::Mat background_frame{GetVideoBackground(vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads))};
 
 	// display the final median image
-	if (background_frame && background_frame->data && !background_frame->empty())
-		cv::imshow("Median Frame", *background_frame);
+	if (background_frame.data && !background_frame.empty())
+		cv::imshow("Median Frame", background_frame);
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
 
