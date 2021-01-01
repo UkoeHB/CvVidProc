@@ -3,5 +3,5 @@ BuildR
 Videos/*
 !Videos/.gitignore
 
-# scikit-build generated files
+# scikit-build generated files in develop mode
 _skbuild

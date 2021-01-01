@@ -63,6 +63,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
 
     # Now we can find pybind11
     find_package(pybind11 CONFIG REQUIRED)
+elseif (SKBUILD)
+    message(WARNING ":: unexpectedly tried to build with scikit-build but not in Release mode! Python module not built.")
 endif ()
 
 

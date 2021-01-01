@@ -8,8 +8,6 @@ Dependencies:
 - OpenCV
 - CMake
 - compiler with c++14 support
-- scikit-build (python package)
-- pybind11 (python package)
 
 
 ## Install Python module cvvidproc
