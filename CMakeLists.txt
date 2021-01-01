@@ -2,7 +2,7 @@
 #cmake setup
 
 # obligatory CMake minimum version
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.15...3.18)
 
 
 ######################################
@@ -13,7 +13,8 @@ project(vid_bg
         DESCRIPTION "get background of a video"
         LANGUAGES CXX)
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14")
+# C++14 required
+set(CMAKE_CXX_STANDARD 14)
 
 
 ######################################
@@ -37,18 +38,81 @@ find_package(${OPENCV} REQUIRED)
 set(LIB_INCLUDE_DIRS "${${OPENCV}_INCLUDE_DIRS}")
 set(MAIN_LIBS "${${OPENCV}_LIBS}")
 
+# only create python bindings in Release mode
+if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
+    # thanks to: https://github.com/pybind/scikit_build_example
+    # Currently, Scikit-build does not support FindPython, so we convert the
+    # provided hints ourselves.
+    set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
+    set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+    set(Python_LIBRARY "${PYTHON_LIBRARY}")
+    set(DUMMY "${PYTHON_VERSION_STRING}")  # Not needed, silences a warning
+
+    set(Python_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
+    find_package(Python REQUIRED COMPONENTS Interpreter Development)
+
+    # Scikit-Build does not add your site-packages to the search path automatically,
+    # so we need to add it _or_ the pybind11 specific directory here.
+    execute_process(
+      COMMAND
+        "${Python_EXECUTABLE}" -c
+        "import pybind11; print(pybind11.get_cmake_dir())"
+      OUTPUT_VARIABLE _tmp_dir
+      OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+    list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+    # Now we can find pybind11
+    find_package(pybind11 CONFIG REQUIRED)
+endif ()
+
+
+######################################
+#set sources/headers
+
+# common sources
+set(COMMON_SRC Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
+
+# common headers
+set(COMMON_INC Sources/AsyncTokens)
+
+
+######################################
+#python bindings module target
+
+# only create python bindings in Release mode
+if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
+    pybind11_add_module(cvvidproc MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
+
+    # connect headers to module target
+    target_include_directories(cvvidproc PUBLIC ${COMMON_INC})
+
+    # connect libraries to module target
+    target_include_directories(cvvidproc PUBLIC ${LIB_INCLUDE_DIRS})
+    target_link_libraries(cvvidproc PUBLIC ${MAIN_LIBS})
+
+    # install the module
+    install(TARGETS cvvidproc DESTINATION .)
+endif ()
+
 
 ######################################
 #executable target
 
-add_executable(${CMAKE_PROJECT_NAME} Sources/main.cpp Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
+# do not build main executable when python module is being installed
+if (NOT SKBUILD)
+    add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC} Sources/main.cpp)
 
-# connect headers to executable target
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC Sources/AsyncTokens)
+    # connect headers to executable target
+    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${COMMON_INC})
 
-# connect libraries to executable target
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
-target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${MAIN_LIBS})
+    # connect libraries to executable target
+    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${MAIN_LIBS})
+endif ()
+
+
+
+
 
 
 

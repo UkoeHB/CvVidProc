@@ -1,0 +1,4 @@
+# scikit-build generated files
+*
+!.gitignore
+!__init__.py

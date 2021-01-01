@@ -2,3 +2,6 @@ Build
 BuildR
 Videos/*
 !Videos/.gitignore
+
+# scikit-build generated files
+_skbuild

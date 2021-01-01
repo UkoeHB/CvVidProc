@@ -1,5 +1,6 @@
 # README
 
+<!-- must update setup.py version as well -->
 version 0.3.0
 
 Dependencies:
@@ -7,6 +8,18 @@ Dependencies:
 - OpenCV
 - CMake
 - compiler with c++14 support
+- scikit-build (python package)
+- pybind11 (python package)
+
+
+## Install Python module cvvidproc
+
+As simple as (can use `pip` or `pip3`):
+```
+pip install .
+```
+
+Note: rerunning `pip install .` will uninstall the existing installation and reinstall the new one, which makes it easy to install new versions (`git pull` -> `git merge origin/master` -> `pip install .`). Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone i.e. in Github).
 
 
 ## Building and Running

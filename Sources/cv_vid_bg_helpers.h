@@ -18,6 +18,7 @@
 #include <iostream>
 #include <list>
 #include <memory>
+#include <string>
 #include <vector>
 
 
@@ -29,8 +30,8 @@ enum class BGAlgo
 	UNKNOWN
 };
 
-/// get background algo from cv::String
-BGAlgo GetBGAlgo(const cv::String &algo)
+/// get background algo from string
+BGAlgo GetBGAlgo(const std::string &algo)
 {
 	if (algo == "hist")
 		return BGAlgo::HISTOGRAM;
@@ -47,7 +48,7 @@ BGAlgo GetBGAlgo(const cv::String &algo)
 struct VidBgPack
 {
 	// algorithm to use for getting vid bg
-	const BGAlgo bg_algo{};
+	const std::string bg_algo{};
 	// number of fragments each frame should be broken into (i.e. number of threads to use)
 	const int batch_size{};
 
@@ -116,21 +117,26 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, 
 /// get a video background
 std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
 {
+	long long frames_to_analyze{vidbg_pack.frame_limit};
+
+	if (frames_to_analyze <= 0 || frames_to_analyze > vidbg_pack.total_frames)
+		frames_to_analyze = vidbg_pack.total_frames;
+
 	// algo is user-specified
-	switch (vidbg_pack.bg_algo)
+	switch (GetBGAlgo(vidbg_pack.bg_algo))
 	{
 		case BGAlgo::HISTOGRAM :
 		{
 			// use cheapest histogram algorithm
-			if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<unsigned char>(-1)))
+			if (frames_to_analyze <= static_cast<long long>(static_cast<unsigned char>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo8>(vid, vidbg_pack);
 			}
-			else if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
+			else if (frames_to_analyze <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo16>(vid, vidbg_pack);
 			}
-			else if (vidbg_pack.total_frames <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
+			else if (frames_to_analyze <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
 			{
 				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo32>(vid, vidbg_pack);
 			}
@@ -146,7 +152,11 @@ std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPa
 		}
 
 		default :
+		{
+			std::cerr << "tried to get vid background with unknown algorithm: " << vidbg_pack.bg_algo << '\n';
+
 			return nullptr;
+		}
 	};
 
 	return nullptr;

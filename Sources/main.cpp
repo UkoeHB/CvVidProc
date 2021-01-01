@@ -79,15 +79,15 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int threads, const long long total_frames)
 {
 	return VidBgPack{
-			GetBGAlgo(cl_pack.bg_algo),
+			cl_pack.bg_algo,
 			threads,
 			total_frames,
 			cl_pack.bg_frame_lim,
 			cl_pack.grayscale,
 			0,
 			0,
-			-1,
-			-1
+			200,
+			200
 		};
 }
 
