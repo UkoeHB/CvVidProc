@@ -17,6 +17,7 @@ namespace py = pybind11;
 
 
 /// create module
+/// NOTE: must update __init__.py file when new symbols are added
 PYBIND11_MODULE(_core, mod)
 {
 	/// set up the Numpy array <-> cv::Mat converter

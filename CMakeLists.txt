@@ -48,6 +48,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     set(Python_LIBRARY "${PYTHON_LIBRARY}")
     set(DUMMY "${PYTHON_VERSION_STRING}")  # Not needed, silences a warning
 
+    # note: NumPy is added for converting NumPy arrays <-> cv::Mat
     set(Python_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
     find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
 

@@ -5,9 +5,13 @@ version 0.4.0
 
 Dependencies:
 
-- OpenCV
 - CMake
 - compiler with c++14 support
+
+Dependencies that will autoinstall if absent:
+- OpenCV
+- NumPy
+- pybind11
 
 
 ## Install Python module `cvvidproc`
