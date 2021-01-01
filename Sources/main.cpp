@@ -2,6 +2,7 @@
 
 //local headers
 #include "cv_vid_bg_helpers.h"
+#include "main.h"
 #include "project_dir_config.h"
 
 //third party headers
@@ -22,16 +23,21 @@ const char* g_commandline_params =
 	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
 	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }";
 
-struct CommandLinePack
+int WorkerThreadsFromMax(int max_threads)
 {
-	cv::String vid_path{};
-	int worker_threads{};
-	bool grayscale{};
-	long long bg_frame_lim{};
-	cv::String bg_algo{};
-};
+	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-/// interpret the command line arguments
+	if (max_threads <= 0)
+		return max_threads = 1;
+	// check if hardware_concurrency() actually returned a value
+	else if (supported_thread_count > 0 && max_threads >= supported_thread_count)
+		return max_threads = supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
+	else if (max_threads > 1)
+		return max_threads -= 1;
+	else
+		return 0;
+}
+
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 {
 	CommandLinePack pack{};
@@ -52,17 +58,7 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 
 	// get number of worker threads to use (subtract one for the main thread)
 	// note: min threads is 2 (1 for main thread, 1 for worker)
-	int worker_threads{cl_args.get<int>("max_threads")};
-	const auto supported_thread_count{std::thread::hardware_concurrency()};
-	if (worker_threads <= 0)
-		worker_threads = 1;
-	// check if hardware_concurrency() actually returned a value
-	else if (supported_thread_count > 0 && worker_threads >= supported_thread_count)
-		worker_threads = supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
-	else if (worker_threads > 1)
-		worker_threads -= 1;
-
-	pack.worker_threads = worker_threads;
+	pack.worker_threads = WorkerThreadsFromMax(cl_args.get<int>("max_threads"));
 
 	// get grayscale setting
 	pack.grayscale = cl_args.get<bool>("grayscale");

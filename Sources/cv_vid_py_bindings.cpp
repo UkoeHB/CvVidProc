@@ -2,6 +2,7 @@
 
 //local headers
 #include "cv_vid_bg_helpers.h"
+#include "main.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -15,10 +16,15 @@ namespace py = pybind11;
 
 
 /// create module
-PYBIND11_MODULE(cvvidproc, mod)
+PYBIND11_MODULE(_core, mod)
 {
 	/// info
 	mod.doc() = "C++ bindings for processing an opencv video";
+
+	/// get number of worker threads to use from max threads available (subtract one for the main thread)
+	/// note: min threads returned is 2 (1 for main thread, 1 for worker)
+	mod.def("WorkerThreadsFromMax", &WorkerThreadsFromMax, "get number of worker threads to use (subtract one from max for the main thread); min return value is '1'",
+		py::arg("max"));
 
 	/// struct VidBgPack binding
 	py::class_<VidBgPack>(mod, "VidBgPack")

@@ -72,7 +72,7 @@ endif ()
 #set sources/headers
 
 # common sources
-set(COMMON_SRC Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
+set(COMMON_SRC Sources/main.cpp Sources/cv_vid_bg_helpers.cpp Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens)
@@ -83,17 +83,17 @@ set(COMMON_INC Sources/AsyncTokens)
 
 # only create python bindings in Release mode
 if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
-    pybind11_add_module(cvvidproc MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
+    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
 
     # connect headers to module target
-    target_include_directories(cvvidproc PUBLIC ${COMMON_INC})
+    target_include_directories(_core PUBLIC ${COMMON_INC})
 
     # connect libraries to module target
-    target_include_directories(cvvidproc PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(cvvidproc PUBLIC ${MAIN_LIBS})
+    target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
+    target_link_libraries(_core PUBLIC ${MAIN_LIBS})
 
     # install the module
-    install(TARGETS cvvidproc DESTINATION .)
+    install(TARGETS _core DESTINATION .)
 endif ()
 
 
@@ -102,7 +102,7 @@ endif ()
 
 # do not build main executable when python module is being installed
 if (NOT SKBUILD)
-    add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC} Sources/main.cpp)
+    add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
 
     # connect headers to executable target
     target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${COMMON_INC})

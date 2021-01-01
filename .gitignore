@@ -5,3 +5,4 @@ Videos/*
 
 # scikit-build generated files in develop mode
 _skbuild
+dist

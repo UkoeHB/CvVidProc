@@ -1,7 +1,7 @@
 // helpers for getting background of an opencv vid
 
-#ifndef CV_VID_BG_HELPERS_H
-#define CV_VID_BG_HELPERS_H
+#ifndef CV_VID_BG_HELPERS_0089787_H
+#define CV_VID_BG_HELPERS_0089787_H
 
 //local headers
 #include "cv_vid_frames_generator.h"
@@ -31,18 +31,7 @@ enum class BGAlgo
 };
 
 /// get background algo from string
-BGAlgo GetBGAlgo(const std::string &algo)
-{
-	if (algo == "hist")
-		return BGAlgo::HISTOGRAM;
-	else if (algo == "tri")
-		return BGAlgo::TRIFRAME;
-	else
-	{
-		std::cerr << "Unknown background algorithm detected: " << algo << '\n';
-		return BGAlgo::UNKNOWN;
-	}
-}
+BGAlgo GetBGAlgo(const std::string &algo);
 
 /// settings necessary to get a vid background
 struct VidBgPack
@@ -115,52 +104,7 @@ std::unique_ptr<cv::Mat> VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, 
 }
 
 /// get a video background
-std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
-{
-	long long frames_to_analyze{vidbg_pack.frame_limit};
-
-	if (frames_to_analyze <= 0 || frames_to_analyze > vidbg_pack.total_frames)
-		frames_to_analyze = vidbg_pack.total_frames;
-
-	// algo is user-specified
-	switch (GetBGAlgo(vidbg_pack.bg_algo))
-	{
-		case BGAlgo::HISTOGRAM :
-		{
-			// use cheapest histogram algorithm
-			if (frames_to_analyze <= static_cast<long long>(static_cast<unsigned char>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo8>(vid, vidbg_pack);
-			}
-			else if (frames_to_analyze <= static_cast<long long>(static_cast<std::uint16_t>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo16>(vid, vidbg_pack);
-			}
-			else if (frames_to_analyze <= static_cast<long long>(static_cast<std::uint32_t>(-1)))
-			{
-				return VidBackgroundWithAlgoEmptyPacks<HistogramMedianAlgo32>(vid, vidbg_pack);
-			}
-			else
-			{
-				std::cerr << "warning, video appears to have over 2^32 frames! (" << vidbg_pack.total_frames << ") is way too many!\n";
-			}
-		}
-
-		case BGAlgo::TRIFRAME :
-		{
-			return VidBackgroundWithAlgoEmptyPacks<TriframeMedianAlgo>(vid, vidbg_pack);
-		}
-
-		default :
-		{
-			std::cerr << "tried to get vid background with unknown algorithm: " << vidbg_pack.bg_algo << '\n';
-
-			return nullptr;
-		}
-	};
-
-	return nullptr;
-}
+std::unique_ptr<cv::Mat> GetVideoBackground(cv::VideoCapture &vid, const VidBgPack &vidbg_pack);
 
 
 #endif //header guard
