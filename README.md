@@ -21,10 +21,10 @@ As simple as (can use `python` or `python3`):
 python3 setup.py --force-cmake --quiet install 
 ```
 
-Note: rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python setup.py ...`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone i.e. in Github).
+Note: rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python3 setup.py ...`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
 
 
-## Building and Running
+## Building and Running as standalone program
 
 Run cmake for debug or release:
 
