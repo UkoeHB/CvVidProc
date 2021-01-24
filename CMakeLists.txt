@@ -68,6 +68,11 @@ elseif (SKBUILD)
     message(WARNING ":: unexpectedly tried to build with scikit-build but not in Release mode! Python module not built.")
 endif ()
 
+# threading support (thanks to https://stackoverflow.com/a/29871891/14080627)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+set(MAIN_LIBS "${MAIN_LIBS}" Threads::Threads)
+
 
 ######################################
 #set sources/headers

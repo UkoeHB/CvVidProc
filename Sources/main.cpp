@@ -31,7 +31,7 @@ int WorkerThreadsFromMax(int max_threads)
 		return max_threads = 1;
 	// check if hardware_concurrency() actually returned a value
 	else if (supported_thread_count > 0 && max_threads >= supported_thread_count)
-		return max_threads = supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
+		return supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
 	else if (max_threads > 1)
 		return max_threads -= 1;
 	else
