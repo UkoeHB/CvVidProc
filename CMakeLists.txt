@@ -6,6 +6,16 @@ cmake_minimum_required(VERSION 3.15...3.18)
 
 
 ######################################
+#inputs
+
+# location of OpenCV library
+set(CV_DIR "" CACHE STRING "Path to OpenCV library, e.g. '~/MyLibs/' (intended for manual installs of OpenCV)")
+
+# location of OpenCV installation
+set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/OpenCV/opencv-1.2.3/release/' (intended for manual installs of OpenCV)")
+
+
+######################################
 #project setup
 
 # Set project name
@@ -34,7 +44,11 @@ include_directories(${GENERATED_FILES})
 
 # opencv
 set(OPENCV OpenCV)
-find_package(${OPENCV} REQUIRED)
+if(CV_DIR)
+    # get location of manually installed opencv
+    set(${OPENCV}_DIR ${CV_INSTALL_DIR})
+endif()
+find_package(${OPENCV} REQUIRED PATHS ${CV_DIR})
 set(LIB_INCLUDE_DIRS "${${OPENCV}_INCLUDE_DIRS}")
 set(MAIN_LIBS "${${OPENCV}_LIBS}")
 
@@ -71,14 +85,17 @@ endif ()
 # threading support (thanks to https://stackoverflow.com/a/29871891/14080627)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-set(MAIN_LIBS "${MAIN_LIBS}" Threads::Threads)
+set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 ######################################
 #set sources/headers
 
 # common sources
-set(COMMON_SRC Sources/main.cpp Sources/cv_vid_bg_helpers.cpp Sources/cv_util.cpp Sources/triframe_median_algo.cpp)
+set(COMMON_SRC Sources/main.cpp
+        Sources/cv_vid_bg_helpers.cpp
+        Sources/cv_util.cpp
+        Sources/triframe_median_algo.cpp)
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens)

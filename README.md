@@ -34,6 +34,10 @@ cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 
 // in command line, for release build (fast version)
 cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
+
+// add these flags if relying on a manually installed version of OpenCV
+-D CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
+-D CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
 ```
 
 Build:
