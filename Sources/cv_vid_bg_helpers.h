@@ -48,6 +48,15 @@ struct VidBgPack
 	// whether to convert frames to grayscale before analyzing them
 	const bool grayscale{false};
 
+	// x-position of frame-crop region
+	const int crop_x{0};
+	// y-position of frame-crop region
+	const int crop_y{0};
+	// width of frame-crop region
+	const int crop_width{0};
+	// height of frame-crop region
+	const int crop_height{0};
+
 	// number of horizontal buffer pixels to add to analyzed fragments
 	const int horizontal_buffer_pixels{0};
 	// number of vertical buffer pixels to add to analyzed fragments
@@ -63,19 +72,26 @@ struct VidBgPack
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
 {
+	cv::Rect frame_dimensions{vidbg_pack.crop_x,
+		vidbg_pack.crop_y,
+		vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
+		vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
+
 	// create frame generator
 	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vidbg_pack.batch_size,
 		vid,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
 		vidbg_pack.frame_limit,
+		frame_dimensions,
 		vidbg_pack.grayscale)};
 
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,
-		vid,
 		vidbg_pack.horizontal_buffer_pixels,
-		vidbg_pack.vertical_buffer_pixels)};
+		vidbg_pack.vertical_buffer_pixels,
+		frame_dimensions.width,
+		frame_dimensions.height)};
 
 	// create process
 	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,

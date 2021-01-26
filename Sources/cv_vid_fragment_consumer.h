@@ -29,14 +29,15 @@ public:
 
 	/// normal constructor
 	CvVidFragmentConsumer(const int batch_size,
-			cv::VideoCapture &vid,
 			const int horizontal_buffer_pixels,
-			const int vertical_buffer_pixels) : 
+			const int vertical_buffer_pixels,
+			const int frame_width,
+			const int frame_height) : 
 		TokenBatchConsumer{batch_size},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
-		m_frame_width{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH))},
-		m_frame_height{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))}
+		m_frame_width{frame_width},
+		m_frame_height{frame_height}
 	{
 		// sanity checks
 		assert(m_horizontal_buffer_pixels >= 0);

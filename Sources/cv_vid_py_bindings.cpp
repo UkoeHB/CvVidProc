@@ -42,12 +42,20 @@ PYBIND11_MODULE(_core, mod)
 					const int,
 					const int,
 					const int,
+					const int,
+					const int,
+					const int,
+					const int,
 					const int>())
 		.def_readonly("vid_path", &VidBgPack::vid_path)
 		.def_readonly("bg_algo", &VidBgPack::bg_algo)
 		.def_readonly("batch_size", &VidBgPack::batch_size)
 		.def_readonly("frame_limit", &VidBgPack::frame_limit)
 		.def_readonly("grayscale", &VidBgPack::grayscale)
+		.def_readonly("crop_x", &VidBgPack::crop_x)
+		.def_readonly("crop_y", &VidBgPack::crop_y)
+		.def_readonly("crop_width", &VidBgPack::crop_width)
+		.def_readonly("crop_height", &VidBgPack::crop_height)
 		.def_readonly("horizontal_buffer_pixels", &VidBgPack::horizontal_buffer_pixels)
 		.def_readonly("vertical_buffer_pixels", &VidBgPack::vertical_buffer_pixels)
 		.def_readonly("token_storage_limit", &VidBgPack::token_storage_limit)

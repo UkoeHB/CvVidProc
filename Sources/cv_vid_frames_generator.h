@@ -35,10 +35,12 @@ public:
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const long long frame_limit,
+			const cv::Rect crop_rectangle,
 			const bool use_grayscale) : 
 		TokenBatchGenerator{batch_size},
 		m_vid{vid},
 		m_frame_limit{frame_limit},
+		m_crop_rectangle{crop_rectangle},
 		m_convert_to_grayscale{use_grayscale},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
@@ -51,6 +53,7 @@ public:
 		assert(m_vertical_buffer_pixels >= 0);
 		assert(m_frame_width > 0);
 		assert(m_frame_height > 0);
+
 		// make sure the Mats obtained will be composed of unsigned chars
 		// http://ninghang.blogspot.com/2012/11/list-of-mat-type-in-opencv.html
 		auto format{m_vid.get(cv::CAP_PROP_FORMAT)};
@@ -58,6 +61,10 @@ public:
 				format == CV_8UC2 ||
 				format == CV_8UC3 || 
 				format == CV_8UC4);
+
+		// make sure crop rectangle actually fits in the frame
+		assert(m_crop_rectangle.x + m_crop_rectangle.width <= m_frame_width &&
+			m_crop_rectangle.y + m_crop_rectangle.height <= m_frame_height);
 
 		// interpet video frames as RGB format for consistency
 		vid.set(cv::CAP_PROP_CONVERT_RGB, true);
@@ -91,6 +98,9 @@ public:
 		// leave if reached the end of the video or frame is corrupted
 		if (!frame.data || frame.empty())
 			return return_token_set;
+
+		// crop the frame to desired size
+		frame = frame(m_crop_rectangle);
 
 		// convert to grayscale if desired
 		// this should always work since the vid's CAP_PROP_CONVERT_RGB property was set
@@ -131,6 +141,8 @@ private:
 	cv::VideoCapture m_vid{};
 	/// max number of frames to process (negative means go until end of vid)
 	const long long m_frame_limit{};
+	/// rectangle for cropping the frames
+	const cv::Rect m_crop_rectangle{};
 	/// if frames should be converted to grayscale before being tokenized
 	const bool m_convert_to_grayscale{false};
 

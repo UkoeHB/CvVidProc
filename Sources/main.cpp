@@ -82,6 +82,10 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 			cl_pack.grayscale,
 			0,
 			0,
+			0,
+			0,
+			0,
+			0,
 			200,
 			200
 		};
