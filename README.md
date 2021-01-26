@@ -64,6 +64,21 @@ Notes:
 - use tag `--help` to learn command line options
 
 
+## Installing OpenCV on Ubuntu
+
+If you have Linux, see [this resource](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) for installing OpenCV. It may be necessary to use the `ninja` build generator instead of `make`. If, for example, you install OpenCV to the directory "`~`", then the command for generating a debug build system will be:
+
+```
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
+```
+
+Ubuntu users may need to download and set up an 'X server for windows' by following [this tutorial](https://seanthegeek.net/234/graphical-linux-applications-bash-ubuntu-windows/). If your Ubuntu doesn't already have it, install GTK3 for backend GUI with:
+
+```
+sudo apt-get install libgtk-3-0
+```
+
+
 ## License
 
 [MIT license](https://opensource.org/licenses/MIT)
