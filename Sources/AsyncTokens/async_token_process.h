@@ -46,11 +46,13 @@ public:
 
 	/// normal constructor
 	AsyncTokenProcess(const int worker_thread_limit,
+			const bool synchronous_allowed,
 			const int token_storage_limit,
 			const int result_storage_limit,
 			TokenGenT token_generator,
 			TokenConsumerT token_consumer) : 
 		m_worker_thread_limit{worker_thread_limit},
+		m_synchronous_allowed{synchronous_allowed},
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit},
 		m_token_generator{token_generator},
@@ -107,7 +109,8 @@ public:
 		{
 			// according to https://stackoverflow.com/questions/5410035/when-does-a-stdvector-reallocate-its-memory-array
 			// this will not reallocate the vector unless the .reserve() amount is exceeded, so it should be thread safe
-			processing_units.emplace_back(m_token_storage_limit, m_result_storage_limit);
+			// the processing units will run synchronously if there is only one token being passed around (and synch mode allowed)
+			processing_units.emplace_back(m_synchronous_allowed && m_batch_size == 1, m_token_storage_limit, m_result_storage_limit);
 
 			// start the unit's thread
 			processing_units[unit_index].Start(std::move(processing_packs[unit_index]));
@@ -201,6 +204,10 @@ private:
 //member variables
 	/// max number of worker threads allowed
 	const int m_worker_thread_limit{};
+	/// whether the token process can be run synchronously or not
+	///  if there is only one worker thread then it makes sense to run synchronously, unless token generation/consumption
+	///  should be concurrent with token processing
+	const bool m_synchronous_allowed{};
 
 	/// max number of tokens that can be stored in each processing unit
 	const int m_token_storage_limit{};

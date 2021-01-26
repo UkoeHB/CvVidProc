@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 
 //standard headers
+#include <chrono>
 #include <iostream>
 #include <thread>		//for std::thread::hardware_concurrency()
 
@@ -18,22 +19,22 @@ const char* g_commandline_params =
 	"{ help h       |         | Print usage }"
 	"{ vid          |         | Video name (with extension) }"
 	"{ vid_path     |         | Full path for video }"
-	"{ max_threads  |     8   | Max number of threads to use for analyzing the video }"
+	"{ max_threads  |   100   | Max number of threads to use for analyzing the video }"
 	"{ grayscale    |  false  | Treat the video as grayscale (true/false) }"
 	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
 	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }";
 
-int WorkerThreadsFromMax(int max_threads)
+int WorkerThreadsFromMax(const int max_threads)
 {
 	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-	if (max_threads <= 0)
-		return max_threads = 1;
+	if (max_threads <= 1)
+		return 1;
 	// check if hardware_concurrency() actually returned a value
 	else if (supported_thread_count > 0 && max_threads >= supported_thread_count)
 		return supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
 	else if (max_threads > 1)
-		return max_threads -= 1;
+		return max_threads - 1;
 	else
 		return 0;
 }
@@ -92,8 +93,18 @@ int main(int argc, char* argv[])
 	cv::CommandLineParser cl_args{argc, argv, g_commandline_params};
 	CommandLinePack cl_pack{HandleCLArgs(cl_args)};
 
+	// time the background algo
+	using namespace std::chrono;
+	auto start_time{steady_clock::now()};
+
 	// get the background of the video
 	cv::Mat background_frame{GetVideoBackground(vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads))};
+
+	// end the timer and print results
+	auto end_time{steady_clock::now()};
+	auto interval_ms{static_cast<long long>(duration_cast<milliseconds>(end_time - start_time).count())};
+	auto interval_s_float{static_cast<double>(interval_ms/1000.0)};
+	std::cout << "Background obtained in: " << interval_s_float << " seconds\n";
 
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())

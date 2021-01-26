@@ -79,6 +79,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create process
 	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,
+		true,
 		vidbg_pack.token_storage_limit,
 		vidbg_pack.result_storage_limit,
 		frame_gen,

@@ -89,7 +89,7 @@ public:
 	/// get the processing result
 	virtual std::unique_ptr<cv::Mat> TryGetResult() override
 	{
-		// for triframe median, only get a result if no more frames will be sent in
+		// only get a result if no more frames will be sent in
 		if (!m_done_processing)
 			return nullptr;
 
@@ -99,6 +99,9 @@ public:
 		// convert vector to Mat image
 		cv::Mat result_frame{};
 		cv_mat_from_std_vector_uchar(result_frame, result_vec, m_frame_rows_count, m_frame_channel_count);
+
+		// reset done processing flag (final result being returned)
+		m_done_processing = false;
 
 		return std::make_unique<cv::Mat>(std::move(result_frame));
 	}

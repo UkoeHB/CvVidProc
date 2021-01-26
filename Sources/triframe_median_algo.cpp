@@ -58,6 +58,9 @@ std::unique_ptr<cv::Mat> TFM_T::TryGetResult()
 	cv::Mat result_frame{};
 	cv_mat_from_std_vector_uchar(result_frame, m_triframe[0], m_frame_rows_count, m_frame_channel_count);
 
+	// reset (final result obtained here)
+	m_done_processing = false;
+
 	return std::make_unique<cv::Mat>(std::move(result_frame));
 }
 

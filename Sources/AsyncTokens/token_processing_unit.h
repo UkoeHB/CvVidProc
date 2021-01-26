@@ -11,6 +11,7 @@
 
 //standard headers
 #include <cassert>
+#include <iostream>
 #include <memory>
 #include <thread>
 #include <type_traits>
@@ -41,7 +42,8 @@ public:
 	TokenProcessingUnit() = default;
 
 	/// normal constructor
-	TokenProcessingUnit(const int token_queue_limit, const int result_queue_limit) :
+	TokenProcessingUnit(const bool synchronous, const int token_queue_limit, const int result_queue_limit) :
+			m_synchronous{synchronous},
 			m_token_queue{token_queue_limit},
 			m_result_queue{result_queue_limit}
 	{}
@@ -66,12 +68,15 @@ public:
 	/// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() and ExtractFinalResults() used)
 	bool Start(TokenProcessorPack<TokenProcessorAlgoT> processor_pack)
 	{
-		// worker thread starts here
 		if (!m_worker.joinable() && m_token_queue.IsEmpty() && m_result_queue.IsEmpty())
 		{
-			m_processor_pack = std::move(processor_pack);
+			m_worker_processor = std::make_unique<TokenProcessorAlgoT>(std::move(processor_pack));
 
-			m_worker = std::thread{&TokenProcessingUnit<TokenProcessorAlgoT>::WorkerFunction, this};
+			// start the worker thread if running asynchronously
+			if (!m_synchronous)
+			{
+				m_worker = std::thread{&TokenProcessingUnit<TokenProcessorAlgoT>::WorkerFunction, this};
+			}
 
 			return true;
 		}
@@ -86,6 +91,20 @@ public:
 	/// shut down the unit (no more tokens to be added)
 	void ShutDown()
 	{
+		// synchronous mode
+		if (m_synchronous)
+		{
+			if (m_worker_processor)
+			{
+				// manually shut down the processor
+				m_worker_processor->NotifyNoMoreTokens();
+			}
+			else
+			{
+				assert(false && "tried to shut down processing unit in synch mode but processor doesn't exist!");
+			}
+		}
+
 		// shut down token queue
 		m_token_queue.ShutDown();
 
@@ -105,7 +124,31 @@ public:
 	{
 		// make sure there is a token inside the unique_ptr
 		if (insert_token)
-			return m_token_queue.TryInsertToken(insert_token);
+		{
+			// synchronous mode
+			if (m_synchronous)
+			{
+				if (!m_worker_processor)
+				{
+					assert(false && "can't insert token in synchronous mode unless unit has been started!");
+
+					return false;
+				}
+
+				// insert token to processor directly (always works)
+				m_worker_processor->Insert(std::move(insert_token));
+
+				// sanity check: inserted tokens should not exist here any more
+				assert(!insert_token);
+
+				return true;
+			}
+			// asynchronous mode
+			else
+			{
+				return m_token_queue.TryInsertToken(insert_token);
+			}
+		}
 		else
 			return false;
 	}
@@ -113,7 +156,22 @@ public:
 	/// try get result wrapper for result queue
 	bool TryGetResult(std::unique_ptr<ResultT> &return_val)
 	{
-		return m_result_queue.TryGetToken(return_val);
+		// sanity check, input should be empty so it isn't destroyed by accident
+		assert(!return_val);
+
+		// synchronous mode
+		if (m_synchronous)
+		{
+			// request from processor directly
+			return_val = m_worker_processor->TryGetResult();
+
+			return return_val.get();
+		}
+		// asynchronous mode
+		else
+		{
+			return m_result_queue.TryGetToken(return_val);
+		}
 	}
 
 	/// extract results lingering in queue when unit is stopped
@@ -126,9 +184,22 @@ public:
 		// sanity check; return val shouldn't have a value since it would be destroyed (not responsibility of this object)
 		assert(!return_val);
 
-		// if there are elements remaining in the queue, grab one
-		// this should not block because the queue should be shutting down, and the worker thread has ended
-		return m_result_queue.GetToken(return_val);
+		// synchronous mode
+		if (m_synchronous)
+		{
+			// request from processor directly
+			// WARNING: if the processor keeps pumping out results then this will keep returning true
+			return_val = m_worker_processor->TryGetResult();
+
+			return return_val.get();
+		}
+		// asynchronous mode
+		else
+		{
+			// if there are elements remaining in the queue, grab one
+			// this should not block because the queue should be shutting down, and the worker thread has ended
+			return m_result_queue.GetToken(return_val);
+		}
 	}
 
 private:
@@ -138,8 +209,14 @@ private:
 		static_assert(std::is_base_of<TokenProcessorAlgoBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
 			"Token processor implementation does not derive from the TokenProcessorAlgoBase!");
 
-		// create token processor algorithm object
-		TokenProcessorAlgoT worker_processor{std::move(m_processor_pack)};
+		if (!m_worker_processor)
+		{
+			assert(false && "can't run token processing unit without starting it!");
+
+			return;
+		}
+
+		// create shuttles
 		std::unique_ptr<TokenT> token_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
 
@@ -149,7 +226,7 @@ private:
 			// sanity check: if a token is obtained then it should exist
 			assert(token_shuttle);
 
-			worker_processor.Insert(std::move(token_shuttle));
+			m_worker_processor->Insert(std::move(token_shuttle));
 
 			// sanity check: inserted tokens should not exist here any more
 			assert(!token_shuttle);
@@ -159,7 +236,7 @@ private:
 			//	so thread that removes results is stalled on token insert
 			//	ANSWER: inserter should alternate between 'tryinsert()' and 'trygetresult()' whenever they have a new token
 			// 		- in practice only TryInsert() and TryGetResult() are exposed to users of the processing unit
-			result_shuttle = worker_processor.TryGetResult();
+			result_shuttle = m_worker_processor->TryGetResult();
 
 			if (result_shuttle)
 			{
@@ -171,10 +248,10 @@ private:
 		}
 
 		// tell token processor there are no more tokens so it can prepare final results
-		worker_processor.NotifyNoMoreTokens();
+		m_worker_processor->NotifyNoMoreTokens();
 
 		// obtain final result if it exists
-		result_shuttle = worker_processor.TryGetResult();
+		result_shuttle = m_worker_processor->TryGetResult();
 
 		if (result_shuttle)
 		{
@@ -196,6 +273,10 @@ private:
 	ResultQueueT m_result_queue{};
 	/// worker thread that moves tokens from queue to token processor, and gets results from the processor
 	std::thread m_worker{};
+	/// token processor algorithm object
+	std::unique_ptr<TokenProcessorAlgoT> m_worker_processor{};
+	/// indicates if the unit is running synchronously or asynchronously
+	const bool m_synchronous{};
 };
 
 
