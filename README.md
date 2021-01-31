@@ -18,11 +18,10 @@ Dependencies that will autoinstall if absent:
 
 As simple as:
 ```
-pip3 install .
+python3 setup.py clean && pip3 install .
 ```
 
 - Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
-- If your project has a `_skbuild` directory you might need to delete it for a successful re-install.
 - If you need to use a manually installed OpenCV, the only way right now is to go in `CMakeLists.txt` and directly edit `set(CV_DIR path/to/...)` and `set(CV_INSTALL_DIR path/to/...)`.
 
 
