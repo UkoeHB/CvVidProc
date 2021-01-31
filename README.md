@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.5.0
+version 0.5.1
 
 Dependencies:
 
@@ -16,16 +16,12 @@ Dependencies that will autoinstall if absent:
 
 ## Install Python module `cvvidproc`
 
-As simple as (can use `python` or `python3`):
+As simple as:
 ```
-python3 setup.py --force-cmake --quiet install
-
-// add these flags if relying on a manually installed version of OpenCV
--D CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
--D CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
+pip3 install -e .
 ```
 
-Note: rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python3 setup.py ...`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
+Note: rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install -e .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
 
 
 ## Building and Running as standalone program
@@ -39,8 +35,9 @@ cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 // in command line, for release build (fast version)
 cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
 
-// add these flags if relying on a manually installed version of OpenCV (same as for python module)
--D CV_DIR=libpath -D CV_INSTALL_DIR=installpath
+// add these flags if relying on a manually installed version of OpenCV
+-D CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
+-D CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
 ```
 
 Build:

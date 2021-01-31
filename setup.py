@@ -17,7 +17,7 @@ except ImportError:
 
 setup(
     name="cvvidproc",
-    version="0.4.0",
+    version="0.5.1",
     description="C++ bindings for multithreaded opencv video processing",
     author="koe",
     license="MIT",

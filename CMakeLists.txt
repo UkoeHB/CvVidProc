@@ -2,7 +2,8 @@
 #cmake setup
 
 # obligatory CMake minimum version
-cmake_minimum_required(VERSION 3.15...3.18)
+cmake_minimum_required(VERSION 3.15...3.17)
+message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 
 ######################################
@@ -57,20 +58,20 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     # thanks to: https://github.com/pybind/scikit_build_example
     # Currently, Scikit-build does not support FindPython, so we convert the
     # provided hints ourselves.
-    set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-    set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-    set(Python_LIBRARY "${PYTHON_LIBRARY}")
+    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
+    set(Python3_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+    set(Python3_LIBRARY "${PYTHON_LIBRARY}")
     set(DUMMY "${PYTHON_VERSION_STRING}")  # Not needed, silences a warning
 
     # note: NumPy is added for converting NumPy arrays <-> cv::Mat
-    set(Python_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
-    find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
+    set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
     # Scikit-Build does not add your site-packages to the search path automatically,
     # so we need to add it _or_ the pybind11 specific directory here.
     execute_process(
       COMMAND
-        "${Python_EXECUTABLE}" -c
+        "${Python3_EXECUTABLE}" -c
         "import pybind11; print(pybind11.get_cmake_dir())"
       OUTPUT_VARIABLE _tmp_dir
       OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
@@ -113,7 +114,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
 
     # connect libraries to module target
     target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(_core PUBLIC ${MAIN_LIBS} Python::NumPy)
+    target_link_libraries(_core PUBLIC ${MAIN_LIBS} Python3::NumPy)
 
     # install the module
     install(TARGETS _core DESTINATION .)

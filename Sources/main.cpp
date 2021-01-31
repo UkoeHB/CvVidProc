@@ -112,12 +112,14 @@ int main(int argc, char* argv[])
 
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())
+	{
 		cv::imshow("Median Frame", background_frame);
+
+		// wait for a keypress before ending
+		int keypress{cv::waitKey()};
+	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
-
-	// wait for a keypress before ending
-	int keypress{cv::waitKey()};
 
 	return 0;
 }

@@ -109,7 +109,7 @@ public:
 		{
 			// according to https://stackoverflow.com/questions/5410035/when-does-a-stdvector-reallocate-its-memory-array
 			// this will not reallocate the vector unless the .reserve() amount is exceeded, so it should be thread safe
-			// the processing units will run synchronously if there is only one token being passed around (and synch mode allowed)
+			// the processing units will run synchronously if there is only one token being passed around at a time (and synch mode allowed)
 			processing_units.emplace_back(m_synchronous_allowed && m_batch_size == 1, m_token_storage_limit, m_result_storage_limit);
 
 			// start the unit's thread
@@ -133,6 +133,7 @@ public:
 
 			// pass token set to processing units
 			// it spins through 'try' functions to avoid deadlocks between token and result queues
+			// TODO: reduce cycle waste by sleeping this thread between spins
 			std::size_t remaining_tokens{m_batch_size};
 			while (remaining_tokens > 0)
 			{

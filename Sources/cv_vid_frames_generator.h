@@ -105,9 +105,7 @@ public:
 		// convert to grayscale if desired
 		// this should always work since the vid's CAP_PROP_CONVERT_RGB property was set
 		if (m_convert_to_grayscale)
-		{
 			cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-		}
 
 		// break frame into chunks
 		if (!cv_mat_to_chunks(frame, return_token_set, 1, static_cast<int>(GetBatchSize()), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
