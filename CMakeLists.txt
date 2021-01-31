@@ -5,6 +5,10 @@
 cmake_minimum_required(VERSION 3.15...3.17)
 message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
+set(ERR "" CACHE BOOL "err")
+if(ERR)
+    message(FATAL_ERROR "detected var")
+endif()
 
 ######################################
 #inputs

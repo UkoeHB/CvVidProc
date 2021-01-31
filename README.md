@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.5.1
+version 0.5.2
 
 Dependencies:
 
@@ -21,8 +21,19 @@ As simple as:
 python3 setup.py clean && pip3 install .
 ```
 
-- Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
-- If you need to use a manually installed OpenCV, the only way right now is to go in `CMakeLists.txt` and directly edit `set(CV_DIR path/to/...)` and `set(CV_INSTALL_DIR path/to/...)`.
+For manually installed OpenCV, you must define these environment variables:
+```
+CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
+CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
+
+# full call for installing python module
+python3 setup.py clean && \
+	CV_DIR=~/MyLibs/ \
+	CV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/ \
+	pip3 install .
+```
+
+- Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python3 setup.py ... (etc.)`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
 
 
 ## Building and Running as standalone program
@@ -36,9 +47,12 @@ cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
 // in command line, for release build (fast version)
 cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
 
-// add these flags if relying on a manually installed version of OpenCV
--D CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
--D CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
+// the OpenCV directory flags must have -D in this case
+-DCV_DIR=~/MyLibs/
+-DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
+
+// for example
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -DCV_DIR=~/MyLibs/ -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
 ```
 
 Build:
