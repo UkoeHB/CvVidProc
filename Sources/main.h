@@ -18,6 +18,7 @@ struct CommandLinePack
 	bool grayscale{};
 	long long bg_frame_lim{};
 	cv::String bg_algo{};
+	bool print_timing_report{};
 };
 
 /// get number of worker threads to use (subtract one for the main thread)

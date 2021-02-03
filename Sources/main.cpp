@@ -23,7 +23,8 @@ const char* g_commandline_params =
 	"{ max_threads  |   100   | Max number of threads to use for analyzing the video }"
 	"{ grayscale    |  false  | Treat the video as grayscale (true/false) }"
 	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
-	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }";
+	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }"
+	"{ timer_report |   true  | Collect timings for background processing and report them }";
 
 int WorkerThreadsFromMax(int max_threads)
 {
@@ -71,6 +72,9 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	// get frame limit
 	pack.bg_frame_lim = static_cast<long long>(cl_args.get<double>("bg_frame_lim"));
 
+	// get timer report setting
+	pack.print_timing_report = cl_args.get<bool>("timer_report");
+
 	return pack;
 }
 
@@ -89,7 +93,8 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 			0,
 			0,
 			200,
-			200
+			200,
+			cl_pack.print_timing_report
 		};
 }
 
@@ -119,7 +124,7 @@ int main(int argc, char* argv[])
 		cv::imshow("Median Frame", background_frame);
 
 		// wait for a keypress before ending
-		//int keypress{cv::waitKey()};
+		int keypress{cv::waitKey()};
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
