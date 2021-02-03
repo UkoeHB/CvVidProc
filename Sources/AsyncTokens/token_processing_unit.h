@@ -6,6 +6,7 @@
 //local headers
 #include "token_queue.h"
 #include "token_processor_algo_base.h"
+#include "ts_interval_timer.h"
 
 //third party headers
 
@@ -42,10 +43,14 @@ public:
 	TokenProcessingUnit() = default;
 
 	/// normal constructor
-	TokenProcessingUnit(const bool synchronous, const int token_queue_limit, const int result_queue_limit) :
-			m_synchronous{synchronous},
-			m_token_queue{token_queue_limit},
-			m_result_queue{result_queue_limit}
+	TokenProcessingUnit(const bool synchronous,
+			const bool collect_timings,
+			const int token_queue_limit,
+			const int result_queue_limit) :
+		m_synchronous{synchronous},
+		m_collect_timings{collect_timings},
+		m_token_queue{token_queue_limit},
+		m_result_queue{result_queue_limit}
 	{}
 
 	/// copy constructor: default construct (do not copy)
@@ -135,8 +140,18 @@ public:
 					return false;
 				}
 
+				// start timer
+				TSIntervalTimer::time_pt_t interval_start_time{};
+
+				if (m_collect_timings)
+					interval_start_time = m_timer.GetTime();
+
 				// insert token to processor directly (always works)
 				m_worker_processor->Insert(std::move(insert_token));
+
+				// end timer
+				if (m_collect_timings)
+					m_timer.AddInterval(interval_start_time);
 
 				// sanity check: inserted tokens should not exist here any more
 				assert(!insert_token);
@@ -202,6 +217,14 @@ public:
 		}
 	}
 
+	/// get interval report for how much time was spent processing each token
+	/// TimeUnit must be e.g. std::chrono::milliseconds
+	template <typename TimeUnit>
+	TSIntervalReport<TimeUnit> GetTimingReport() const
+	{
+		return m_timer.GetReport<TimeUnit>();
+	}
+
 private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
@@ -220,13 +243,24 @@ private:
 		std::unique_ptr<TokenT> token_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
 
+		// prepare timer tracker
+		TSIntervalTimer::time_pt_t interval_start_time{};
+
 		// get tokens asynchronously until the queue shuts down (and is empty)
 		while(m_token_queue.GetToken(token_shuttle))
 		{
 			// sanity check: if a token is obtained then it should exist
 			assert(token_shuttle);
 
+			// start timer
+			if (m_collect_timings)
+				interval_start_time = m_timer.GetTime();
+
 			m_worker_processor->Insert(std::move(token_shuttle));
+
+			// end timer
+			if (m_collect_timings)
+				m_timer.AddInterval(interval_start_time);
 
 			// sanity check: inserted tokens should not exist here any more
 			assert(!token_shuttle);
@@ -275,8 +309,12 @@ private:
 	std::thread m_worker{};
 	/// token processor algorithm object
 	std::unique_ptr<TokenProcessorAlgoT> m_worker_processor{};
+	/// interval timer (collects the time it takes to process each token; does not time 'TryGetResult()')
+	TSIntervalTimer m_timer{};
 	/// indicates if the unit is running synchronously or asynchronously
 	const bool m_synchronous{};
+	/// whether to collect timings or not
+	const bool m_collect_timings{};
 };
 
 

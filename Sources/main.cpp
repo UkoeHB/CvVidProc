@@ -4,6 +4,7 @@
 #include "cv_vid_bg_helpers.h"
 #include "main.h"
 #include "project_dir_config.h"
+#include "ts_interval_timer.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -98,15 +99,16 @@ int main(int argc, char* argv[])
 	CommandLinePack cl_pack{HandleCLArgs(cl_args)};
 
 	// time the background algo
-	using namespace std::chrono;
-	auto start_time{steady_clock::now()};
+	TSIntervalTimer timer{};
+	auto start_time{timer.GetTime()};
 
 	// get the background of the video
 	cv::Mat background_frame{GetVideoBackground(vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads))};
 
 	// end the timer and print results
-	auto end_time{steady_clock::now()};
-	auto interval_ms{static_cast<long long>(duration_cast<milliseconds>(end_time - start_time).count())};
+	timer.AddInterval(start_time);
+	auto timer_report{timer.GetReport<std::chrono::milliseconds>()};
+	auto interval_ms{timer_report.avg_interval.count()};
 	auto interval_s_float{static_cast<double>(interval_ms/1000.0)};
 	std::cout << "Background obtained in: " << interval_s_float << " seconds\n";
 

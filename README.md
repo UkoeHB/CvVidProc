@@ -1,12 +1,13 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.5.2
+version 0.5.3
 
 Dependencies:
 
 - CMake
 - compiler with c++14 support
+- Python3
 
 Dependencies that will autoinstall if absent:
 - OpenCV

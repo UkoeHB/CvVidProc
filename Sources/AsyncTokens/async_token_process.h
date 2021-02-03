@@ -8,6 +8,7 @@
 #include "token_batch_consumer.h"
 #include "token_processor_algo_base.h"
 #include "token_processing_unit.h"
+#include "ts_interval_timer.h"
 
 //third party headers
 
@@ -29,7 +30,7 @@
 //
 // - when the async token process has processed all tokens, it gets a final result from the token consumer
 ///
-template <typename TokenProcessorAlgoT, typename FinalResultT>
+template <typename TokenProcessorAlgoT, typename FinalResultT, typename UnitTimingReportT = std::chrono::milliseconds>
 class AsyncTokenProcess final
 {
 //member types
@@ -47,6 +48,7 @@ public:
 	/// normal constructor
 	AsyncTokenProcess(const int worker_thread_limit,
 			const bool synchronous_allowed,
+			const bool collect_timings,
 			const int token_storage_limit,
 			const int result_storage_limit,
 			TokenGenT token_generator,
@@ -55,6 +57,7 @@ public:
 		m_synchronous_allowed{synchronous_allowed},
 		m_token_storage_limit{token_storage_limit},
 		m_result_storage_limit{result_storage_limit},
+		m_collect_timings{collect_timings},
 		m_token_generator{token_generator},
 		m_token_consumer{token_consumer}
 	{
@@ -70,6 +73,9 @@ public:
 		assert(m_batch_size > 0);
 		assert(m_batch_size <= m_worker_thread_limit);
 		assert(m_batch_size == m_token_consumer->GetBatchSize());
+
+		if (m_collect_timings)
+			m_unit_timing_reports.resize(m_batch_size);
 	}
 
 	/// copy constructor: disabled
@@ -110,7 +116,10 @@ public:
 			// according to https://stackoverflow.com/questions/5410035/when-does-a-stdvector-reallocate-its-memory-array
 			// this will not reallocate the vector unless the .reserve() amount is exceeded, so it should be thread safe
 			// the processing units will run synchronously if there is only one token being passed around at a time (and synch mode allowed)
-			processing_units.emplace_back(m_synchronous_allowed && m_batch_size == 1, m_token_storage_limit, m_result_storage_limit);
+			processing_units.emplace_back(m_synchronous_allowed && m_batch_size == 1,
+				m_collect_timings,
+				m_token_storage_limit,
+				m_result_storage_limit);
 
 			// start the unit's thread
 			processing_units[unit_index].Start(std::move(processing_packs[unit_index]));
@@ -119,10 +128,15 @@ public:
 		// consume tokens until no more are generated
 		std::vector<std::unique_ptr<TokenT>> token_set_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
+		TSIntervalTimer::time_pt_t interval_start_time{};
 
-		// get token set or leave if no more will be created
+		// start initial timer
+		if (m_collect_timings)
+			interval_start_time = m_timer.GetTime();
+
 		while (true)
 		{
+			// get token set or leave if no more will be created
 			token_set_shuttle = m_token_generator->GetTokenSet();
 
 			if (!token_set_shuttle.size())
@@ -166,6 +180,10 @@ public:
 					}
 				}
 			}
+
+			// add interval and update start time
+			if (m_collect_timings)
+				interval_start_time = m_timer.AddInterval(interval_start_time);
 		}
 
 		// shut down all processing units (no more tokens)
@@ -189,6 +207,15 @@ public:
 
 				m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
 			}
+
+			// get timing report from unit
+			if (m_collect_timings)
+			{
+				std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
+
+				// weird syntax! see https://stackoverflow.com/questions/3786360/confusing-template-error
+				m_unit_timing_reports[unit_index] = processing_units[unit_index].template GetTimingReport<UnitTimingReportT>();
+			}
 		}
 
 		// get final result (before resetting generator for safety/proper order of events)
@@ -201,6 +228,69 @@ public:
 		return final_result;
 	}
 
+	/// get timing information as a string
+	std::string GetTimingInfo()
+	{
+		if (!m_collect_timings)
+			return "";
+
+		std::string unit{TimeUnitStr<UnitTimingReportT>()};
+		std::string str{};
+
+		// timing info for overall process
+		auto batch_timing{m_timer.GetReport<UnitTimingReportT>()};
+
+		if (!batch_timing.num_intervals)
+			return "";
+
+		str += "Per-batch: ";
+		{
+			std::ostringstream ss;
+			ss << batch_timing.avg_interval.count();
+			str += ss.str();
+		}
+		str += " " + unit + " (";
+		{
+			std::ostringstream ss;
+			ss << batch_timing.num_intervals;
+			str += ss.str();
+		}
+		str += " batches)\n";
+
+		// timing info for each processing unit
+		std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
+
+		assert(m_unit_timing_reports.size() == m_batch_size);
+
+		for (std::size_t unit_index{0}; unit_index < m_batch_size; unit_index++)
+		{
+			if (!m_unit_timing_reports[unit_index].num_intervals)
+				continue;
+
+			str += "Unit [";
+			{
+				std::ostringstream ss;
+				ss << unit_index + 1;
+				str += ss.str();
+			}
+			str += "]: ";
+			{
+				std::ostringstream ss;
+				ss << m_unit_timing_reports[unit_index].avg_interval.count();
+				str += ss.str();
+			}
+			str += " " + unit + " (";
+			{
+				std::ostringstream ss;
+				ss << m_unit_timing_reports[unit_index].num_intervals;
+				str += ss.str();
+			}
+			str += " tokens)\n";
+		}
+
+		return str;
+	}
+
 private:
 //member variables
 	/// max number of worker threads allowed
@@ -209,6 +299,8 @@ private:
 	///  if there is only one worker thread then it makes sense to run synchronously, unless token generation/consumption
 	///  should be concurrent with token processing
 	const bool m_synchronous_allowed{};
+	/// if timings should be collected
+	const bool m_collect_timings{};
 
 	/// max number of tokens that can be stored in each processing unit
 	const int m_token_storage_limit{};
@@ -224,6 +316,13 @@ private:
 
 	/// mutex in case this object is used asynchronously
 	std::mutex m_mutex;
+	/// mutex for unit timing reports
+	std::mutex m_unit_timing_mutex;
+
+	/// interval timer (collects the time it takes to process each batch of tokens)
+	TSIntervalTimer m_timer{};
+	/// timing reports from all the processing units
+	std::vector<TSIntervalReport<UnitTimingReportT>> m_unit_timing_reports{};
 };
 
 
