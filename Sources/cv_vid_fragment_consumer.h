@@ -29,11 +29,12 @@ public:
 
 	/// normal constructor
 	CvVidFragmentConsumer(const int batch_size,
+			const bool collect_timings,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const int frame_width,
 			const int frame_height) : 
-		TokenBatchConsumer{batch_size},
+		TokenBatchConsumer{batch_size, collect_timings},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
 		m_frame_width{frame_width},
@@ -62,7 +63,7 @@ protected:
 //member functions
 	/// consume an image fragment
 	/// WARNING: tied to implementation of fragment generator
-	virtual void ConsumeToken(std::unique_ptr<token_type> intermediate_result, const std::size_t index_in_batch) override
+	virtual void ConsumeTokenImpl(std::unique_ptr<token_type> intermediate_result, const std::size_t index_in_batch) override
 	{
 		assert(index_in_batch < GetBatchSize());
 

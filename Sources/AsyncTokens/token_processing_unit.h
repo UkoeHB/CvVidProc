@@ -217,12 +217,16 @@ public:
 		}
 	}
 
-	/// get interval report for how much time was spent processing each token
+	/// get interval report for how much time was spent processing each token (resets timer)
 	/// TimeUnit must be e.g. std::chrono::milliseconds
 	template <typename TimeUnit>
-	TSIntervalReport<TimeUnit> GetTimingReport() const
+	TSIntervalReport<TimeUnit> GetTimingReport()
 	{
-		return m_timer.GetReport<TimeUnit>();
+		auto report{m_timer.GetReport<TimeUnit>()};
+
+		m_timer.Reset();
+
+		return report;
 	}
 
 private:

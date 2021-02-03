@@ -31,13 +31,14 @@ public:
 
 	/// normal constructor
 	CvVidFramesGenerator(const int batch_size,
+			const bool collect_timings,
 			cv::VideoCapture &vid,
 			const int horizontal_buffer_pixels,
 			const int vertical_buffer_pixels,
 			const long long frame_limit,
 			const cv::Rect crop_rectangle,
 			const bool use_grayscale) : 
-		TokenBatchGenerator{batch_size},
+		TokenBatchGenerator{batch_size, collect_timings},
 		m_vid{vid},
 		m_frame_limit{frame_limit},
 		m_crop_rectangle{crop_rectangle},
@@ -82,8 +83,9 @@ public:
 	CvVidFramesGenerator& operator=(const CvVidFramesGenerator&) const = delete;
 
 //member functions
+protected:
 	/// get token set from generator (set of frame segments)
-	virtual std::vector<std::unique_ptr<token_type>> GetTokenSet() override
+	virtual std::vector<std::unique_ptr<token_type>> GetTokenSetImpl() override
 	{
 		std::vector<std::unique_ptr<token_type>> return_token_set{};
 

@@ -89,28 +89,20 @@ public:
 	/// get the processing result
 	virtual std::unique_ptr<cv::Mat> TryGetResult() override
 	{
-		// only get a result if no more frames will be sent in
-		if (!m_done_processing)
+		// get result if there is one
+		if (m_result)
+			return std::move(m_result);
+		else
 			return nullptr;
-
-		// collect histogram results
-		std::vector<unsigned char> result_vec{MedianFromHistograms()};
-
-		// convert vector to Mat image
-		cv::Mat result_frame{};
-		cv_mat_from_std_vector_uchar(result_frame, result_vec, m_frame_rows_count, m_frame_channel_count);
-
-		// reset done processing flag (final result being returned)
-		m_done_processing = false;
-
-		return std::make_unique<cv::Mat>(std::move(result_frame));
 	}
 
 	/// get notified there are no more elements
 	virtual void NotifyNoMoreTokens() override
 	{ 
-		m_done_processing = true;
-		m_final_frames_processed = m_frames_processed;
+		// set the result
+		SetResult();
+
+		// reset number of frames processed
 		m_frames_processed = 0;
 	}
 
@@ -135,7 +127,7 @@ public:
 		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
 		{
 			// only increment histogram if it won't cause roll-over
-			if (m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])] != T{static_cast<T>(-1)})
+			if (m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])] != static_cast<T>(-1))
 			{
 				m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])]++;
 			}
@@ -148,7 +140,7 @@ public:
 		std::vector<unsigned char> return_vec{};
 		return_vec.resize(m_histograms.size());
 		std::size_t max_uchar{static_cast<unsigned char>(-1)};
-		unsigned long accumulator_cap{static_cast<unsigned long>(m_final_frames_processed)};
+		unsigned long accumulator_cap{static_cast<unsigned long>(m_frames_processed)};
 
 		assert(m_histograms.size() > 0);
 
@@ -193,6 +185,19 @@ public:
 		return return_vec;
 	}
 
+	void SetResult()
+	{
+		// collect histogram results
+		std::vector<unsigned char> result_vec{MedianFromHistograms()};
+
+		// convert vector to Mat image
+		cv::Mat result_frame{};
+		cv_mat_from_std_vector_uchar(result_frame, result_vec, m_frame_rows_count, m_frame_channel_count);
+
+		// set the result
+		m_result = std::make_unique<cv::Mat>(std::move(result_frame));
+	}
+
 private:
 //member variables
 	/// number of pixel rows in frame Mat
@@ -202,14 +207,11 @@ private:
 
 	/// number of frames processed
 	int m_frames_processed{0};
-	/// total number of frames processed when the algo ends
-	int m_final_frames_processed{0};
 
 	/// histograms for processing median of each element; parent vector is all image elements, child vector is histogram
 	std::vector<std::vector<T>> m_histograms{};
-
-	/// no more frames will be inserted
-	bool m_done_processing{false};
+	/// store result in anticipation of future requests
+	std::unique_ptr<cv::Mat> m_result{};
 };
 
 

@@ -79,6 +79,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create frame generator
 	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vidbg_pack.batch_size,
+		true,
 		vid,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
@@ -88,6 +89,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,
+		true,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
 		frame_dimensions.width,
@@ -105,7 +107,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 	// run process to get background image
 	auto bg_img{vid_bg_prod.Run(std::move(processor_packs))};
 
-	std::cout << vid_bg_prod.GetTimingInfo();
+	// print out timing info
+	std::cout << vid_bg_prod.GetTimingInfoAndResetTimer();
 
 	if (bg_img && !bg_img->empty())
 		return std::move(bg_img->back());

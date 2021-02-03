@@ -16,8 +16,8 @@
 template<typename TimeUnit>
 struct TSIntervalReport
 {
-	/// average time spent in each interval
-	TimeUnit avg_interval{};
+	/// total time spent in each interval
+	TimeUnit total_time{};
 	/// number of intervals
 	unsigned long num_intervals{};
 };
@@ -79,9 +79,6 @@ public:
 	TSIntervalReport<TimeUnit> GetReport() const
 	{
 		auto duration = std::chrono::duration_cast<TimeUnit>(m_duration.load() - time_pt_t{});
-
-		if (m_num_intervals)
-			duration /= m_num_intervals;
 
 		return TSIntervalReport<TimeUnit>{duration, m_num_intervals};
 	}

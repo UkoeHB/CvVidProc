@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	// end the timer and print results
 	timer.AddInterval(start_time);
 	auto timer_report{timer.GetReport<std::chrono::milliseconds>()};
-	auto interval_ms{timer_report.avg_interval.count()};
+	auto interval_ms{timer_report.total_time.count()};
 	auto interval_s_float{static_cast<double>(interval_ms/1000.0)};
 	std::cout << "Background obtained in: " << interval_s_float << " seconds\n";
 
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 		cv::imshow("Median Frame", background_frame);
 
 		// wait for a keypress before ending
-		int keypress{cv::waitKey()};
+		//int keypress{cv::waitKey()};
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";

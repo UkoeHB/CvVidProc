@@ -4,6 +4,7 @@
 #define TOKEN_BATCH_GENERATOR_098989_H
 
 //local headers
+#include "ts_interval_timer.h"
 
 //third party headers
 
@@ -25,8 +26,9 @@ public:
 	TokenBatchGenerator() = delete;
 
 	/// normal constructor
-	TokenBatchGenerator(const int batch_size) :
-		m_batch_size{static_cast<std::size_t>(batch_size)}
+	TokenBatchGenerator(const int batch_size, const bool collect_timings) :
+		m_batch_size{static_cast<std::size_t>(batch_size)},
+		m_collect_timings{collect_timings}
 	{
 		assert(batch_size > 0);
 	}
@@ -47,15 +49,51 @@ public:
 	virtual std::size_t GetBatchSize() final { return m_batch_size; }
 
 	/// get token set from generator; should return empty vector when no more token sets to get
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() = 0;
+	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() final
+	{
+		TSIntervalTimer::time_pt_t interval_start_time{};
+
+		// start initial timer
+		if (m_collect_timings)
+			interval_start_time = m_timer.GetTime();
+
+		auto ret_val{GetTokenSetImpl()};
+
+		// add interval and update start time
+		if (m_collect_timings)
+			m_timer.AddInterval(interval_start_time);
+
+		return ret_val;
+	}
 
 	/// reset the token generator so it can be reused
 	virtual void ResetGenerator() = 0;
+
+	/// get interval report for how much time was spent producing each batch (resets timer)
+	/// TimeUnit must be e.g. std::chrono::milliseconds
+	template <typename TimeUnit>
+	TSIntervalReport<TimeUnit> GetTimingReport()
+	{
+		auto report{m_timer.GetReport<TimeUnit>()};
+
+		m_timer.Reset();
+
+		return report;
+	}
+
+protected:
+	/// get token set from generator; should return empty vector when no more token sets to get
+	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSetImpl() = 0;
 
 private:
 //member variables
 	/// batch size (number of tokens per batch)
 	const std::size_t m_batch_size{};
+	/// whether to collecting timing info
+	const bool m_collect_timings{};
+
+	/// interval timer (collects the time it takes to produce each batch of tokens)
+	TSIntervalTimer m_timer{};
 };
 
 

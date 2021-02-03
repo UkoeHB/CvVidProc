@@ -229,7 +229,7 @@ public:
 	}
 
 	/// get timing information as a string
-	std::string GetTimingInfo()
+	std::string GetTimingInfoAndResetTimer()
 	{
 		if (!m_collect_timings)
 			return "";
@@ -243,10 +243,10 @@ public:
 		if (!batch_timing.num_intervals)
 			return "";
 
-		str += "Per-batch: ";
+		str += "Batch loading: ";
 		{
 			std::ostringstream ss;
-			ss << batch_timing.avg_interval.count();
+			ss << batch_timing.total_time.count();
 			str += ss.str();
 		}
 		str += " " + unit + " (";
@@ -255,7 +255,66 @@ public:
 			ss << batch_timing.num_intervals;
 			str += ss.str();
 		}
-		str += " batches)\n";
+		str += " batches; ";
+		{
+			std::ostringstream ss;
+			ss << (batch_timing.total_time / batch_timing.num_intervals).count();
+			str += ss.str();
+		}
+		str += " " + unit + " avg)\n";
+
+		// timing info for token generator
+		if (m_token_generator)
+		{
+			auto generator_timing{m_token_generator->template GetTimingReport<UnitTimingReportT>()};
+
+			str += "Batch gen: ";
+			{
+				std::ostringstream ss;
+				ss << generator_timing.total_time.count();
+				str += ss.str();
+			}
+			str += " " + unit + " (";
+			{
+				std::ostringstream ss;
+				ss << generator_timing.num_intervals;
+				str += ss.str();
+			}
+			str += " batches; ";
+			{
+				std::ostringstream ss;
+				ss << (generator_timing.total_time / generator_timing.num_intervals).count();
+				str += ss.str();
+			}
+			str += " " + unit + " avg)\n";
+		}
+
+		// timing info for token consumer
+		// timing info for token generator
+		if (m_token_consumer)
+		{
+			auto consumer_timing{m_token_consumer->template GetTimingReport<UnitTimingReportT>()};
+
+			str += "Token consume: ";
+			{
+				std::ostringstream ss;
+				ss << consumer_timing.total_time.count();
+				str += ss.str();
+			}
+			str += " " + unit + " (";
+			{
+				std::ostringstream ss;
+				ss << consumer_timing.num_intervals;
+				str += ss.str();
+			}
+			str += " tokens; ";
+			{
+				std::ostringstream ss;
+				ss << (consumer_timing.total_time / consumer_timing.num_intervals).count();
+				str += ss.str();
+			}
+			str += " " + unit + " avg)\n";
+		}
 
 		// timing info for each processing unit
 		std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
@@ -264,7 +323,9 @@ public:
 
 		for (std::size_t unit_index{0}; unit_index < m_batch_size; unit_index++)
 		{
-			if (!m_unit_timing_reports[unit_index].num_intervals)
+			auto report{m_unit_timing_reports[unit_index]};
+
+			if (!report.num_intervals)
 				continue;
 
 			str += "Unit [";
@@ -276,17 +337,26 @@ public:
 			str += "]: ";
 			{
 				std::ostringstream ss;
-				ss << m_unit_timing_reports[unit_index].avg_interval.count();
+				ss << report.total_time.count();
 				str += ss.str();
 			}
 			str += " " + unit + " (";
 			{
 				std::ostringstream ss;
-				ss << m_unit_timing_reports[unit_index].num_intervals;
+				ss << report.num_intervals;
 				str += ss.str();
 			}
-			str += " tokens)\n";
+			str += " tokens; ";
+			{
+				std::ostringstream ss;
+				ss << (report.total_time / report.num_intervals).count();
+				str += ss.str();
+			}
+			str += " " + unit + " avg)\n";
 		}
+
+		// reset timer
+		m_timer.Reset();
 
 		return str;
 	}
