@@ -75,44 +75,37 @@ protected:
 		for (const auto &frag_list : m_fragments)
 		{
 			if (frag_list.empty())
-			{
-				no_luck = true;
-
-				break;
-			}
+				return;
 		}
 
-		// add result if possible
-		if (!no_luck)
+		// add result
+		// pull out a full image
+		std::vector<cv::Mat> img_frags{};
+		img_frags.resize(GetBatchSize());
+
+		for (std::size_t batch_index{0}; batch_index < GetBatchSize(); batch_index++)
 		{
-			// pull out a full image
-			std::vector<cv::Mat> img_frags{};
-			img_frags.resize(GetBatchSize());
-
-			for (std::size_t batch_index{0}; batch_index < GetBatchSize(); batch_index++)
-			{
-				img_frags[batch_index] = std::move(m_fragments[batch_index].front());
-				m_fragments[batch_index].pop_front();
-			}
-
-			// combine result fragments
-			cv::Mat result_img{};
-			if (!cv_mat_from_chunks(result_img,
-					img_frags,
-					1,
-					static_cast<int>(GetBatchSize()),
-					m_frame_width,
-					m_frame_height,
-					m_horizontal_buffer_pixels,
-					m_vertical_buffer_pixels)
-				)
-				std::cerr << "Combining img fragments into image failed unexpectedly!\n";
-
-			if (!m_results)
-				m_results = std::make_unique<final_result_type>();
-
-			m_results->emplace_back(std::move(result_img));
+			img_frags[batch_index] = std::move(m_fragments[batch_index].front());
+			m_fragments[batch_index].pop_front();
 		}
+
+		// combine result fragments
+		cv::Mat result_img{};
+		if (!cv_mat_from_chunks(result_img,
+				img_frags,
+				1,
+				static_cast<int>(GetBatchSize()),
+				m_frame_width,
+				m_frame_height,
+				m_horizontal_buffer_pixels,
+				m_vertical_buffer_pixels)
+			)
+			std::cerr << "Combining img fragments into image failed unexpectedly!\n";
+
+		if (!m_results)
+			m_results = std::make_unique<final_result_type>();
+
+		m_results->emplace_back(std::move(result_img));
 	}
 
 	/// get final result (list of reassembled cv::Mat imgs, aged oldest to youngest)

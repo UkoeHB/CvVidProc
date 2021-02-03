@@ -59,8 +59,8 @@ public:
 
 		auto ret_val{GetTokenSetImpl()};
 
-		// add interval and update start time
-		if (m_collect_timings)
+		// add interval and update start time (only if tokens were obtained)
+		if (m_collect_timings && ret_val.size())
 			m_timer.AddInterval(interval_start_time);
 
 		return ret_val;

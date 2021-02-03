@@ -80,7 +80,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 		vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
 
 	// create frame generator
-	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vidbg_pack.batch_size,
+	auto frame_gen{std::make_shared<CvVidFramesGenerator>(1,
+		vidbg_pack.batch_size,
 		vidbg_pack.print_timing_report,
 		vid,
 		vidbg_pack.horizontal_buffer_pixels,

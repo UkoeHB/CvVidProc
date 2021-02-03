@@ -167,6 +167,8 @@ bool cv_mat_to_chunks(
 		return false;
 
 	// create all the actual chunks
+	chunks_output.reserve(chunks.size());
+
 	for (const auto& chunk : chunks)
 	{
 		chunks_output.emplace_back(std::make_unique<cv::Mat>(mat_input(cv::Rect(chunk.corner_x, chunk.corner_y, chunk.chunk_width, chunk.chunk_height)).clone()));
