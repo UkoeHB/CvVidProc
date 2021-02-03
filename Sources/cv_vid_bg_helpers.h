@@ -66,6 +66,8 @@ struct VidBgPack
 	const int token_storage_limit{-1};
 	// max number of output fragments to store at a time (memory conservation vs efficiency)
 	const int result_storage_limit{-1};
+
+	const bool print_timing_report{false};
 };
 
 /// encapsulates call to async tokenized video background analysis
@@ -79,7 +81,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create frame generator
 	auto frame_gen{std::make_shared<CvVidFramesGenerator>(vidbg_pack.batch_size,
-		true,
+		vidbg_pack.print_timing_report,
 		vid,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
@@ -89,7 +91,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,
-		true,
+		vidbg_pack.print_timing_report,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
 		frame_dimensions.width,
@@ -98,7 +100,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 	// create process
 	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,
 		true,
-		true,
+		vidbg_pack.print_timing_report,
 		vidbg_pack.token_storage_limit,
 		vidbg_pack.result_storage_limit,
 		frame_gen,
@@ -108,7 +110,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 	auto bg_img{vid_bg_prod.Run(std::move(processor_packs))};
 
 	// print out timing info
-	std::cout << vid_bg_prod.GetTimingInfoAndResetTimer();
+	if (vidbg_pack.print_timing_report)
+		std::cout << vid_bg_prod.GetTimingInfoAndResetTimer();
 
 	if (bg_img && !bg_img->empty())
 		return std::move(bg_img->back());

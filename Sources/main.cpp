@@ -25,19 +25,20 @@ const char* g_commandline_params =
 	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
 	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }";
 
-int WorkerThreadsFromMax(const int max_threads)
+int WorkerThreadsFromMax(int max_threads)
 {
 	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-	if (max_threads <= 1)
-		return 1;
+	if (max_threads < 1)
+		max_threads = supported_thread_count;
+
 	// check if hardware_concurrency() actually returned a value
-	else if (supported_thread_count > 0 && max_threads >= supported_thread_count)
+	if (supported_thread_count > 0 && max_threads >= supported_thread_count)
 		return supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
 	else if (max_threads > 1)
 		return max_threads - 1;
 	else
-		return 0;
+		return 1;
 }
 
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
