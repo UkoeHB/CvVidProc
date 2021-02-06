@@ -24,13 +24,22 @@ struct TSIntervalReport
 
 
 ////
-// collect timings over an interval (thread safe)
+// collect timings over an interval (thread safe for read vs write)
+// note: data race can occur for competing writes
 ///
 class TSIntervalTimer final
 {
 //member types
 public:
 	using time_pt_t = std::chrono::time_point<std::chrono::steady_clock>;
+
+	struct IntervalPair
+	{
+		/// duration (no specific units)
+		time_pt_t time;
+		/// number of intervals recorded
+		unsigned long intervals;
+	};
 
 //constructors
 	/// default constructor: default
@@ -57,11 +66,21 @@ public:
 	}
 
 	/// add interval based on input time
+	// note: write data races can occur where only one write can win when competing
 	time_pt_t AddInterval(time_pt_t start_time)
 	{
+		// get current time
 		auto current_time{GetTime()};
-		m_duration = m_duration.load() + (current_time - start_time);
-		m_num_intervals++;
+
+		// copy current record for atomicity
+		IntervalPair current_record{m_interval_record.load()};
+
+		// update record info
+		current_record.time = current_record.time + (current_time - start_time);
+		current_record.intervals++;
+
+		// update record for atomicity
+		m_interval_record = current_record;
 
 		return current_time;
 	}
@@ -69,8 +88,7 @@ public:
 	/// reset interval timer
 	void Reset()
 	{
-		m_duration = time_pt_t{};
-		m_num_intervals = 0;
+		m_interval_record = IntervalPair{time_pt_t{}, 0};
 	}
 
 	/// get interval report
@@ -78,18 +96,18 @@ public:
 	template <typename TimeUnit>
 	TSIntervalReport<TimeUnit> GetReport() const
 	{
-		auto duration = std::chrono::duration_cast<TimeUnit>(m_duration.load() - time_pt_t{});
+		IntervalPair temp_record{m_interval_record.load()};
 
-		return TSIntervalReport<TimeUnit>{duration, m_num_intervals};
+		auto duration = std::chrono::duration_cast<TimeUnit>(temp_record.time - time_pt_t{});
+
+		return TSIntervalReport<TimeUnit>{duration, temp_record.intervals};
 	}
 
 
 private:
 //member variables
-	/// duration (no specific units)
-	std::atomic<time_pt_t> m_duration{};
-	/// number of intervals recorded
-	std::atomic<unsigned long> m_num_intervals{};
+	/// atomic interval pair
+	std::atomic<IntervalPair> m_interval_record{};
 };
 
 

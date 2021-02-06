@@ -44,9 +44,16 @@ cv::Mat GetVideoBackground(const VidBgPack &vidbg_pack)
 
 	// print info about the video
 	long long total_frames{static_cast<long long>(vid.get(cv::CAP_PROP_FRAME_COUNT))};
+
 	std::cout << "Frames: " << total_frames <<
-				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT) <<
-				  "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
+				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT);
+	if (vidbg_pack.crop_width || vidbg_pack.crop_height)
+	{
+		int width = vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH));
+		int height = vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT));
+		std::cout << "(" << width << 'x' << height << " cropped)";
+	}
+	std::cout << "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
 
 	// figure out how many frames will be analyzed
 	long long frames_to_analyze{vidbg_pack.frame_limit};

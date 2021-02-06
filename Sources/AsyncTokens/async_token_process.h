@@ -30,7 +30,7 @@
 //
 // - when the async token process has processed all tokens, it gets a final result from the token consumer
 ///
-template <typename TokenProcessorAlgoT, typename FinalResultT, typename UnitTimingReportT = std::chrono::milliseconds>
+template <typename TokenProcessorAlgoT, typename FinalResultT, typename TimingReportUnitT = std::chrono::milliseconds>
 class AsyncTokenProcess final
 {
 //member types
@@ -214,7 +214,7 @@ public:
 				std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
 
 				// weird syntax! see https://stackoverflow.com/questions/3786360/confusing-template-error
-				m_unit_timing_reports[unit_index] = processing_units[unit_index].template GetTimingReport<UnitTimingReportT>();
+				m_unit_timing_reports[unit_index] = processing_units[unit_index].template GetTimingReport<TimingReportUnitT>();
 			}
 		}
 
@@ -234,11 +234,11 @@ public:
 		if (!m_collect_timings)
 			return "";
 
-		std::string unit{TimeUnitStr<UnitTimingReportT>()};
+		std::string unit{TimeUnitStr<TimingReportUnitT>()};
 		std::string str{};
 
 		// timing info for overall process
-		auto batch_timing{m_timer.GetReport<UnitTimingReportT>()};
+		auto batch_timing{m_timer.GetReport<TimingReportUnitT>()};
 
 		if (!batch_timing.num_intervals)
 			return "";
@@ -266,7 +266,7 @@ public:
 		// timing info for token generator
 		if (m_token_generator)
 		{
-			auto generator_timing{m_token_generator->template GetTimingReport<UnitTimingReportT>()};
+			auto generator_timing{m_token_generator->template GetTimingReport<TimingReportUnitT>()};
 
 			str += "Batch gen: ";
 			{
@@ -293,7 +293,7 @@ public:
 		// timing info for token generator
 		if (m_token_consumer)
 		{
-			auto consumer_timing{m_token_consumer->template GetTimingReport<UnitTimingReportT>()};
+			auto consumer_timing{m_token_consumer->template GetTimingReport<TimingReportUnitT>()};
 
 			str += "Token consume: ";
 			{
@@ -392,7 +392,7 @@ private:
 	/// interval timer (collects the time it takes to process each batch of tokens)
 	TSIntervalTimer m_timer{};
 	/// timing reports from all the processing units
-	std::vector<TSIntervalReport<UnitTimingReportT>> m_unit_timing_reports{};
+	std::vector<TSIntervalReport<TimingReportUnitT>> m_unit_timing_reports{};
 };
 
 
