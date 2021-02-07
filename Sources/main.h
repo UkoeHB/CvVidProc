@@ -37,52 +37,6 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 #endif  //header guard
 
 
-/*
-- managing python thread from C++ thread
-
-	- C++ object for managing thread interface
-		- condition variable for sleeping the C++ thread
-		- result shuttle from python thread
-		- input shuttle from C++ thread
-			- locks GIL
-			- notifies python thread somehow when there is a result
-			- unlocks GIL
-
-	- C++ thread: inherit from TokenProcessorAlgoBase
-		// owns thread interface object
-		// owns python thread object
-
-		- python thread runs function
-			funct(input: thread interface object reference)
-				while (not shutting down)
-				{
-					// sleep until woken
-
-					// get input
-					// perform work
-
-					// post result
-					// notify C++ thread it's done
-				}
-
-
-
-plan for bubble tracking
-	
-	- thread: asynctokenprocess (std::async)
-		- gen: sets of frames
-		- algo: highlight bubbles
-		- consume: sets of highlighted bubbles
-
-	- thread: asynctokenprocess - sync mode (main thread)
-		- gen: prev consume
-		- algo: pass highlighted bubbles to python assign_bubbles()
-		- consume: collect final results (bubbles_archive)
-			- note: frameIDs can be obtained by the caller
-
-
-*/
-
 
 
 

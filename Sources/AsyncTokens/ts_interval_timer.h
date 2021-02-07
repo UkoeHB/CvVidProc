@@ -25,7 +25,6 @@ struct TSIntervalReport
 
 ////
 // collect timings over an interval (thread safe for read vs write)
-// note: data race can occur for competing writes
 ///
 class TSIntervalTimer final
 {
@@ -66,21 +65,20 @@ public:
 	}
 
 	/// add interval based on input time
-	// note: write data races can occur where only one write can win when competing
 	time_pt_t AddInterval(time_pt_t start_time)
 	{
 		// get current time
 		auto current_time{GetTime()};
 
-		// copy current record for atomicity
-		IntervalPair current_record{m_interval_record.load()};
-
-		// update record info
-		current_record.time = current_record.time + (current_time - start_time);
-		current_record.intervals++;
-
-		// update record for atomicity
-		m_interval_record = current_record;
+		// atomically update the record
+		//assert(m_interval_record.is_lock_free()); <- should be true on most implementations
+		IntervalPair old_record{m_interval_record.load()};
+		IntervalPair new_record{};
+		do
+		{
+			new_record.time = old_record.time + (current_time - start_time);
+			new_record.intervals = old_record.intervals + 1;
+		} while (!m_interval_record.compare_exchange_weak(old_record, new_record));
 
 		return current_time;
 	}
@@ -88,7 +86,8 @@ public:
 	/// reset interval timer
 	void Reset()
 	{
-		m_interval_record = IntervalPair{time_pt_t{}, 0};
+		// atomically reset the record
+		m_interval_record.store(IntervalPair{time_pt_t{}, 0});
 	}
 
 	/// get interval report
