@@ -99,7 +99,7 @@ public:
 	/// get notified there are no more elements
 	virtual void NotifyNoMoreTokens() override
 	{ 
-		// set the result
+		// no more tokens, so set the result
 		SetResult();
 
 		// reset number of frames processed
