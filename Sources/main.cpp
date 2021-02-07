@@ -17,14 +17,15 @@
 
 // command line parameters (compatible with cv::CommandLineParser)
 const char* g_commandline_params = 
-	"{ help h       |         | Print usage }"
-	"{ vid          |         | Video name (with extension) }"
-	"{ vid_path     |         | Full path for video }"
-	"{ max_threads  |   100   | Max number of threads to use for analyzing the video }"
-	"{ grayscale    |  false  | Treat the video as grayscale (true/false) }"
-	"{ bg_algo      |   hist  | Algorithm for getting background image (hist/tri) }"
-	"{ bg_frame_lim |    -1   | Max number of frames to analyze for background image }"
-	"{ timer_report |   true  | Collect timings for background processing and report them }";
+	"{ help h           |         | Print usage }"
+	"{ vid              |         | Video name (with extension) }"
+	"{ vid_path         |         | Full path for video }"
+	"{ max_threads      |   100   | Max number of threads to use for analyzing the video }"
+	"{ grayscale        |  false  | Treat the video as grayscale [optimization] (true/false) }"
+	"{ vid_is_grayscale |  false  | Video is already grayscale [optimization] (true/false) }"
+	"{ bg_algo          |   hist  | Algorithm for getting background image (hist/tri) }"
+	"{ bg_frame_lim     |    -1   | Max number of frames to analyze for background image }"
+	"{ timer_report     |   true  | Collect timings for background processing and report them }";
 
 int WorkerThreadsFromMax(int max_threads)
 {
@@ -66,6 +67,9 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	// get grayscale setting
 	pack.grayscale = cl_args.get<bool>("grayscale");
 
+	// get vid_is_grayscale setting
+	pack.vid_is_grayscale = cl_args.get<bool>("vid_is_grayscale");
+
 	// get background algorithm
 	pack.bg_algo = cl_args.get<cv::String>("bg_algo");
 
@@ -86,6 +90,7 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 			threads,
 			cl_pack.bg_frame_lim,
 			cl_pack.grayscale,
+			cl_pack.vid_is_grayscale,
 			0,
 			0,
 			0,

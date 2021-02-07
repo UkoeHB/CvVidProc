@@ -47,6 +47,8 @@ struct VidBgPack
 	const long long frame_limit{-1};
 	// whether to convert frames to grayscale before analyzing them
 	const bool grayscale{false};
+	// whether video is already supposedly grayscale
+	const bool vid_is_grayscale{false};
 
 	// x-position of frame-crop region
 	const int crop_x{0};
@@ -88,7 +90,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 		vidbg_pack.vertical_buffer_pixels,
 		vidbg_pack.frame_limit,
 		frame_dimensions,
-		vidbg_pack.grayscale)};
+		vidbg_pack.grayscale,
+		vidbg_pack.vid_is_grayscale)};
 
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,

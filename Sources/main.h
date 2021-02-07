@@ -16,6 +16,7 @@ struct CommandLinePack
 	cv::String vid_path{};
 	int worker_threads{};
 	bool grayscale{};
+	bool vid_is_grayscale{};
 	long long bg_frame_lim{};
 	cv::String bg_algo{};
 	bool print_timing_report{};
@@ -64,7 +65,20 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 					// notify C++ thread it's done
 				}
 
-		
+
+
+plan for bubble tracking
+	
+	- thread: asynctokenprocess (std::async)
+		- gen: sets of frames
+		- algo: highlight bubbles
+		- consume: sets of highlighted bubbles
+
+	- thread: asynctokenprocess - sync mode (main thread)
+		- gen: prev consume
+		- algo: pass highlighted bubbles to python assign_bubbles()
+		- consume: collect final results (bubbles_archive)
+			- note: frameIDs can be obtained by the caller
 
 
 */

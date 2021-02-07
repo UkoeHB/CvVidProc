@@ -261,7 +261,7 @@ public:
 			ss << (batch_timing.total_time / batch_timing.num_intervals).count();
 			str += ss.str();
 		}
-		str += " " + unit + " avg)\n";
+		str += " " + unit + " avg) on time between each generated batch\n";
 
 		// timing info for token generator
 		if (m_token_generator)
@@ -286,7 +286,7 @@ public:
 				ss << (generator_timing.total_time / generator_timing.num_intervals).count();
 				str += ss.str();
 			}
-			str += " " + unit + " avg)\n";
+			str += " " + unit + " avg) on generating batches\n";
 		}
 
 		// timing info for token consumer
@@ -295,7 +295,7 @@ public:
 		{
 			auto consumer_timing{m_token_consumer->template GetTimingReport<TimingReportUnitT>()};
 
-			str += "Token consume: ";
+			str += "Result consume: ";
 			{
 				std::ostringstream ss;
 				ss << consumer_timing.total_time.count();
@@ -313,7 +313,7 @@ public:
 				ss << (consumer_timing.total_time / consumer_timing.num_intervals).count();
 				str += ss.str();
 			}
-			str += " " + unit + " avg)\n";
+			str += " " + unit + " avg) on handling results\n";
 		}
 
 		// timing info for each processing unit
@@ -352,7 +352,7 @@ public:
 				ss << (report.total_time / report.num_intervals).count();
 				str += ss.str();
 			}
-			str += " " + unit + " avg)\n";
+			str += " " + unit + " avg) on ingesting tokens in workers\n";
 		}
 
 		// reset timer

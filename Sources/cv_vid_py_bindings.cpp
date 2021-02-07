@@ -39,6 +39,7 @@ PYBIND11_MODULE(_core, mod)
 				const int,
 				const long long,
 				const bool,
+				const bool,
 				const int,
 				const int,
 				const int,
@@ -53,6 +54,7 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("batch_size"),
 				py::arg("frame_limit") = -1,
 				py::arg("grayscale") = false,
+				py::arg("vid_is_grayscale") = false,
 				py::arg("crop_x") = 0,
 				py::arg("crop_y") = 0,
 				py::arg("crop_width") = 0,
@@ -67,6 +69,7 @@ PYBIND11_MODULE(_core, mod)
 		.def_readonly("batch_size", &VidBgPack::batch_size)
 		.def_readonly("frame_limit", &VidBgPack::frame_limit)
 		.def_readonly("grayscale", &VidBgPack::grayscale)
+		.def_readonly("vid_is_grayscale", &VidBgPack::vid_is_grayscale)
 		.def_readonly("crop_x", &VidBgPack::crop_x)
 		.def_readonly("crop_y", &VidBgPack::crop_y)
 		.def_readonly("crop_width", &VidBgPack::crop_width)

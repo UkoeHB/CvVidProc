@@ -38,13 +38,15 @@ public:
 			const int vertical_buffer_pixels,
 			const long long frame_limit,
 			const cv::Rect crop_rectangle,
-			const bool use_grayscale) : 
+			const bool use_grayscale,
+			const bool vid_is_grayscale) : 
 		TokenBatchGenerator{frames_in_batch*chunks_per_frame, collect_timings},
 		m_vid{vid},
 		m_frame_limit{frame_limit},
 		m_chunks_per_frame{chunks_per_frame},
 		m_crop_rectangle{crop_rectangle},
 		m_convert_to_grayscale{use_grayscale},
+		m_vid_is_grayscale{vid_is_grayscale},
 		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
 		m_vertical_buffer_pixels{vertical_buffer_pixels},
 		m_frame_width{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH))},
@@ -70,8 +72,9 @@ public:
 		assert(m_crop_rectangle.x + m_crop_rectangle.width <= m_frame_width &&
 			m_crop_rectangle.y + m_crop_rectangle.height <= m_frame_height);
 
-		// interpet video frames as RGB format for consistency
-		vid.set(cv::CAP_PROP_CONVERT_RGB, true);
+		// try to interpet video frames as RGB format for consistency (only when not grayscale already)
+		if (!m_vid_is_grayscale)
+			vid.set(cv::CAP_PROP_CONVERT_RGB, true);
 	}
 
 	/// copy constructor: disabled
@@ -116,16 +119,23 @@ protected:
 			frame = frame(m_crop_rectangle);
 
 			// convert to grayscale if desired
-			// this should always work since the vid's CAP_PROP_CONVERT_RGB property was set
-			if (m_convert_to_grayscale)
-				cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
+			cv::Mat modified_frame{};
+
+			if (m_vid_is_grayscale)
+				// video should already be grayscale, so directly get one channel (original grayscale frames have 3 channels)
+				cv::extractChannel(frame, modified_frame, 0);
+			else if (m_convert_to_grayscale)
+				// this should always work since the vid's CAP_PROP_CONVERT_RGB property was set
+				cv::cvtColor(frame, modified_frame, cv::COLOR_RGB2GRAY);
+			else
+				modified_frame = std::move(frame);
 
 			// break frame into chunks
 			return_t temp_chunk_set{};
 
 			if (m_chunks_per_frame == 1)
-				temp_chunk_set.emplace_back(std::make_unique<cv::Mat>(frame));
-			else if (!cv_mat_to_chunks(frame, temp_chunk_set, 1, static_cast<int>(GetBatchSize()), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
+				temp_chunk_set.emplace_back(std::make_unique<cv::Mat>(modified_frame));
+			else if (!cv_mat_to_chunks(modified_frame, temp_chunk_set, 1, static_cast<int>(GetBatchSize()), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
 				std::cerr << "Breaking frame (" << m_frames_consumed + 1 << ") into chunks failed unexpectedly!\n";
 
 			// store the set of chunks
@@ -167,7 +177,9 @@ private:
 	/// rectangle for cropping the frames
 	const cv::Rect m_crop_rectangle{};
 	/// if frames should be converted to grayscale before being tokenized
-	const bool m_convert_to_grayscale{false};
+	const bool m_convert_to_grayscale{};
+	/// if video is already grayscale (optimization)
+	const bool m_vid_is_grayscale{};
 	/// number of chunks to break each frame into
 	const int m_chunks_per_frame{};
 

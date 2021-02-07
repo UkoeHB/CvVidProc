@@ -69,7 +69,8 @@ cmake --build BuildR
 Execute program.:
 
 ```
-./Build(R)/vid_bg --vid=vid.mp4
+./Build/vid_bg --vid=vid.mp4
+./BuildR/vid_bg --vid=vid.mp4
 ```
 
 Notes:
