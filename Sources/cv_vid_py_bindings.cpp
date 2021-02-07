@@ -82,6 +82,8 @@ PYBIND11_MODULE(_core, mod)
 
 	/// funct GetVideoBackground()
 	mod.def("GetVideoBackground", &GetVideoBackground, "Get the background of an OpenCV video.",
+		// no need to hold the GIL in long-running C++ code
+		py::call_guard<py::gil_scoped_release>(),
 		py::arg("pack"));
 }
 

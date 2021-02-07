@@ -70,8 +70,6 @@ protected:
 		m_fragments[index_in_batch].emplace_back(std::move(*intermediate_result));
 
 		// check if a full image can be assembled
-		bool no_luck{false};
-
 		for (const auto &frag_list : m_fragments)
 		{
 			if (frag_list.empty())

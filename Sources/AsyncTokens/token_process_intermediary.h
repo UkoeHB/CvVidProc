@@ -47,7 +47,7 @@ public:
 
 //member functions
 	/// consume a token from first process; should call AddNextBatch() periodically
-	virtual void ConsumeToken(std::unique_ptr<InTokenT> input_token, const std::size_t index_in_batch) = 0;
+	virtual void ConsumeTokenImpl(std::unique_ptr<InTokenT> input_token, const std::size_t index_in_batch) = 0;
 
 	/// get final result; should also reset the child object in case a new production run is started
 	virtual std::unique_ptr<FinalResultT> GetFinalResultImpl() = 0;
@@ -65,19 +65,31 @@ public:
 	}
 
 	/// add next token set to queue for second process to obtain (blocks)
-	void AddNextBatch(std::vector<std::unique_ptr<OutTokenT>> &out_batch)
+	virtual void AddNextBatch(std::vector<std::unique_ptr<OutTokenT>> &out_batch) final
 	{
 		m_shuttle_queue.InsertToken(out_batch);
 	}
 
 	/// gets a token set when it is available (blocks)
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSet() override final
+	virtual std::vector<std::unique_ptr<OutTokenT>> GetTokenSetImpl() override final
 	{
-		std::vector<std::unique_ptr<TokenT>> return_token_set{};
+		std::vector<std::unique_ptr<OutTokenT>> return_token_set{};
 
 		m_shuttle_queue.GetToken(return_token_set);
 
 		return return_token_set;
+	}
+
+	/// wrapper to get generator batch size
+	virtual std::size_t GetBatchSizeGenerator() final
+	{
+		return TokenBatchGenerator<OutTokenT>::GetBatchSize();
+	}
+
+	/// wrapper to get consumer batch size
+	virtual std::size_t GetBatchSizeConsumer() final
+	{
+		return TokenBatchConsumer<InTokenT, FinalResultT>::GetBatchSize();
 	}
 
 private:

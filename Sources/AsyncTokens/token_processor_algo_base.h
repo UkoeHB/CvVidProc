@@ -34,7 +34,7 @@ public:
 	TokenProcessorAlgoBase() = delete;
 
 	/// normal constructor
-	TokenProcessorAlgoBase(TokenProcessorPack<AlgoT> processor_pack) : m_processor_pack{std::move(processor_pack)}
+	TokenProcessorAlgoBase(TokenProcessorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
@@ -60,7 +60,7 @@ public:
 
 protected:
 //member variables
-	TokenProcessorPack<AlgoT> m_processor_pack{};
+	TokenProcessorPack<AlgoT> m_pack{};
 };
 
 
