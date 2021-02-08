@@ -177,7 +177,10 @@ void test_bubbletracking(cv::Mat &test_frame)
 	}
 
 	// print result
-	py::print(*bubbles_archive);
+	if (bubbles_archive)
+		py::print(*bubbles_archive);
+	else
+		py::print("assign bubbles returned no archive");
 }
 
 } //rand_tests namespace

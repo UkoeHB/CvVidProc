@@ -74,6 +74,8 @@ public:
 //destructor
 	~AssignBubblesAlgo()
 	{
+		// it is best to always call NotifyNoMoreTokens() before destroying the algo, which will clean up the python resources,
+		// so you don't have to acquire the GIL during destruction (might cause problems)
 		if (m_bubbles_active || m_bubbles_archive)
 		{
 			// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)

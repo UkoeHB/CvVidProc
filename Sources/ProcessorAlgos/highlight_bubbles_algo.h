@@ -32,7 +32,7 @@ struct TokenProcessorPack<HighlightBubblesAlgo> final
 };
 
 ////
-// implementation for algorithm: highlight bubbles
+// C++ implementation for algorithm: highlight_bubble_hyst_thresh()
 // obtains a cv::Mat image and uses heuristics to process the image so bubble-like objects are highlighted
 ///
 class HighlightBubblesAlgo final : public TokenProcessorAlgoBase<HighlightBubblesAlgo, cv::Mat, cv::Mat>

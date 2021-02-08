@@ -123,13 +123,16 @@ include_directories(${GENERATED_FILES})
 # common sources
 set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bg_helpers.cpp
-        Sources/cv_util.cpp
-        Sources/triframe_median_algo.cpp
-        Sources/highlight_bubbles_algo.cpp
-        Sources/ndarray_converter.cpp)
+        Sources/ProcessorAlgos/triframe_median_algo.cpp
+        Sources/ProcessorAlgos/highlight_bubbles_algo.cpp
+        Sources/Utility/cv_util.cpp
+        Sources/Utility/ndarray_converter.cpp)
 
 # common headers
-set(COMMON_INC Sources/AsyncTokens)
+set(COMMON_INC Sources/AsyncTokens
+        Sources/ProcessorAlgos
+        Sources/ProcessorTokenHandlers
+        Sources/Utility)
 
 
 
@@ -138,7 +141,7 @@ set(COMMON_INC Sources/AsyncTokens)
 
 # only create python bindings in Release mode
 if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
-    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
+    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/py_bindings.cpp)
 
     # connect headers to module target
     target_include_directories(_core PUBLIC ${COMMON_INC})
@@ -176,10 +179,13 @@ endif ()
 #custom commands
 
 # copy python scripts
-add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
-)
+# currently these are only used by the C++ executable, so don't copy them for python module
+if (NOT SKBUILD)
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
+    )
+endif ()
 
 
 
