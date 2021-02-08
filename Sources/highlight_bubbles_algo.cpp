@@ -61,10 +61,6 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
     //bubble_bw_2 = remove_small_objects(closed_bw_2, min_size_hyst)
 	remove_small_objects_find(thresh_bw_2, m_pack.min_size_hyst);
 
-    // fills enclosed holes with white, but leaves open holes black
-    //bubble_part_filled = basic.fill_holes(bubble_bw_2)
-	fill_holes(thresh_bw_2);
-
     // fills in holes that might be cut off at border
     //bubble_2 = frame_and_fill(bubble_part_filled, width_border)
 	// why do fill_holes() before this? why not just do frame_and_fill() in the first place
