@@ -9,12 +9,16 @@
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
 
 //standard headers
 #include <chrono>
 #include <iostream>
 #include <thread>		//for std::thread::hardware_concurrency()
 
+
+namespace py = pybind11;
 
 // command line parameters (compatible with cv::CommandLineParser)
 const char* g_commandline_params = 
@@ -185,6 +189,13 @@ int main(int argc, char* argv[])
 	else
 		std::cerr << "Bubbles frame created was malformed, unexpectedly!\n";
 	*/
+
+	// test assign_bubbles
+	// create Python interpreter
+	py::scoped_interpreter guard{};
+
+	py::module_ sys = py::module_::import("sys");
+	py::print(sys.attr("path"));
 
 	return 0;
 }

@@ -53,7 +53,9 @@ find_package(${OPENCV} REQUIRED PATHS ${CV_DIR})
 set(LIB_INCLUDE_DIRS "${${OPENCV}_INCLUDE_DIRS}")
 set(MAIN_LIBS "${${OPENCV}_LIBS}")
 
-# only create python bindings in Release mode
+
+# python and numpy
+# for scikit-build must do this
 if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     # thanks to: https://github.com/pybind/scikit_build_example
     # Currently, Scikit-build does not support FindPython, so we convert the
@@ -63,25 +65,29 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     set(Python3_LIBRARY "${PYTHON_LIBRARY}")
     set(DUMMY "${PYTHON_VERSION_STRING}")  # Not needed, silences a warning
 
-    # note: NumPy is added for converting NumPy arrays <-> cv::Mat
     set(Python3_FIND_IMPLEMENTATIONS CPython PyPy)  # PyPy requires 3.18
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
-
-    # Scikit-Build does not add your site-packages to the search path automatically,
-    # so we need to add it _or_ the pybind11 specific directory here.
-    execute_process(
-      COMMAND
-        "${Python3_EXECUTABLE}" -c
-        "import pybind11; print(pybind11.get_cmake_dir())"
-      OUTPUT_VARIABLE _tmp_dir
-      OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-    list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-
-    # Now we can find pybind11
-    find_package(pybind11 CONFIG REQUIRED)
-elseif (SKBUILD)
-    message(WARNING ":: unexpectedly tried to build with scikit-build but not in Release mode! Python module not built.")
 endif ()
+
+# note: NumPy is added for converting NumPy arrays <-> cv::Mat
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
+set(MAIN_LIBS ${MAIN_LIBS} Python3::NumPy)
+
+
+# pybind11
+# Scikit-Build does not add your site-packages to the search path automatically,
+# so we need to add it _or_ the pybind11 specific directory here.
+execute_process(
+  COMMAND
+    "${Python3_EXECUTABLE}" -c
+    "import pybind11; print(pybind11.get_cmake_dir())"
+  OUTPUT_VARIABLE _tmp_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+
+# Now we can find pybind11
+find_package(pybind11 CONFIG REQUIRED)
+set(MAIN_LIBS ${MAIN_LIBS} pybind11::embed)
+
 
 # threading support (thanks to https://stackoverflow.com/a/29871891/14080627)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -115,10 +121,12 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
 
     # connect libraries to module target
     target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(_core PUBLIC ${MAIN_LIBS} Python3::NumPy)
+    target_link_libraries(_core PUBLIC ${MAIN_LIBS})
 
     # install the module
     install(TARGETS _core DESTINATION .)
+elseif (SKBUILD)
+    message(WARNING ":: unexpectedly tried to build with scikit-build but not in Release mode! Python module not built.")
 endif ()
 
 
@@ -138,10 +146,14 @@ if (NOT SKBUILD)
 endif ()
 
 
+######################################
+#custom commands
 
-
-
-
+# copy python scripts
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/PySources/bubble_tracking $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/bubble_tracking
+)
 
 
 
