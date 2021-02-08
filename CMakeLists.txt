@@ -96,7 +96,8 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bg_helpers.cpp
         Sources/cv_util.cpp
-        Sources/triframe_median_algo.cpp)
+        Sources/triframe_median_algo.cpp
+        Sources/highlight_bubbles_algo.cpp)
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens)

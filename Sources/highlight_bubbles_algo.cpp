@@ -1,14 +1,14 @@
 // highlights bubbles in an image
 
 //local headers
-#include "token_processor_algo_base.h"
+#include "highlight_bubbles_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
 
 //standard headers
+#include <iostream>
 #include <memory>
-#include <type_traits>
 #include <vector>
 
 
@@ -22,8 +22,8 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
     */
 
 	//im_diff = cv2.absdiff(bkgd, frame)
-	cv::Mat im_diff{};
-	cv2::absdiff(m_pack.background, frame, im_diff);
+	cv::Mat im_diff{cv::Size{frame.cols, frame.rows}, frame.type()};
+	cv::absdiff(m_pack.background, frame, im_diff);
 
     ///////////////////// THRESHOLD AND HIGH MIN SIZE /////////////////////
     // thresholds image to become black-and-white
@@ -32,17 +32,16 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
 
     // smooths out thresholded image
     //closed_bw_1 = cv2.morphologyEx(thresh_bw_1, cv2.MORPH_OPEN, selem)
-	cv::Mat closed_bw_1
-	cv2::morphologyEx(thresh_bw_1, closed_bw_1, cv2::MorphTypes::MORPH_OPEN, m_pack.struct_element);
+	cv::morphologyEx(thresh_bw_1, thresh_bw_1, cv::MorphTypes::MORPH_OPEN, m_pack.struct_element);
 
     // removes small objects
     //                                                     min_size=min_size_th)
     //bubble_bw_1 = remove_small_objects(closed_bw_1, min_size_th)
-	cv::Mat bubble_bw_1{remove_small_objects_find(closed_bw_1, m_pack.min_size_threshold)};
+	remove_small_objects_find(thresh_bw_1, m_pack.min_size_threshold);
 
     // fills enclosed holes with white, but leaves open holes black
     //bubble_1 = basic.fill_holes(bubble_bw_1)
-	fill_holes(bubble_bw_1);
+	fill_holes(thresh_bw_1);
 
     ///////////////////// HYSTERESIS THRESHOLD AND LOW MIN SIZE /////////////////////
     // thresholds image to become black-and-white
@@ -56,25 +55,25 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
 
     // smooths out thresholded image
     //closed_bw_2 = cv2.morphologyEx(thresh_bw_2, cv2.MORPH_OPEN, selem)
-	cv::Mat closed_bw_2
-	cv2::morphologyEx(thresh_bw_2, closed_bw_2, cv2::MorphTypes::MORPH_OPEN, m_pack.struct_element);
+	cv::morphologyEx(thresh_bw_2, thresh_bw_2, cv::MorphTypes::MORPH_OPEN, m_pack.struct_element);
 
     // removes small objects
     //bubble_bw_2 = remove_small_objects(closed_bw_2, min_size_hyst)
-	remove_small_objects_find(closed_bw_2, m_pack.min_size_hyst);
+	remove_small_objects_find(thresh_bw_2, m_pack.min_size_hyst);
 
     // fills enclosed holes with white, but leaves open holes black
     //bubble_part_filled = basic.fill_holes(bubble_bw_2)
-	fill_holes(closed_bw_2);
+	fill_holes(thresh_bw_2);
 
     // fills in holes that might be cut off at border
     //bubble_2 = frame_and_fill(bubble_part_filled, width_border)
 	// why do fill_holes() before this? why not just do frame_and_fill() in the first place
-	frame_and_fill(closed_bw_2, m_pack.width_border);
+	frame_and_fill(thresh_bw_2, m_pack.width_border);
 
     // merges images to create final image
     //bubble = np.logical_or(bubble_1, bubble_2)
-	cv::bitwise_or(bubble_bw_1, closed_bw_2, frame);
+	cv::bitwise_or(thresh_bw_1, thresh_bw_2, frame);
+
 }
 
 /// C++ implementation of thresh_im()
@@ -91,13 +90,13 @@ cv::Mat HighlightBubblesAlgo::thresh_im(cv::Mat &image, const int threshold)
 		// Otsu's thresholding (automatically finds optimal thresholding value)
 	    //ret, thresh_im = cv2.threshold(im, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 	    // (ignores return val)
-		cv2::threshold(image, thresholded_im, 0, 255, cv2::ThresholdTypes::THRESH_BINARY + cv2::ThresholdTypes::THRESH_OTSU)
+		cv::threshold(image, thresholded_im, 0, 255, cv::ThresholdTypes::THRESH_BINARY + cv::ThresholdTypes::THRESH_OTSU);
 	}
 	else
 	{
 	    //ret, thresh_im = cv2.threshold(im, thresh, 255, cv2.THRESH_BINARY)
 	    // (ignores return val)
-		cv2::threshold(image, thresholded_im, threshold, 255, cv2::ThresholdTypes::THRESH_BINARY)
+		cv::threshold(image, thresholded_im, threshold, 255, cv::ThresholdTypes::THRESH_BINARY);
 	}
 
 	return thresholded_im;
@@ -115,16 +114,16 @@ cv::Mat HighlightBubblesAlgo::hysteresis_threshold(cv::Mat &image, const int thr
 	*/
 	//_, thresh_upper = cv2.threshold(im, th_hi, 128, cv2.THRESH_BINARY)
 	cv::Mat thresh_upper{};
-	cv2::threshold(image, thresh_upper, threshold_hi, 128, cv2::ThresholdTypes::THRESH_BINARY)
+	cv::threshold(image, thresh_upper, threshold_hi, 128, cv::ThresholdTypes::THRESH_BINARY);
 
 	//_, thresh_lower = cv2.threshold(im, th_lo, 128, cv2.THRESH_BINARY)
 	cv::Mat thresh_lower{};
-	cv2::threshold(image, thresh_lower, threshold_lo, 128, cv2::ThresholdTypes::THRESH_BINARY)
+	cv::threshold(image, thresh_lower, threshold_lo, 128, cv::ThresholdTypes::THRESH_BINARY);
 
     // finds the contours to get the seed from which to start the floodfill
 	//_, cnts_upper, _ = cv2.findContours(thresh_upper, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 	std::vector<std::vector<cv::Point>> countours_upper{};
-	cv2::findContours(thresh_upper, countours_upper, cv::RetrievalModes::RETR_EXTERNAL, cv::ContourApproximationModes::CHAIN_APPROX_NONE);
+	cv::findContours(thresh_upper, countours_upper, cv::RetrievalModes::RETR_EXTERNAL, cv::ContourApproximationModes::CHAIN_APPROX_NONE);
 
     // Makes brighter the regions that contain a seed
     for (auto countour : countours_upper)
@@ -133,12 +132,12 @@ cv::Mat HighlightBubblesAlgo::hysteresis_threshold(cv::Mat &image, const int thr
 	    // cv2.floodFill(threshLower, cnt[0], 255, 0, 2, 2, CV_FLOODFILL_FIXED_RANGE)
 	    // Python implementation
 		//cv2.floodFill(thresh_lower, None, tuple(cnt[0][0]), 255, 2, 2, cv2.FLOODFILL_FIXED_RANGE)
-		cv2::floodFill(thresh_lower, countour[0], cv::Scalar{255}, 0, 2, 2, cv2::FloodFillFlags::FLOODFILL_FIXED_RANGE);
+		cv::floodFill(thresh_lower, countour[0], cv::Scalar{255}, 0, 2, 2, cv::FloodFillFlags::FLOODFILL_FIXED_RANGE);
 	}
 
     // thresholds the image again to make black the unfilled regions
 	//_, im_thresh = cv2.threshold(thresh_lower, 200, 255, cv2.THRESH_BINARY)
-	cv2::threshold(thresh_lower, thresh_lower, 200, 255, cv2::ThresholdTypes::THRESH_BINARY)
+	cv::threshold(thresh_lower, thresh_lower, 200, 255, cv::ThresholdTypes::THRESH_BINARY);
 
 	return thresh_lower;
 }
@@ -158,7 +157,7 @@ void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int m
 	// Filter using contour area and remove small noise
 	//_, cnts, _ = cv2.findContours(im, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	std::vector<std::vector<cv::Point>> contours{};
-	cv2::findContours(image, contours, cv::RetrievalModes::RETR_TREE, cv::ContourApproximationModes::CHAIN_APPROX_SIMPLE);
+	cv::findContours(image, contours, cv::RetrievalModes::RETR_TREE, cv::ContourApproximationModes::CHAIN_APPROX_SIMPLE);
 
 	std::vector<std::vector<cv::Point>> thresholded_contours{};
 	thresholded_contours.reserve(contours.size());
@@ -166,7 +165,7 @@ void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int m
     for (auto contour : contours)
     {
         //area = cv2.contourArea(c)
-		double area = cv2::contourArea(contour);
+		double area = cv::contourArea(contour);
 
 	    if (area < min_size_threshold)
 	    {
@@ -175,7 +174,7 @@ void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int m
 	    }
 	}
 
-	cv2::drawContours(image, thresholded_contours, -1, cv::Scalar{0, 0, 0}, -1);
+	cv::drawContours(image, thresholded_contours, -1, cv::Scalar{0, 0, 0}, -1);
 
 	// return by reference
 }
@@ -196,7 +195,7 @@ void HighlightBubblesAlgo::fill_holes(cv::Mat &image)
     // fills bkgd with white (assuming origin is contiguously connected with bkgd)
     //cv2.floodFill(im_floodfill, None, (0,0), 255)
 	// (ignores return val)
-	cv2::floodFill(im_floodfill, cv::Point{0,0}, cv::Scalar{255});
+	cv::floodFill(im_floodfill, cv::Point{0,0}, cv::Scalar{255});
 
     // inverts image (black -> white and white -> black)
     //im_inv = cv2.bitwise_not(im_floodfill)
@@ -231,22 +230,25 @@ void HighlightBubblesAlgo::frame_and_fill(cv::Mat &image, const int width_border
     //mask_frame_sides[-w:-1,:] = 0
     // frames sides of filled bubble image
     //im_framed = np.logical_or(im, mask_frame_sides)
-	
+
+	assert(image.cols > 2*width_border);
+    assert(image.rows > 2*width_border);
+
 	// instead just make a sliver image and use .copyTo()
 	// make sides all white
-	cv::Mat cutoff_sliver{image.rows, width_border, image.type(), cv::Scalar{255}};
+	cv::Mat cutoff_sliver{image.rows - 2*width_border, width_border, image.type(), cv::Scalar{255}};
 	cutoff_sliver.copyTo(image(cv::Rect(
         0,
-        0,
         width_border,
-        image.rows
+        width_border,
+        image.rows - 2*width_border
     )));
 
 	cutoff_sliver.copyTo(image(cv::Rect(
         image.cols - width_border,  //other side
-        0,
         width_border,
-        image.rows
+        width_border,
+        image.rows - 2*width_border
     )));
 
     // fills in open space in the middle of the bubble that might not get
@@ -261,16 +263,16 @@ void HighlightBubblesAlgo::frame_and_fill(cv::Mat &image, const int width_border
 	cutoff_sliver = cv::Scalar{0};
 	cutoff_sliver.copyTo(image(cv::Rect(
         0,
-        0,
         width_border,
-        image.rows
+        width_border,
+        image.rows - 2*width_border
     )));
 
 	cutoff_sliver.copyTo(image(cv::Rect(
         image.cols - width_border,  //other side
-        0,
         width_border,
-        image.rows
+        width_border,
+        image.rows - 2*width_border
     )));
 
 	// return by reference

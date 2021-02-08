@@ -2,6 +2,7 @@
 
 //local headers
 #include "cv_vid_bg_helpers.h"
+#include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "project_dir_config.h"
 #include "ts_interval_timer.h"
@@ -133,6 +134,57 @@ int main(int argc, char* argv[])
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
+
+	/*
+	// test bubble highlighting
+	// for test video 'bubble_15000fps.mp4'
+
+	// set parameters
+	TokenProcessorPack<HighlightBubblesAlgo> bubbles_pack{
+		background_frame,
+		cv::getStructuringElement(cv::MorphShapes::MORPH_ELLIPSE, cv::Size{4, 4}),
+		14,
+		7,
+		16,
+		20,
+		20,
+		5
+	};
+
+	// create algo object for processing frames (highlighting bubbles)
+	HighlightBubblesAlgo highlight_bubbles{bubbles_pack};
+
+	// get 10th frame of video
+	cv::VideoCapture vid{cl_pack.vid_path};
+	vid.set(cv::CAP_PROP_POS_FRAMES, 10);
+
+	cv::Mat vid_frame{};
+	vid >> vid_frame;
+
+	// grayscale (if vid is grayscale)
+	cv::Mat modified_frame{};
+	cv::extractChannel(vid_frame, modified_frame, 0);
+
+	// convert format
+	std::unique_ptr<cv::Mat> frame{std::make_unique<cv::Mat>(modified_frame)};
+
+	// insert to algo (processes the frame)
+	highlight_bubbles.Insert(std::move(frame));
+
+	// get the processed result out
+	frame = highlight_bubbles.TryGetResult();
+
+	// display the highlighted bubbles
+	if (frame && frame->data && !frame->empty())
+	{
+		cv::imshow("Highlighted Bubbles", *frame);
+
+		// wait for a keypress before ending
+		int keypress{cv::waitKey()};
+	}
+	else
+		std::cerr << "Bubbles frame created was malformed, unexpectedly!\n";
+	*/
 
 	return 0;
 }

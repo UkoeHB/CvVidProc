@@ -11,7 +11,6 @@
 
 //standard headers
 #include <memory>
-#include <type_traits>
 #include <vector>
 
 
@@ -26,7 +25,7 @@ struct TokenProcessorPack<HighlightBubblesAlgo> final
 	cv::Mat struct_element;
 	const int threshold;
 	const int threshold_lo;
-	const int threshold_hi
+	const int threshold_hi;
 	const int min_size_hyst;
 	const int min_size_threshold;
 	const int width_border;
@@ -44,7 +43,7 @@ public:
 	HighlightBubblesAlgo() = delete;
 
 	/// normal constructor
-	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo<T>> processor_pack) : TokenProcessorAlgoBase<HighlightBubblesAlgo, cv::Mat, cv::Mat>{std::move(processor_pack)}
+	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgoBase<HighlightBubblesAlgo, cv::Mat, cv::Mat>{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
@@ -103,7 +102,7 @@ public:
 	void fill_holes(cv::Mat &image);
 
 	/// C++ implementation of frame_and_fill()
-	void frame_and_fill(cv::Mat &image, const int width_border)
+	void frame_and_fill(cv::Mat &image, const int width_border);
 
 
 private:
@@ -113,7 +112,9 @@ private:
 };
 
 
-//endif //header guard
+#endif //header guard
+
+
 
 
 
