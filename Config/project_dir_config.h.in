@@ -6,8 +6,8 @@
 namespace config
 {
 
-const char *videos_dir = "${VIDEO_DIR}";
-const char *pylibs_dir = "${PYLIBS_DIR}";
+constexpr const char *videos_dir = "${VIDEO_DIR}";
+constexpr const char *pylibs_dir = "${PYLIBS_DIR}";
 
 }
 

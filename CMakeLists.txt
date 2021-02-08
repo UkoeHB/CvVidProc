@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.15...3.17)
 message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 
+
 ######################################
 #inputs
 
@@ -14,6 +15,7 @@ set(CV_DIR "" CACHE STRING "Path to OpenCV library, e.g. '~/MyLibs/' (intended f
 
 # location of OpenCV installation
 set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/OpenCV/opencv-1.2.3/release/' (intended for manual installs of OpenCV)")
+
 
 
 ######################################
@@ -26,6 +28,7 @@ project(vid_bg
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
+
 
 
 ######################################
@@ -41,7 +44,6 @@ set(PYLIBS_DIR ${CMAKE_BINARY_DIR}/PyLibs/)
 set(GENERATED_FILES ${CMAKE_BINARY_DIR}/generated)
 configure_file(Config/project_dir_config.h.in ${GENERATED_FILES}/project_dir_config.h)
 include_directories(${GENERATED_FILES})
-
 
 
 
@@ -100,6 +102,16 @@ find_package(Threads REQUIRED)
 set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
+# third party bubble tracking library (python scripts needed at run-time)
+FetchContent_Declare(
+    bubbletracking
+    GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
+    GIT_TAG 5ae4b0f923434fb9a4427c343bc50d79bc933b65
+)
+FetchContent_Populate(bubbletracking)
+
+
+
 ######################################
 #set sources/headers
 
@@ -112,6 +124,7 @@ set(COMMON_SRC Sources/main.cpp
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens)
+
 
 
 ######################################
@@ -135,12 +148,13 @@ elseif (SKBUILD)
 endif ()
 
 
+
 ######################################
 #executable target
 
 # do not build main executable when python module is being installed
 if (NOT SKBUILD)
-    add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC})
+    add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC} Sources/rand_tests.cpp)
 
     # connect headers to executable target
     target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${COMMON_INC})
@@ -149,6 +163,7 @@ if (NOT SKBUILD)
     target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
     target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${MAIN_LIBS})
 endif ()
+
 
 
 ######################################

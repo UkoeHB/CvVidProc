@@ -1,0 +1,23 @@
+// random tests
+
+#ifndef RAND_TESTS_78989_H
+#define RAND_TESTS_78989_H
+
+//local headers
+#include "main.h"
+
+//third party headers
+#include <opencv2/opencv.hpp>	//for video manipulation (mainly)
+
+//standard headers
+
+namespace rand_tests
+{
+
+void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack);
+void test_embedded_python();
+
+}
+
+
+#endif //header guard

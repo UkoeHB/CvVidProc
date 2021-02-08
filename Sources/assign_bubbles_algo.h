@@ -53,7 +53,6 @@ public:
 		TokenProcessorAlgoBase<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>{std::move(processor_pack)}
 	{
 		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
-		//TODO: is this necessary here?
 		py::gil_scoped_acquire gil;
 
 		// prepare the wrapped function
