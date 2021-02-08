@@ -13,6 +13,7 @@
 #include <pybind11/embed.h>
 
 //standard headers
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <thread>		//for std::thread::hardware_concurrency()
@@ -131,10 +132,10 @@ int main(int argc, char* argv[])
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())
 	{
-		cv::imshow("Median Frame", background_frame);
+//		cv::imshow("Median Frame", background_frame);
 
 		// wait for a keypress before ending
-		int keypress{cv::waitKey()};
+//		int keypress{cv::waitKey()};
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
@@ -194,8 +195,14 @@ int main(int argc, char* argv[])
 	// create Python interpreter
 	py::scoped_interpreter guard{};
 
+	// add location of local python libs to path so they can be found
 	py::module_ sys = py::module_::import("sys");
-	py::print(sys.attr("path"));
+	py::object path = sys.attr("path");
+	path.attr("insert")(0, config::pylibs_dir);
+
+	py::module_ test = py::module_::import("test1");
+	py::function testfunc = test.attr("testfunc");
+	testfunc();
 
 	return 0;
 }

@@ -34,10 +34,15 @@ set(CMAKE_CXX_STANDARD 14)
 # config setting: directory containing videos
 set(VIDEO_DIR ${CMAKE_SOURCE_DIR}/Videos/)
 
+# config setting: directory containing local python libs
+set(PYLIBS_DIR ${CMAKE_BINARY_DIR}/PyLibs/)
+
 # config setup: for project directory (auto generated header)
 set(GENERATED_FILES ${CMAKE_BINARY_DIR}/generated)
 configure_file(Config/project_dir_config.h.in ${GENERATED_FILES}/project_dir_config.h)
 include_directories(${GENERATED_FILES})
+
+
 
 
 ######################################
@@ -152,7 +157,7 @@ endif ()
 # copy python scripts
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/PySources/bubble_tracking $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/bubble_tracking
+    ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
 )
 
 
