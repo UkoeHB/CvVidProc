@@ -5,6 +5,7 @@
 
 //local headers
 #include "ndarray_converter.h"
+#include "project_dir_config.h"
 #include "token_processor_algo_base.h"
 
 //third party headers
@@ -13,6 +14,7 @@
 
 //standard headers
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -26,7 +28,7 @@ class AssignBubblesAlgo;
 template <>
 struct TokenProcessorPack<AssignBubblesAlgo> final
 {
-	cv::Mat bubble_img;
+	std::string bubbletracking_module;
 	py::tuple flow_dir;
 	const int fps;
 	const int pix_per_um;
@@ -40,6 +42,12 @@ struct TokenProcessorPack<AssignBubblesAlgo> final
 // obtains a vector of ordered cv::Mats and passes them to a Python method (this is a glorified wrapper)
 // keeps track of all the bubbles that have been identified, and the most recent 'active bubbles'
 // 	so bubbles that appear in more than one frame can be tracked
+// note: expects the bubbletracking module to be available in sys.path, which may need to be pointed to by the caller
+//  #include "project_dir_config.h"
+//
+// 	py::module_ sys = py::module_::import("sys");
+//  py::object path = sys.attr("path");
+//  path.attr("insert")(0, config::bubbletracking_dir);
 ///
 class AssignBubblesAlgo final : public TokenProcessorAlgoBase<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
 {
@@ -49,21 +57,33 @@ public:
 	AssignBubblesAlgo() = delete;
 
 	/// normal constructor
-	AssignBubblesAlgo(TokenProcessorPack<AssignBubblesAlgo<T>> processor_pack) :
+	AssignBubblesAlgo(TokenProcessorPack<AssignBubblesAlgo> processor_pack) :
 		TokenProcessorAlgoBase<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>{std::move(processor_pack)}
 	{
 		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
 		py::gil_scoped_acquire gil;
 
 		// prepare the wrapped function
-		py::module_ algo_module = py::module_::import("...");
+		py::module_ algo_module = py::module_::import(m_pack.bubbletracking_module.c_str());
 		m_algo_func = algo_module.attr("assign_bubbles");
 	}
 
 	/// copy constructor: disabled
 	AssignBubblesAlgo(const AssignBubblesAlgo&) = delete;
 
-//destructor: not needed (final class)
+//destructor
+	~AssignBubblesAlgo()
+	{
+		if (m_bubbles_active || m_bubbles_archive)
+		{
+			// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
+			py::gil_scoped_acquire gil;
+
+			// destroy the python dictionaries within the GIL
+			m_bubbles_active = nullptr;
+			m_bubbles_archive = nullptr;
+		}
+	}
 
 //overloaded operators
 	/// copy assignment operators: disabled
@@ -86,6 +106,13 @@ public:
 		// courtesy of https://github.com/edmBernard/pybind11_opencv_numpy
 		NDArrayConverter::init_numpy();
 
+		// make sure the dictionaries are available
+		if (!m_bubbles_active)
+			m_bubbles_active = std::make_unique<py::dict>();
+
+		if (!m_bubbles_archive)
+			m_bubbles_archive = std::make_unique<py::dict>();
+
 		// process each input image
 		for (auto image : *in_mats)
 		{
@@ -96,18 +123,20 @@ public:
 			// process the Mat
 			// - python call
 			using namespace pybind11::literals;		// for '_a'
-			m_current_id = m_algo_func("bubbles_bw"_a = image,
+			m_current_id = m_algo_func("frame_bw"_a = image,
 				"f"_a = m_num_processed,
-				"bubbles_prev"_a = m_bubbles_active,
-				"bubbles_archive"_a = m_bubbles_archive,
+				"bubbles_prev"_a = *m_bubbles_active,
+				"bubbles_archive"_a = *m_bubbles_archive,
 				"ID_curr"_a = m_current_id,
 				"flow_dir"_a = m_pack.flow_dir,
 				"fps"_a = m_pack.fps,
 				"pix_per_um"_a = m_pack.pix_per_um,
 				"width_border"_a = m_pack.width_border,
+				"row_lo"_a = 0,
+				"row_hi"_a = image.rows,
 				"v_max"_a = m_pack.v_max,
 				"min_size_reg"_a = m_pack.min_size_reg
-			);
+			).cast<int>();
 
 			m_num_processed++;
 		}
@@ -127,17 +156,17 @@ public:
 	virtual void NotifyNoMoreTokens() override
 	{
 		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
-		//TODO: is this necessary here?
 		py::gil_scoped_acquire gil;
 
 		// move the bubbles archive into the result variable so it can be extracted
 		// - no more frames will be processed so we are done
-		m_result = std::make_unique<py::dict>(std::move(m_bubbles_archive));
+		m_result = std::move(m_bubbles_archive);
 
 		// reset variables
 		m_num_processed = 0;
 		m_current_id = 0;
-		m_bubbles_active = py::dict{};
+		m_bubbles_active = nullptr;
+		m_bubbles_archive = nullptr;
 	}
 
 private:
@@ -150,9 +179,9 @@ private:
 	/// current ID
 	int m_current_id{0};
 	/// still-alive bubbles
-	py::dict m_bubbles_active;
+	std::unique_ptr<py::dict> m_bubbles_active;
 	/// all bubbles encountered
-	py::dict m_bubbles_archive;
+	std::unique_ptr<py::dict> m_bubbles_archive;
 
 	/// store result in anticipation of future requests
 	std::unique_ptr<py::dict> m_result{};

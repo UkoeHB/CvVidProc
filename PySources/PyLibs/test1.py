@@ -1,6 +1,5 @@
 def testfunc(mydict, key, data):
-	print('mydict info')
-	print(len(mydict))
+	print('testing dictionary')
 	print(type(mydict))
 
 	mydict[key] = data
@@ -9,5 +8,4 @@ def testfunc(mydict, key, data):
 	else:
 		mydict["num"] = 1
 
-	print(mydict[key])
-	print(mydict["num"])
+	print(mydict)

@@ -14,8 +14,10 @@
 namespace rand_tests
 {
 
-void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack);
 void test_embedded_python();
+
+void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack, bool add_test_bubbletracking);
+void test_bubbletracking(cv::Mat &test_frame);
 
 }
 

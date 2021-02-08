@@ -8,8 +8,13 @@ namespace config
 
 constexpr const char *videos_dir = "${VIDEO_DIR}";
 constexpr const char *pylibs_dir = "${PYLIBS_DIR}";
+constexpr const char *bubbletracking_dir = "${BUBBLETRACKING_DIR}";
 
 }
 
 
 #endif 	//header guard
+
+
+
+

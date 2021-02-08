@@ -32,22 +32,6 @@ set(CMAKE_CXX_STANDARD 14)
 
 
 ######################################
-#config for project
-
-# config setting: directory containing videos
-set(VIDEO_DIR ${CMAKE_SOURCE_DIR}/Videos/)
-
-# config setting: directory containing local python libs
-set(PYLIBS_DIR ${CMAKE_BINARY_DIR}/PyLibs/)
-
-# config setup: for project directory (auto generated header)
-set(GENERATED_FILES ${CMAKE_BINARY_DIR}/generated)
-configure_file(Config/project_dir_config.h.in ${GENERATED_FILES}/project_dir_config.h)
-include_directories(${GENERATED_FILES})
-
-
-
-######################################
 #get libraries
 
 # opencv
@@ -103,12 +87,33 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 # third party bubble tracking library (python scripts needed at run-time)
+#TODO: this pollutes the build directory a bit, could be simpler
+include (FetchContent)
 FetchContent_Declare(
     bubbletracking
     GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
     GIT_TAG 5ae4b0f923434fb9a4427c343bc50d79bc933b65
 )
 FetchContent_Populate(bubbletracking)
+
+
+
+######################################
+#config for project
+
+# config setting: directory containing videos
+set(VIDEO_DIR ${CMAKE_SOURCE_DIR}/Videos/)
+
+# config setting: directory containing local python libs
+set(PYLIBS_DIR ${CMAKE_BINARY_DIR}/PyLibs/)
+
+# config setting: directory containing third party bubble tracking lib
+set(BUBBLETRACKING_DIR ${bubbletracking_SOURCE_DIR})
+
+# config setup: for project directory (auto generated header)
+set(GENERATED_FILES ${CMAKE_BINARY_DIR}/generated)
+configure_file(Config/project_dir_config.h.in ${GENERATED_FILES}/project_dir_config.h)
+include_directories(${GENERATED_FILES})
 
 
 
@@ -120,7 +125,8 @@ set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bg_helpers.cpp
         Sources/cv_util.cpp
         Sources/triframe_median_algo.cpp
-        Sources/highlight_bubbles_algo.cpp)
+        Sources/highlight_bubbles_algo.cpp
+        Sources/ndarray_converter.cpp)
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens)
@@ -132,7 +138,7 @@ set(COMMON_INC Sources/AsyncTokens)
 
 # only create python bindings in Release mode
 if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
-    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp Sources/ndarray_converter.cpp)
+    pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/cv_vid_py_bindings.cpp)
 
     # connect headers to module target
     target_include_directories(_core PUBLIC ${COMMON_INC})

@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
 
 
-	//rand_tests::test_bubblehighlighting(background_frame, cl_pack);
+	rand_tests::test_bubblehighlighting(background_frame, cl_pack, true);
 	//rand_tests::test_embedded_python();
 
 	return 0;
