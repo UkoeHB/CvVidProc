@@ -102,7 +102,6 @@ VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int thread
 			0,
 			0,
 			200,
-			200,
 			cl_pack.print_timing_report
 		};
 }

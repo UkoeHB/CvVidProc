@@ -14,11 +14,22 @@
 #include <mutex>
 
 
+/// return codes
+enum class TokenQueueCode
+{
+	Success,
+	LockFail,
+	QueueFull,
+	QueueEmpty,
+	ShutDown,
+	GeneralFail
+};
+
 template <typename T>
 class TokenQueue final
 {
 //constructors
-public: 
+public:
 	/// default constructor: default
 	TokenQueue() = default;
 
@@ -28,7 +39,7 @@ public:
 	{}
 
 	/// copy constructor
-	TokenQueue(const TokenQueue& queue) : m_max_queue_size(queue.m_max_queue_size)
+	TokenQueue(const TokenQueue& queue) : m_max_queue_size{queue.m_max_queue_size}
 	{}
 
 //destructor: not needed (final class)
@@ -62,13 +73,13 @@ public:
 
 	/// insert token; hangs if token can't be inserted yet (queue full)
 	/// may mutate the token passed in
-	bool InsertToken(T &token, bool force_insert = false)
+	TokenQueueCode InsertToken(T &token, bool force_insert = false)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
 
 		// wait until the token queue is open
-		while (!force_insert && !QueueOpen())
+		while (!force_insert && !QueueOpenImpl())
 		{
 			m_condvar_fill.wait(lock);
 		}
@@ -79,7 +90,7 @@ public:
 
 	/// try to insert a token; returns false if token can't be inserted (or can't acquire mutex)
 	/// may mutate the token passed in if insertion succeeds
-	bool TryInsertToken(T &token)
+	TokenQueueCode TryInsertToken(T &token)
 	{
 		// try to lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
@@ -89,7 +100,7 @@ public:
 	}
 
 	/// get token from one of the queues; hangs if no tokens available
-	bool GetToken(T &return_token)
+	TokenQueueCode GetToken(T &return_token)
 	{
 		// lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex};
@@ -99,7 +110,7 @@ public:
 		{
 			// only return false when there are no tokens, and won't be more
 			if (m_shutting_down)
-				return false;
+				return TokenQueueCode::ShutDown;
 
 			m_condvar_gettoken.wait(lock);
 		}
@@ -109,7 +120,7 @@ public:
 	}
 
 	/// try to get token from the queue; returns false if no tokens available (or can't acquire mutex)
-	bool TryGetToken(T &return_token)
+	TokenQueueCode TryGetToken(T &return_token)
 	{
 		// try to lock the queue
 		std::unique_lock<std::mutex> lock{m_mutex, std::try_to_lock};
@@ -128,18 +139,28 @@ public:
 		return m_tokenqueue.empty();
 	}
 
+	/// check if queue is open
+	bool QueueOpen()
+	{
+		// lock the queue
+		std::lock_guard<std::mutex> lock{m_mutex};
+
+		// see if queue is empty
+		return QueueOpenImpl();
+	}
+
 private:
 	/// try to insert token to queue
 	/// allows force inserting to avoid deadlocks in some cases (use with caution)
-	bool TryInsertTokenImpl(T &token, std::unique_lock<std::mutex> lock, bool force_insert)
+	TokenQueueCode TryInsertTokenImpl(T &token, std::unique_lock<std::mutex> lock, bool force_insert)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())
-			return false;
+			return TokenQueueCode::LockFail;
 
 		// expect the queue to be open at this point
-		if (!force_insert && !QueueOpen())
-			return false;
+		if (!force_insert && !QueueOpenImpl())
+			return TokenQueueCode::QueueFull;
 
 		// insert the token
 		m_tokenqueue.emplace_back(std::move(token));
@@ -150,19 +171,19 @@ private:
 		// notify anyone waiting
 		m_condvar_gettoken.notify_all();
 
-		return true;
+		return TokenQueueCode::Success;
 	}
 
 	/// try to get token from the queue
-	bool TryGetTokenImpl(T &return_token, std::unique_lock<std::mutex> lock)
+	TokenQueueCode TryGetTokenImpl(T &return_token, std::unique_lock<std::mutex> lock)
 	{
 		// expect to own the lock by this point
 		if (!lock.owns_lock())
-			return false;
+			return TokenQueueCode::LockFail;
 
 		// expect the queue to not be empty at this point
 		if (m_tokenqueue.empty())
-			return false;
+			return TokenQueueCode::QueueEmpty;
 
 		// get the oldest token from the queue
 		return_token = std::move(m_tokenqueue.front());
@@ -174,26 +195,26 @@ private:
 		// notify any inserters waiting for a full queue
 		m_condvar_fill.notify_all();
 
-		return true;
+		return TokenQueueCode::Success;
 	}
 
-	/// see if all queues are open; not thread-safe since it should only be used by thread-safe member functions
-	bool QueueOpen() const
+	/// see if queue is open; not thread-safe since it should only be used by thread-safe member functions
+	bool QueueOpenImpl() const
 	{
 		return m_tokenqueue.size() < m_max_queue_size;
 	}
 
 //member variables
 private: 
-	/// set of token queues
+	/// queue of tokens
 	std::list<T> m_tokenqueue{};
-	/// max number of tokens per sub-queue; queue size <=0 means unlimited
+	/// max number of tokens the queue can store; queue size <=0 means unlimited
 	const std::size_t m_max_queue_size{};
-	/// mutex for accessing the queues
+	/// mutex for accessing the queue
 	std::mutex m_mutex;
 	/// help threads wait for tokens to appear
 	std::condition_variable m_condvar_gettoken;
-	/// help threads wait until there is room to fill queues
+	/// help threads wait until there is room to fill queue
 	std::condition_variable m_condvar_fill;
 	/// indicate the queue is shutting down (no more tokens will be added)
 	bool m_shutting_down{false};

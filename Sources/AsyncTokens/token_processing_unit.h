@@ -12,8 +12,10 @@
 
 //standard headers
 #include <cassert>
+#include <condition_variable>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <type_traits>
 
@@ -125,7 +127,7 @@ public:
 	}
 
 	/// try insert wrapper for insert queue
-	bool TryInsert(std::unique_ptr<TokenT> &insert_token)
+	TokenQueueCode TryInsert(std::unique_ptr<TokenT> &insert_token)
 	{
 		// make sure there is a token inside the unique_ptr
 		if (insert_token)
@@ -137,7 +139,7 @@ public:
 				{
 					assert(false && "can't insert token in synchronous mode unless unit has been started!");
 
-					return false;
+					return TokenQueueCode::GeneralFail;
 				}
 
 				// start timer
@@ -156,7 +158,7 @@ public:
 				// sanity check: inserted tokens should not exist here any more
 				assert(!insert_token);
 
-				return true;
+				return TokenQueueCode::Success;
 			}
 			// asynchronous mode
 			else
@@ -165,11 +167,11 @@ public:
 			}
 		}
 		else
-			return false;
+			return TokenQueueCode::GeneralFail;
 	}
 
 	/// try get result wrapper for result queue
-	bool TryGetResult(std::unique_ptr<ResultT> &return_val)
+	TokenQueueCode TryGetResult(std::unique_ptr<ResultT> &return_val)
 	{
 		// sanity check, input should be empty so it isn't destroyed by accident
 		assert(!return_val);
@@ -180,7 +182,7 @@ public:
 			// request from processor directly
 			return_val = m_worker_processor->TryGetResult();
 
-			return return_val.get();
+			return return_val.get() ? TokenQueueCode::Success : TokenQueueCode::GeneralFail;
 		}
 		// asynchronous mode
 		else
@@ -191,7 +193,7 @@ public:
 
 	/// extract results lingering in queue when unit is stopped
 	/// returns true if a result was extracted
-	bool ExtractFinalResults(std::unique_ptr<ResultT> &return_val)
+	TokenQueueCode ExtractFinalResults(std::unique_ptr<ResultT> &return_val)
 	{
 		assert(!m_worker.joinable() && "ExtractFinalResults() can only be called after WaitUntilUnitStops()!");
 		assert(m_result_queue.IsShuttingDown() && "ExtractFinalResults() can only be called after ShutDown()!");
@@ -206,7 +208,7 @@ public:
 			// WARNING: if the processor keeps pumping out results then this will keep returning true
 			return_val = m_worker_processor->TryGetResult();
 
-			return return_val.get();
+			return return_val.get() ? TokenQueueCode::Success : TokenQueueCode::GeneralFail;
 		}
 		// asynchronous mode
 		else
@@ -215,6 +217,15 @@ public:
 			// this should not block because the queue should be shutting down, and the worker thread has ended
 			return m_result_queue.GetToken(return_val);
 		}
+	}
+
+	/// wait until either a token can be inserted or a result extracted
+	void WaitForUnblockingEvent()
+	{
+		std::unique_lock<std::mutex> lock{m_unit_unblocking_mutex};
+
+		if (!m_token_queue.QueueOpen() && m_result_queue.IsEmpty())
+			m_condvar_unblockingevents.wait(lock);
 	}
 
 	/// get interval report for how much time was spent processing each token (resets timer)
@@ -251,8 +262,19 @@ private:
 		TSIntervalTimer::time_pt_t interval_start_time{};
 
 		// get tokens asynchronously until the queue shuts down (and is empty)
-		while(m_token_queue.GetToken(token_shuttle))
+		while(true)
 		{
+			{
+				std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
+
+				TokenQueueCode token_result{m_token_queue.GetToken(token_shuttle)};
+
+				if (token_result == TokenQueueCode::Success)
+					m_condvar_unblockingevents.notify_all();
+				else
+					break;
+			}
+
 			// sanity check: if a token is obtained then it should exist
 			assert(token_shuttle);
 
@@ -305,16 +327,24 @@ private:
 //member variables
 	/// variable pack for initializing the token processor
 	TokenProcessorPack<TokenProcessorAlgoT> m_processor_pack{};
+
 	/// queue of tokens, which are inserted by users
 	TokenQueueT m_token_queue{};
 	/// queue of results, which are obtained from token processor
 	ResultQueueT m_result_queue{};
+
 	/// worker thread that moves tokens from queue to token processor, and gets results from the processor
 	std::thread m_worker{};
 	/// token processor algorithm object
 	std::unique_ptr<TokenProcessorAlgoT> m_worker_processor{};
 	/// interval timer (collects the time it takes to process each token; does not time 'TryGetResult()')
 	TSIntervalTimer m_timer{};
+
+	/// mutex for managing unblocking events
+	std::mutex m_unit_unblocking_mutex;
+	/// condition variable for waiting for unblocking events
+	std::condition_variable m_condvar_unblockingevents;
+
 	/// indicates if the unit is running synchronously or asynchronously
 	const bool m_synchronous{};
 	/// whether to collect timings or not

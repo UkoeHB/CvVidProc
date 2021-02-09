@@ -8,6 +8,7 @@
 #include "ndarray_converter.h"
 #include "project_dir_config.h"
 #include "rand_tests.h"
+#include "ts_interval_timer.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)

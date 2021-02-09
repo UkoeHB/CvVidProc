@@ -8,6 +8,7 @@
 #include "token_batch_consumer.h"
 #include "token_processor_algo_base.h"
 #include "token_processing_unit.h"
+#include "token_queue.h"
 #include "ts_interval_timer.h"
 
 //third party headers
@@ -147,12 +148,16 @@ public:
 
 			// pass token set to processing units
 			// it spins through 'try' functions to avoid deadlocks between token and result queues
-			// TODO: reduce cycle waste by sleeping this thread between spins
+			// note: will go to sleep if any unit is blocked (can't insert token or remove result)
 			std::size_t remaining_tokens{m_batch_size};
+			std::size_t last_unit_stuck_on_full{m_batch_size};
 			while (remaining_tokens > 0)
 			{
 				// recount the number of uninserted tokens each round
 				remaining_tokens = 0;
+
+				// reset last unit stuck on full
+				last_unit_stuck_on_full = m_batch_size;
 
 				// iterate through token set to empty it
 				for (std::size_t unit_index{0}; unit_index < m_batch_size; unit_index++)
@@ -160,17 +165,24 @@ public:
 					// try to insert the token to its processing unit (if it needs to be inserted)
 					if (token_set_shuttle[unit_index])
 					{
-						if (processing_units[unit_index].TryInsert(token_set_shuttle[unit_index]))
+						TokenQueueCode insert_result{processing_units[unit_index].TryInsert(token_set_shuttle[unit_index])};
+
+						if (insert_result == TokenQueueCode::Success)
 						{
 							// sanity check - successful insertions should remove the token
 							assert(!token_set_shuttle[unit_index]);
 						}
 						else
+						{
 							remaining_tokens++;
+
+							if (insert_result == TokenQueueCode::QueueFull)
+								last_unit_stuck_on_full = unit_index;
+						}
 					}
 
 					// try to get a result from the processing unit
-					if (processing_units[unit_index].TryGetResult(result_shuttle))
+					if (processing_units[unit_index].TryGetResult(result_shuttle) == TokenQueueCode::Success)
 					{
 						// sanity check: if a result is obtained, it should exist
 						assert(result_shuttle);
@@ -178,6 +190,12 @@ public:
 						// consume the result
 						m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
 					}
+				}
+
+				// sleep this thread if insert failed for any unit
+				if (last_unit_stuck_on_full < m_batch_size)
+				{
+					processing_units[last_unit_stuck_on_full].WaitForUnblockingEvent();
 				}
 			}
 
@@ -200,7 +218,7 @@ public:
 			processing_units[unit_index].WaitUntilUnitStops();
 
 			// clear remaining results
-			while (processing_units[unit_index].ExtractFinalResults(result_shuttle))
+			while (processing_units[unit_index].ExtractFinalResults(result_shuttle) == TokenQueueCode::Success)
 			{
 				// sanity check: if a result is obtained, it should exist
 				assert(result_shuttle);

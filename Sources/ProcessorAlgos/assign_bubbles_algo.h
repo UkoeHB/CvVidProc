@@ -66,7 +66,7 @@ public:
 
 		// prepare the wrapped function
 		py::module_ algo_module = py::module_::import(m_pack.bubbletracking_module.c_str());
-		m_algo_func = algo_module.attr(bubbletracking_function);
+		m_algo_func = algo_module.attr(m_pack.bubbletracking_function.c_str());
 	}
 
 	/// copy constructor: disabled

@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+
 /// encapsulates call to async tokenized bubble tracking analysis
 std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	const VidBubbleTrackPack &trackbubble_pack,
