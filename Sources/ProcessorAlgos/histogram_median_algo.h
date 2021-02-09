@@ -46,7 +46,8 @@ public:
 	HistogramMedianAlgo() = delete;
 
 	/// normal constructor
-	HistogramMedianAlgo(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) : TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>{std::move(processor_pack)}
+	HistogramMedianAlgo(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) :
+		TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>{std::move(processor_pack)}
 	{
 		static_assert(std::is_unsigned<T>::value, "HistogramMedianAlgo only works with unsigned integrals for histogram elements!");
 	}

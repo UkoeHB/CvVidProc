@@ -19,6 +19,8 @@ void test_embedded_python();
 void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack, bool add_test_bubbletracking);
 void test_bubbletracking(cv::Mat &test_frame);
 
+void test_timing_numpyconverter(const int num_rounds, const bool include_conversion = false);
+
 }
 
 

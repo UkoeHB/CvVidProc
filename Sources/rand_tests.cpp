@@ -183,6 +183,55 @@ void test_bubbletracking(cv::Mat &test_frame)
 		py::print("assign bubbles returned no archive");
 }
 
+//TODO: it's not clear if this is working as intended... need to test with a sample object simpler than AssignBubblesAlgo
+void test_timing_numpyconverter(const int num_rounds, const bool include_conversion)
+{
+	// test python interpreter
+	// create Python interpreter
+	py::scoped_interpreter guard{};
+
+	// add location of local python libs to path so they can be found
+	py::module_ sys = py::module_::import("sys");
+	py::object path = sys.attr("path");
+	path.attr("insert")(0, config::pylibs_dir);
+
+	// get spinfunc for testing conversion
+	py::module_ test = py::module_::import("test1");
+	py::function spinfunc = test.attr("spinfunc");
+
+	cv::Mat testmat{5,10, CV_8UC1};
+	int num{0};
+
+	// time the init numpy function
+	TSIntervalTimer timer{};
+	auto start_time{timer.GetTime()};
+
+	for (int round{0}; round < num_rounds; round++)
+	{
+		// test custom converter
+		// set up the Numpy array <-> cv::Mat converter
+		// courtesy of https://github.com/edmBernard/pybind11_opencv_numpy
+		NDArrayConverter::init_numpy();
+
+		if (include_conversion)
+			num = spinfunc(testmat, num).cast<int>();
+
+		// end the timer and print results
+		start_time = timer.AddInterval(start_time);
+	}
+
+	// print timer report
+	auto timer_report{timer.GetReport<std::chrono::milliseconds>()};
+	auto interval_ms{timer_report.total_time.count()};
+	auto interval_s_float{static_cast<double>(interval_ms/1000.0)};
+	std::cout << "init_numpy timing: " << interval_s_float << " s; " <<
+		timer_report.num_intervals << " rounds; " <<
+		(timer_report.total_time / timer_report.num_intervals).count() << " ms avg\n";
+}
+
+
+
+
 } //rand_tests namespace
 
 

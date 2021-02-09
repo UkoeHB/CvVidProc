@@ -9,3 +9,6 @@ def testfunc(mydict, key, data):
 		mydict["num"] = 1
 
 	print(mydict)
+
+def spinfunc(mat, num):
+	return num + 1

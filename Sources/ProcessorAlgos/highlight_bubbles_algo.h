@@ -43,7 +43,7 @@ public:
 	HighlightBubblesAlgo() = delete;
 
 	/// normal constructor
-	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgoBase<HighlightBubblesAlgo, cv::Mat, cv::Mat>{std::move(processor_pack)}
+	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgoBase{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled

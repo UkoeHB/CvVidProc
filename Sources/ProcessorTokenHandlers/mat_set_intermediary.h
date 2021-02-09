@@ -28,7 +28,7 @@ public:
 	MatSetIntermediary(const int batch_size,
 			const int max_shuttle_queue_size) :
 		// output batch size is 1
-		TokenProcessIntermediary<cv::Mat, std::vector<cv::Mat>, bool>{batch_size, 1, max_shuttle_queue_size}
+		TokenProcessIntermediary{batch_size, 1, max_shuttle_queue_size}
 	{
 		m_elements.resize(batch_size);
 	}

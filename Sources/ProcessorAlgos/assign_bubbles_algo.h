@@ -58,7 +58,7 @@ public:
 
 	/// normal constructor
 	AssignBubblesAlgo(TokenProcessorPack<AssignBubblesAlgo> processor_pack) :
-		TokenProcessorAlgoBase<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>{std::move(processor_pack)}
+		TokenProcessorAlgoBase{std::move(processor_pack)}
 	{
 		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
 		py::gil_scoped_acquire gil;
