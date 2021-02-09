@@ -19,6 +19,7 @@
 
 
 /// tied to CvVidFramesGenerator implementation
+///  note: but does not currently support multiple frames per batch (only one frame with multiple chunks)
 /// assumes result fragments are passed out in layers (each full set of fragments is stitched together without further thought)
 class CvVidFragmentConsumer final : public TokenBatchConsumer<cv::Mat, std::list<cv::Mat>>
 {

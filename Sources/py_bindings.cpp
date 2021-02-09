@@ -47,7 +47,6 @@ PYBIND11_MODULE(_core, mod)
 				const int,
 				const int,
 				const int,
-				const int,
 				const bool>(),
 				py::arg("vid_path"),
 				py::arg("bg_algo"),
@@ -62,7 +61,6 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("horizontal_buffer_pixels") = 0,
 				py::arg("vertical_buffer_pixels") = 0,
 				py::arg("token_storage_limit") = 200,
-				py::arg("result_storage_limit") = 200,
 				py::arg("print_timing_report") = false)
 		.def_readonly("vid_path", &VidBgPack::vid_path)
 		.def_readonly("bg_algo", &VidBgPack::bg_algo)
@@ -77,7 +75,6 @@ PYBIND11_MODULE(_core, mod)
 		.def_readonly("horizontal_buffer_pixels", &VidBgPack::horizontal_buffer_pixels)
 		.def_readonly("vertical_buffer_pixels", &VidBgPack::vertical_buffer_pixels)
 		.def_readonly("token_storage_limit", &VidBgPack::token_storage_limit)
-		.def_readonly("result_storage_limit", &VidBgPack::result_storage_limit)
 		.def_readonly("print_timing_report", &VidBgPack::print_timing_report);
 
 	/// funct GetVideoBackground()

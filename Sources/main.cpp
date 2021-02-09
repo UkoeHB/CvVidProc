@@ -11,7 +11,6 @@
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 #include <pybind11/pybind11.h>
-#include <pybind11/embed.h>
 
 //standard headers
 #include <cassert>

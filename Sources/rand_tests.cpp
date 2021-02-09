@@ -145,6 +145,7 @@ void test_bubbletracking(cv::Mat &test_frame)
 	// set parameters
 	TokenProcessorPack<AssignBubblesAlgo> assign_bubbles_pack{
 		"cvimproc.improc",
+		"assign_bubbles",
 		py::make_tuple(1.0f, 0), 	// +x direction (?)
 		3,		// not useful here...
 		4,

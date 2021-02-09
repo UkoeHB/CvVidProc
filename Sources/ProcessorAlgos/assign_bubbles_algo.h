@@ -29,6 +29,7 @@ template <>
 struct TokenProcessorPack<AssignBubblesAlgo> final
 {
 	std::string bubbletracking_module;
+	std::string bubbletracking_function;
 	py::tuple flow_dir;
 	const int fps;
 	const int pix_per_um;
@@ -65,7 +66,7 @@ public:
 
 		// prepare the wrapped function
 		py::module_ algo_module = py::module_::import(m_pack.bubbletracking_module.c_str());
-		m_algo_func = algo_module.attr("assign_bubbles");
+		m_algo_func = algo_module.attr(bubbletracking_function);
 	}
 
 	/// copy constructor: disabled

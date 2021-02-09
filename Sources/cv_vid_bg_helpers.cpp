@@ -2,6 +2,9 @@
 
 //local headers
 #include "cv_vid_bg_helpers.h"
+#include "cv_vid_frames_generator.h"
+#include "cv_vid_fragment_consumer.h"
+#include "async_token_process.h"
 #include "histogram_median_algo.h"
 #include "triframe_median_algo.h"
 
@@ -11,8 +14,10 @@
 //standard headers
 #include <cstdint>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 
 /// get background algo from string
@@ -27,6 +32,65 @@ BGAlgo GetBGAlgo(const std::string &algo)
 		std::cerr << "Unknown background algorithm detected: " << algo << '\n';
 		return BGAlgo::UNKNOWN;
 	}
+}
+
+template <typename MedianAlgo>
+cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
+{
+	cv::Rect frame_dimensions{vidbg_pack.crop_x,
+		vidbg_pack.crop_y,
+		vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
+		vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
+
+	// create frame generator
+	auto frame_gen{std::make_shared<CvVidFramesGenerator>(1,
+		vidbg_pack.batch_size,
+		vidbg_pack.print_timing_report,
+		vid,
+		vidbg_pack.horizontal_buffer_pixels,
+		vidbg_pack.vertical_buffer_pixels,
+		vidbg_pack.frame_limit,
+		frame_dimensions,
+		vidbg_pack.grayscale,
+		vidbg_pack.vid_is_grayscale)};
+
+	// create fragment consumer
+	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,
+		vidbg_pack.print_timing_report,
+		vidbg_pack.horizontal_buffer_pixels,
+		vidbg_pack.vertical_buffer_pixels,
+		frame_dimensions.width,
+		frame_dimensions.height)};
+
+	// create process
+	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,
+		true,
+		vidbg_pack.print_timing_report,
+		vidbg_pack.token_storage_limit,
+		vidbg_pack.token_storage_limit,
+		frame_gen,
+		bg_frag_consumer};
+
+	// run process to get background image
+	auto bg_img{vid_bg_prod.Run(std::move(processor_packs))};
+
+	// print out timing info
+	if (vidbg_pack.print_timing_report)
+		std::cout << vid_bg_prod.GetTimingInfoAndResetTimer();
+
+	if (bg_img && !bg_img->empty())
+		return std::move(bg_img->back());
+	else
+		return cv::Mat{};
+}
+
+template <typename MedianAlgo>
+cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
+{
+	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
+	empty_packs.resize(vidbg_pack.batch_size, TokenProcessorPack<MedianAlgo>{});
+
+	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs);
 }
 
 /// get a video background
