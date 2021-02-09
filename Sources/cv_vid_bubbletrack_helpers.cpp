@@ -14,6 +14,7 @@
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 
 //standard headers
+#include <future>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -22,14 +23,14 @@
 /// encapsulates call to async tokenized bubble tracking analysis
 std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	const VidBubbleTrackPack &trackbubble_pack,
-	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs
+	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs,
 	std::vector<TokenProcessorPack<AssignBubblesAlgo>> &assignbubbles_packs)
 {
 	// this function releases the GIL so called functions can acquire it
-	py::gil_scoped_release nogil;
+	//py::gil_scoped_release nogil;
 
 	// expect only one assignbbubbles_pack
-	assert(assignbbubbles_pack.size() == 1);
+	assert(assignbubbles_packs.size() == 1);
 
 	// create crop-window for processing frames
 	cv::Rect frame_dimensions{trackbubble_pack.crop_x,
@@ -80,7 +81,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		dict_collector};
 
 	// start the highlighting bubbles process in a new thread
-	auto hbproc_handle = std::async(highlight_bubbles_proc_t::Run, highlight_bubbles_proc, std::move(highlightbubbles_packs));
+	auto hbproc_handle = std::async(&highlight_bubbles_proc_t::Run, &highlight_bubbles_proc, std::move(highlightbubbles_packs));
 
 	// run the assign bubbles process in this thread (should run synchronously)
 	auto bubble_archive{assign_bubbles_proc.Run(std::move(assignbubbles_packs))};
@@ -98,7 +99,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		std::cout << "Assign bubbles timing report:\n";
 		std::cout << assign_bubbles_proc.GetTimingInfoAndResetTimer();
 	}
-
+std::cerr << "7\n";
 	// return the dictionary of all bubbles tracked
 	if (bubble_archive && bubble_archive->size())
 		return std::move(bubble_archive->front());
@@ -121,18 +122,18 @@ py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack)
 
 	// validate inputs
 	// frame cropping should match background image passed in
-	assert(trackbubble_pack.background && !trackbubble_pack.background.empty());
+	assert(trackbubble_pack.highlightbubbles_pack.background.data && !trackbubble_pack.highlightbubbles_pack.background.empty());
 	assert(trackbubble_pack.crop_width - trackbubble_pack.crop_x >= 0);
 	assert(trackbubble_pack.crop_height - trackbubble_pack.crop_y >= 0);
 	assert(trackbubble_pack.crop_width ?
-		trackbubble_pack.crop_width - trackbubble_pack.crop_x == trackbubble_pack.background.cols :
-		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)) == trackbubble_pack.background.cols);
+		trackbubble_pack.crop_width - trackbubble_pack.crop_x == trackbubble_pack.highlightbubbles_pack.background.cols :
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)) == trackbubble_pack.highlightbubbles_pack.background.cols);
 	assert(trackbubble_pack.crop_height ?
-		trackbubble_pack.crop_height - trackbubble_pack.crop_y == trackbubble_pack.background.rows :
-		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)) == trackbubble_pack.background.rows);
+		trackbubble_pack.crop_height - trackbubble_pack.crop_y == trackbubble_pack.highlightbubbles_pack.background.rows :
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)) == trackbubble_pack.highlightbubbles_pack.background.rows);
 
 	// the structuring element should exist
-	assert(trackbubble_pack.struct_element && !trackbubble_pack.struct_element.empty());
+	assert(trackbubble_pack.highlightbubbles_pack.struct_element.data && !trackbubble_pack.highlightbubbles_pack.struct_element.empty());
 
 	// create algo packs
 
@@ -158,8 +159,8 @@ py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack)
 		TrackBubblesProcess(vid, trackbubble_pack, highlightbubbles_packs, assignbubbles_packs)};
 
 	// return the dictionary of tracked bubbles
-	if (bubble_archive)
-		return std::move(*(bubble_archive.release()));
+	if (bubbles_archive)
+		return std::move(*(bubbles_archive.release()));
 	else
 		return py::dict{};
 }

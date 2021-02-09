@@ -56,7 +56,7 @@ struct VidBubbleTrackPack
 /// encapsulates call to async tokenized bubble tracking analysis
 std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	const VidBubbleTrackPack &trackbubble_pack,
-	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs
+	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs,
 	std::vector<TokenProcessorPack<AssignBubblesAlgo>> &assignbubbles_packs);
 
 /// track bubbles in a video and return record of bubbles tracked

@@ -56,7 +56,8 @@ public:
 	{}
 
 	/// copy constructor: default construct (do not copy)
-	TokenProcessingUnit(const TokenProcessingUnit&) {}
+	TokenProcessingUnit(const TokenProcessingUnit&) : TokenProcessingUnit{}
+	{}
 
 	/// destructor
 	~TokenProcessingUnit()
@@ -264,6 +265,8 @@ private:
 		// get tokens asynchronously until the queue shuts down (and is empty)
 		while(true)
 		{
+			// getting a token an unblocking event because it might open the queue so the unit's owner
+			//  can insert a token (where it otherwise may have been unable to)
 			{
 				std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
 
@@ -300,6 +303,8 @@ private:
 
 			if (result_shuttle)
 			{
+				// adding a result to the result queue is an unblocking event because it lets the unit's owner
+				//  do something (get a result out)
 				{
 					std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
 

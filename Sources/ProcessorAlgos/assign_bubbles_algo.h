@@ -28,14 +28,14 @@ class AssignBubblesAlgo;
 template <>
 struct TokenProcessorPack<AssignBubblesAlgo> final
 {
-	std::string bubbletracking_module;
-	std::string bubbletracking_function;
-	py::tuple flow_dir;
-	const int fps;
-	const int pix_per_um;
-	const int width_border;
-	const double v_max;
-	const int min_size_reg;
+	std::string bubbletracking_module{};
+	std::string bubbletracking_function{};
+	py::tuple flow_dir{};
+	const int fps{};
+	const int pix_per_um{};
+	const int width_border{};
+	const double v_max{};
+	const int min_size_reg{};
 };
 
 ////

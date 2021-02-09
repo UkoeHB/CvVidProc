@@ -3,6 +3,7 @@
 //local headers
 #include "assign_bubbles_algo.h"
 #include "cv_vid_bg_helpers.h"
+#include "cv_vid_bubbletrack_helpers.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "ndarray_converter.h"
@@ -80,7 +81,7 @@ void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &c
 
 	if (add_test_bubbletracking)
 	{
-		test_bubbletracking(*frame);
+		test_assignbubbles(*frame);
 	}
 }
 
@@ -131,7 +132,7 @@ void test_embedded_python()
 
 /// note: assumes test_frame contains highlighted bubbles
 /// this test is just to see if the AssignBubblesAlgo works with one input frame
-void test_bubbletracking(cv::Mat &test_frame)
+void test_assignbubbles(cv::Mat &test_frame)
 {
 	// create Python interpreter
 	py::scoped_interpreter guard{};
@@ -231,7 +232,82 @@ void test_timing_numpyconverter(const int num_rounds, const bool include_convers
 		(timer_report.total_time / timer_report.num_intervals).count() << " ms avg\n";
 }
 
+/// demo the TrackBubbles function
+void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
+{
+	// create Python interpreter
+	py::scoped_interpreter guard{};
 
+	// add location of bubbletracking python libs to path so they can be found
+	py::module_ sys = py::module_::import("sys");
+	py::object path = sys.attr("path");
+	std::string lib_dir{config::bubbletracking_dir};
+	lib_dir += "/src/";
+	path.attr("insert")(0, lib_dir.c_str());
+
+	// create template highlightbubbles pack
+	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack{
+		background_frame.clone(),
+		cv::getStructuringElement(cv::MorphShapes::MORPH_ELLIPSE, cv::Size{4, 4}),
+		14,
+		7,
+		16,
+		20,
+		20,
+		5
+	};
+
+	// create template assignbubbles pack
+	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
+		"cvimproc.improc",
+		"assign_bubbles",
+		py::make_tuple(2, 1), 	// +x direction (?)
+		3,		// not useful here...?
+		4,
+		5,
+		200,
+		40
+	};
+
+	// create parameter pack
+	VidBubbleTrackPack trackbubble_pack{cl_pack.vid_path,
+		cl_pack.worker_threads > 1 ? cl_pack.worker_threads - 1 : 1,	//trackbubbles uses two threads + worker threads
+		highlightbubbles_pack,
+		assignbubbles_pack,
+		cl_pack.bg_frame_lim,
+		cl_pack.grayscale,
+		cl_pack.vid_is_grayscale,
+		0,
+		0,
+		0,
+		0,
+		200,
+		cl_pack.print_timing_report
+	};
+
+	/// track bubbles in the input video
+
+	// start timer
+	TSIntervalTimer timer{};
+	auto start_time{timer.GetTime()};
+
+	// run the process
+	std::cout << "\nTracking bubbles...\n";
+	py::dict bubbles_archive{TrackBubbles(trackbubble_pack)};
+
+	// end the timer and print results
+	timer.AddInterval(start_time);
+	auto timer_report{timer.GetReport<std::chrono::milliseconds>()};
+	auto interval_ms{timer_report.total_time.count()};
+	auto interval_s_float{static_cast<double>(interval_ms/1000.0)};
+	std::cout << "Bubbles tracked in: " << interval_s_float << " seconds\n";
+
+	// print info about results
+	if (static_cast<bool>(bubbles_archive))
+		std::cout << "Number of bubbles: " << bubbles_archive.size() << '\n';
+	else
+		std::cout << "No bubbles tracked!\n";
+}
 
 
 } //rand_tests namespace

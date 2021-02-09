@@ -47,7 +47,10 @@ protected:
 	{
 		assert(index_in_batch < GetBatchSize());
 
-		m_results->emplace_back(std::move(result_img));
+		if (!m_results)
+			m_results = std::make_unique<final_result_type>(final_result_type{});
+
+		m_results->emplace_back(std::move(token));
 	}
 
 	/// get final result (list of py::dicts in the order they were obtained)

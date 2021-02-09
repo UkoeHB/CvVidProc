@@ -21,14 +21,14 @@ class HighlightBubblesAlgo;
 template <>
 struct TokenProcessorPack<HighlightBubblesAlgo> final
 {
-	cv::Mat background;
-	cv::Mat struct_element;
-	const int threshold;
-	const int threshold_lo;
-	const int threshold_hi;
-	const int min_size_hyst;
-	const int min_size_threshold;
-	const int width_border;
+	cv::Mat background{};
+	cv::Mat struct_element{};
+	const int threshold{};
+	const int threshold_lo{};
+	const int threshold_hi{};
+	const int min_size_hyst{};
+	const int min_size_threshold{};
+	const int width_border{};
 };
 
 ////

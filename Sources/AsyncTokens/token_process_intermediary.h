@@ -30,8 +30,8 @@ public:
 			const int generator_batch_size,
 			const int max_shuttle_queue_size,
 			const bool collect_timings) :
-		TokenBatchConsumer{consumer_batch_size, collect_timings},
-		TokenBatchGenerator{generator_batch_size, collect_timings},
+		TokenBatchConsumer<InTokenT, FinalResultT>{consumer_batch_size, collect_timings},
+		TokenBatchGenerator<OutTokenT>{generator_batch_size, collect_timings},
 		m_shuttle_queue{max_shuttle_queue_size}
 	{}
 
@@ -48,7 +48,7 @@ public:
 
 //member functions
 	/// consume a token from first process; should call AddNextBatch() periodically
-	virtual void ConsumeTokenImpl(std::unique_ptr<InTokenT> input_token, const std::size_t index_in_batch) = 0;
+	virtual void ConsumeTokenImpl(std::unique_ptr<InTokenT> input_token, const std::size_t index_in_batch) override = 0;
 
 	/// get final result; should also reset the child object in case a new production run is started
 	virtual std::unique_ptr<FinalResultT> GetFinalResultImpl() = 0;

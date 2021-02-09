@@ -66,7 +66,7 @@ public:
 		new_batch.reserve(m_elements.size());
 
 		// assemble batch from first element in each batch-position
-		for (const auto &element_list : m_elements)
+		for (auto &element_list : m_elements)
 		{
 			new_batch.emplace_back(std::move(element_list.front()));
 
