@@ -300,7 +300,12 @@ private:
 
 			if (result_shuttle)
 			{
-				m_result_queue.InsertToken(result_shuttle);
+				{
+					std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
+
+					if (m_result_queue.InsertToken(result_shuttle) == TokenQueueCode::Success)
+						m_condvar_unblockingevents.notify_all();
+				}
 
 				// sanity check: inserted tokens should not exist
 				assert(!result_shuttle);
