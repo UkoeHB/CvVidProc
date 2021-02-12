@@ -1,11 +1,12 @@
 // helpers for getting background of an opencv vid
 
 //local headers
+#include "async_token_process.h"
 #include "cv_vid_bg_helpers.h"
 #include "cv_vid_frames_generator.h"
 #include "cv_vid_fragment_consumer.h"
-#include "async_token_process.h"
 #include "histogram_median_algo.h"
+#include "main.h"
 #include "triframe_median_algo.h"
 
 //third party headers
@@ -37,6 +38,10 @@ BGAlgo GetBGAlgo(const std::string &algo)
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
 {
+	// number of fragments to create during background analysis
+	int batch_size{static_cast<int>(processor_packs.size())};
+	assert(batch_size);
+
 	cv::Rect frame_dimensions{vidbg_pack.crop_x,
 		vidbg_pack.crop_y,
 		vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
@@ -44,7 +49,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create frame generator
 	auto frame_gen{std::make_shared<CvVidFramesGenerator>(1,
-		vidbg_pack.batch_size,
+		batch_size,
 		vidbg_pack.print_timing_report,
 		vid,
 		vidbg_pack.horizontal_buffer_pixels,
@@ -55,7 +60,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 		vidbg_pack.vid_is_grayscale)};
 
 	// create fragment consumer
-	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(vidbg_pack.batch_size,
+	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(batch_size,
 		vidbg_pack.print_timing_report,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
@@ -63,7 +68,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 		frame_dimensions.height)};
 
 	// create process
-	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{vidbg_pack.batch_size,
+	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{batch_size,
 		true,
 		vidbg_pack.print_timing_report,
 		vidbg_pack.token_storage_limit,
@@ -87,8 +92,10 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
 {
+	int batch_size{GetAdditionalThreads(1, 1, vidbg_pack.max_threads)};
+
 	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
-	empty_packs.resize(vidbg_pack.batch_size, TokenProcessorPack<MedianAlgo>{});
+	empty_packs.resize(batch_size, TokenProcessorPack<MedianAlgo>{});
 
 	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs);
 }

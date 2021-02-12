@@ -4,6 +4,7 @@
 #define MAIN_9889789_H
 
 //local headers
+#include "cv_vid_bg_helpers.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -14,7 +15,7 @@
 struct CommandLinePack
 {
 	cv::String vid_path{};
-	int worker_threads{};
+	int max_threads{};
 	bool grayscale{};
 	bool vid_is_grayscale{};
 	long long bg_frame_lim{};
@@ -22,9 +23,8 @@ struct CommandLinePack
 	bool print_timing_report{};
 };
 
-/// get number of worker threads to use (subtract one for the main thread)
-/// note: min threads is 2 (1 for main thread, 1 for worker)
-int WorkerThreadsFromMax(int max_threads);
+/// get number of additional threads available above min_threads, plus extra_threads, but not more than max_threads
+int GetAdditionalThreads(int min_threads, int extra_threads = 0, int max_threads = -1);
 
 /// interpret the command line arguments
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args);

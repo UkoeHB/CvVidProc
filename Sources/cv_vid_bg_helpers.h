@@ -32,8 +32,8 @@ struct VidBgPack
 	const std::string vid_path{};
 	// algorithm to use for getting vid bg
 	const std::string bg_algo{};
-	// number of fragments each frame should be broken into (i.e. number of threads to use)
-	const int batch_size{};
+	// max number of threads allowed
+	const int max_threads{};
 
 	// max number of frames to analyze for getting the vig bg (<= 0 means use all frames in video)
 	const long long frame_limit{-1};

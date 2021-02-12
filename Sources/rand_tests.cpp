@@ -144,6 +144,10 @@ void test_assignbubbles(cv::Mat &test_frame)
 	lib_dir += "/src/";
 	path.attr("insert")(0, lib_dir.c_str());
 
+	// get the function to track bubbles with as functor
+	py::module_ bubbletracking_mod = py::module_::import("cvimproc.improc");
+	py::function assignbubbles_func = bubbletracking_mod.attr("assign_bubbles");
+
 	// set parameters
 	/*
 	py::tuple flow_dir{};
@@ -154,15 +158,14 @@ void test_assignbubbles(cv::Mat &test_frame)
 	const int min_size_reg{};
 	*/
 
-	TokenProcessorPack<AssignBubblesAlgo> assign_bubbles_pack{
-		"cvimproc.improc",
-		"assign_bubbles",
-		py::make_tuple(1.0f, 0), 	// +x direction (?)
-		3,		// not useful here...
+	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
+		assignbubbles_func,
+		py::make_tuple(py::make_tuple(2, 1), 	// +x direction (?)
+		3,		// not useful here...?
 		4,
 		5,
 		200,
-		40
+		40)
 	};
 
 	// create new scope so the GIL can be released
@@ -172,7 +175,7 @@ void test_assignbubbles(cv::Mat &test_frame)
 		py::gil_scoped_release nogil;
 
 		// create algo object for processing frames (highlighting bubbles)
-		AssignBubblesAlgo assign_bubbles{assign_bubbles_pack};
+		AssignBubblesAlgo assign_bubbles{assignbubbles_pack};
 
 		// convert format
 		std::vector<cv::Mat> vec_temp;
@@ -273,7 +276,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	// create template assignbubbles pack
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
 		assignbubbles_func,
-		py::make_tuple(py::make_tuple(2f, 1f), 	// +x direction (?)
+		py::make_tuple(py::make_tuple(2, 1), 	// +x direction (?)
 		3,		// not useful here...?
 		4,
 		5,
@@ -283,7 +286,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 
 	// create parameter pack
 	VidBubbleTrackPack trackbubble_pack{cl_pack.vid_path,
-		cl_pack.worker_threads > 1 ? cl_pack.worker_threads - 1 : 1,	//trackbubbles uses two threads + worker threads
+		cl_pack.max_threads,
 		highlightbubbles_pack,
 		assignbubbles_pack,
 		cl_pack.bg_frame_lim,

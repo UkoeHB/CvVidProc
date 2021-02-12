@@ -59,10 +59,13 @@ public:
 	/// wrapper for getting the final result
 	virtual std::unique_ptr<FinalResultT> GetFinalResult() override final
 	{
+		// do this first in case consumer cleanup posts more tokens to the shuttle queue (calls AddNextBatch())
+		std::unique_ptr<FinalResultT> final_result{GetFinalResultImpl()};
+
 		// shut down the shuttle queue (GetFinalResult() should be called after the last ConsumeToken())
 		m_shuttle_queue.ShutDown();
 
-		return GetFinalResultImpl();
+		return final_result;
 	}
 
 	/// add next token set to queue for second process to obtain (blocks)

@@ -31,20 +31,23 @@ const char* g_commandline_params =
 	"{ bg_frame_lim     |    -1   | Max number of frames to analyze for background image }"
 	"{ timer_report     |   true  | Collect timings for background processing and report them }";
 
-int WorkerThreadsFromMax(int max_threads)
+int GetAdditionalThreads(int min_threads, int extra_threads, int max_threads)
 {
+	if (extra_threads < 0)
+		extra_threads = 0;
+
+	if (min_threads < 0)
+		min_threads = 0;
+
 	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-	if (max_threads < 1)
-		max_threads = supported_thread_count;
+	if (max_threads < 1 || max_threads > supported_thread_count + extra_threads)
+		max_threads = supported_thread_count + extra_threads;
 
-	// check if hardware_concurrency() actually returned a value
-	if (supported_thread_count > 0 && max_threads >= supported_thread_count)
-		return supported_thread_count - (supported_thread_count > 1 ? 1 : 0);
-	else if (max_threads > 1)
-		return max_threads - 1;
+	if (max_threads > min_threads)
+		return max_threads - min_threads;
 	else
-		return 1;
+		return 0;
 }
 
 CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
@@ -64,9 +67,8 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	else if (cl_args.get<cv::String>("vid_path") != "")
 		pack.vid_path = cl_args.get<cv::String>("vid_path");
 
-	// get number of worker threads to use (subtract one for the main thread)
-	// note: min threads is 2 (1 for main thread, 1 for worker)
-	pack.worker_threads = WorkerThreadsFromMax(cl_args.get<int>("max_threads"));
+	// get max number of threads allowed
+	pack.max_threads = cl_args.get<int>("max_threads");
 
 	// get grayscale setting
 	pack.grayscale = cl_args.get<bool>("grayscale");
@@ -86,12 +88,12 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	return pack;
 }
 
-VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack, const int threads)
+VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack)
 {
 	return VidBgPack{
 			cl_pack.vid_path,
 			cl_pack.bg_algo,
-			threads,
+			cl_pack.max_threads,
 			cl_pack.bg_frame_lim,
 			cl_pack.grayscale,
 			cl_pack.vid_is_grayscale,
@@ -117,7 +119,7 @@ int main(int argc, char* argv[])
 	auto start_time{timer.GetTime()};
 
 	// get the background of the video
-	cv::Mat background_frame{GetVideoBackground(vidbgpack_from_clpack(cl_pack, cl_pack.worker_threads))};
+	cv::Mat background_frame{GetVideoBackground(vidbgpack_from_clpack(cl_pack))};
 
 	// end the timer and print results
 	timer.AddInterval(start_time);

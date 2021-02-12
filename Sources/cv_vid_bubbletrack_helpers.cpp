@@ -6,6 +6,7 @@
 #include "cv_vid_bubbletrack_helpers.h"
 #include "cv_vid_frames_generator.h"
 #include "highlight_bubbles_algo.h"
+#include "main.h"
 #include "mat_set_intermediary.h"
 #include "py_dict_consumer.h"
 
@@ -27,10 +28,14 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	std::vector<TokenProcessorPack<AssignBubblesAlgo>> &assignbubbles_packs)
 {
 	// this function releases the GIL so called functions can acquire it
-	//py::gil_scoped_release nogil;
+	py::gil_scoped_release nogil;
 
 	// expect only one assignbbubbles_pack
 	assert(assignbubbles_packs.size() == 1);
+
+	// set batch size
+	int batch_size{static_cast<int>(highlightbubbles_packs.size())};
+	assert(batch_size);
 
 	// create crop-window for processing frames
 	cv::Rect frame_dimensions{trackbubble_pack.crop_x,
@@ -39,7 +44,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		trackbubble_pack.crop_height ? trackbubble_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
 
 	// create frame generator
-	auto frame_gen{std::make_shared<CvVidFramesGenerator>(trackbubble_pack.batch_size,
+	auto frame_gen{std::make_shared<CvVidFramesGenerator>(batch_size,
 		1,	// frames are not chunked
 		trackbubble_pack.print_timing_report,
 		vid,
@@ -51,7 +56,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		trackbubble_pack.vid_is_grayscale)};
 
 	// create mat shuttle that passes frames with highlighted bubbles to assign bubbles algo
-	auto mat_shuttle{std::make_shared<MatSetIntermediary>(trackbubble_pack.batch_size,
+	auto mat_shuttle{std::make_shared<MatSetIntermediary>(batch_size,
 		trackbubble_pack.token_storage_limit,
 		trackbubble_pack.print_timing_report)};
 
@@ -62,7 +67,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	// create process for highlighting bubbles
 	using highlight_bubbles_proc_t = AsyncTokenProcess<HighlightBubblesAlgo, MatSetIntermediary::final_result_type>;
 	highlight_bubbles_proc_t highlight_bubbles_proc{
-		trackbubble_pack.batch_size,
+		batch_size,
 		true,
 		trackbubble_pack.print_timing_report,
 		trackbubble_pack.token_storage_limit,
@@ -87,8 +92,8 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	auto bubble_archive{assign_bubbles_proc.Run(std::move(assignbubbles_packs))};
 
 	// close out the highlight bubbles thread (it should be waiting at this point)
-	if (!hbproc_handle.get())
-		std::cout << "Unexpectedly not all highlighted images were cleared from highlight_bubbles_proc!\n";
+	// note: we don't care about the return value
+	hbproc_handle.get();
 
 	// print out timing info
 	if (trackbubble_pack.print_timing_report)
@@ -99,7 +104,7 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		std::cout << "Assign bubbles timing report:\n";
 		std::cout << assign_bubbles_proc.GetTimingInfoAndResetTimer();
 	}
-std::cerr << "7\n";
+
 	// return the dictionary of all bubbles tracked
 	if (bubble_archive && bubble_archive->size())
 		return std::move(bubble_archive->front());
@@ -135,12 +140,17 @@ py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack)
 	// the structuring element should exist
 	assert(trackbubble_pack.highlightbubbles_pack.struct_element.data && !trackbubble_pack.highlightbubbles_pack.struct_element.empty());
 
-	// create algo packs
+	/// create algo packs
+
+	// get number of frames to highlight in parallel based on number of threads available
+	// 3 -> min threads required; 1 -> add an extra thread to make sure cores are well-utilized (heuristic)
+	// + 1 -> roll one of the required threads into the additional threads obtained to get the batch size
+	int batch_size{GetAdditionalThreads(3, 1, trackbubble_pack.max_threads) + 1};
 
 	// highlight bubbles algo packs
 	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> highlightbubbles_packs{};
-	highlightbubbles_packs.reserve(trackbubble_pack.batch_size);
-	for (int i{0}; i < trackbubble_pack.batch_size; i++)
+	highlightbubbles_packs.reserve(batch_size);
+	for (int i{0}; i < batch_size; i++)
 	{
 		// all packs are copies of the input pack
 		highlightbubbles_packs.emplace_back(trackbubble_pack.highlightbubbles_pack);

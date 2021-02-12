@@ -22,8 +22,8 @@ struct VidBubbleTrackPack
 {
 	// path to video
 	const std::string vid_path{};
-	// number of frames to process in parallel (i.e. number of threads to use)
-	const int batch_size{};
+	// max number of threads allowed
+	const int max_threads{-1};
 
 	// pack of variables for HighlightBubblesAlgo
 	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack;

@@ -61,19 +61,45 @@ public:
 				return;
 		}
 
-		// add a batch
+		// post a batch
+
+	}
+
+	/// clean up remaining tokens (unique ptr return type is an API requirement)
+	virtual std::unique_ptr<bool> GetFinalResultImpl() override
+	{
+		// clear out any remaining elements carelessly
+		// this should only cause 'out of order' problems if ConsumeTokenImpl caller sent
+		// uneven numbers of tokens to each batch index
+		while (SendABatch()) {}
+
+		return std::make_unique<bool>(true);
+	}
+
+private:
+	/// send a batch in
+	/// warning: calling this carelessly can cause tokens passed to the generator to be out of order
+	bool SendABatch()
+	{
 		std::vector<cv::Mat> new_batch{};
 		new_batch.reserve(m_elements.size());
 
-		// assemble batch from first element in each batch-position
+		// assemble batch from first element in each batch-position (if available)
 		for (auto &element_list : m_elements)
 		{
+			// ignore empty lists
+			if (element_list.empty())
+				continue;
+
 			new_batch.emplace_back(std::move(element_list.front()));
 
 			element_list.pop_front();
 		}
 
-		assert(new_batch.size() == m_elements.size());
+		if (new_batch.size() == 0)
+			return false;
+
+		assert(new_batch.size() <= m_elements.size());
 
 		// the batch is considered 'one output token', so it must be wrapped for TokenBatchGenerator
 		std::vector<std::unique_ptr< std::vector<cv::Mat> >> out_token{};
@@ -81,31 +107,10 @@ public:
 
 		// send the token to the generator so the second AsyncTokenProcess can use it
 		AddNextBatch(out_token);
+
+		return true;
 	}
 
-	/// get final result and reset the elements (unique ptr is an API requirement)
-	virtual std::unique_ptr<bool> GetFinalResultImpl() override
-	{
-		// check that the elements have been cleared out
-		bool elements_cleared{true};
-
-		for (const auto &element_list : m_elements)
-		{
-			if (!element_list.empty())
-			{
-				elements_cleared = false;
-
-				// elements remain, so reset first
-				m_elements.resize(m_elements.size());
-
-				break;
-			}
-		}
-
-		return std::make_unique<bool>(elements_cleared);
-	}
-
-private:
 //member variables
 	/// store batch elements until they are ready to be used
 	std::vector<std::list<cv::Mat>> m_elements{};

@@ -17,6 +17,7 @@
 #include <cassert>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <type_traits>
 
 
