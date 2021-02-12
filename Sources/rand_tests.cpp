@@ -145,6 +145,15 @@ void test_assignbubbles(cv::Mat &test_frame)
 	path.attr("insert")(0, lib_dir.c_str());
 
 	// set parameters
+	/*
+	py::tuple flow_dir{};
+	const int fps{};
+	const int pix_per_um{};
+	const int width_border{};
+	const double v_max{};
+	const int min_size_reg{};
+	*/
+
 	TokenProcessorPack<AssignBubblesAlgo> assign_bubbles_pack{
 		"cvimproc.improc",
 		"assign_bubbles",
@@ -245,6 +254,10 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	lib_dir += "/src/";
 	path.attr("insert")(0, lib_dir.c_str());
 
+	// get the function to track bubbles with as functor
+	py::module_ bubbletracking_mod = py::module_::import("cvimproc.improc");
+	py::function assignbubbles_func = bubbletracking_mod.attr("assign_bubbles");
+
 	// create template highlightbubbles pack
 	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack{
 		background_frame.clone(),
@@ -259,14 +272,13 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 
 	// create template assignbubbles pack
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
-		"cvimproc.improc",
-		"assign_bubbles",
-		py::make_tuple(2, 1), 	// +x direction (?)
+		assignbubbles_func,
+		py::make_tuple(py::make_tuple(2f, 1f), 	// +x direction (?)
 		3,		// not useful here...?
 		4,
 		5,
 		200,
-		40
+		40)
 	};
 
 	// create parameter pack

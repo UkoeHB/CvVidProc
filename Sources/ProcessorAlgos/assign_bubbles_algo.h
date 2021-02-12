@@ -28,14 +28,8 @@ class AssignBubblesAlgo;
 template <>
 struct TokenProcessorPack<AssignBubblesAlgo> final
 {
-	std::string bubbletracking_module{};
-	std::string bubbletracking_function{};
-	py::tuple flow_dir{};
-	const int fps{};
-	const int pix_per_um{};
-	const int width_border{};
-	const double v_max{};
-	const int min_size_reg{};
+	py::function bubbletracking_function{};
+	py::tuple args{};
 };
 
 ////
@@ -60,14 +54,7 @@ public:
 	/// normal constructor
 	AssignBubblesAlgo(TokenProcessorPack<AssignBubblesAlgo> processor_pack) :
 		TokenProcessorAlgoBase{std::move(processor_pack)}
-	{
-		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
-		py::gil_scoped_acquire gil;
-
-		// prepare the wrapped function
-		py::module_ algo_module = py::module_::import(m_pack.bubbletracking_module.c_str());
-		m_algo_func = algo_module.attr(m_pack.bubbletracking_function.c_str());
-	}
+	{}
 
 	/// copy constructor: disabled
 	AssignBubblesAlgo(const AssignBubblesAlgo&) = delete;
@@ -126,19 +113,12 @@ public:
 			// process the Mat
 			// - python call
 			using namespace pybind11::literals;		// for '_a'
-			m_current_id = m_algo_func("frame_bw"_a = image,
+			m_current_id = m_pack.bubbletracking_function("frame_bw"_a = image,
 				"f"_a = m_num_processed,
 				"bubbles_prev"_a = *m_bubbles_active,
 				"bubbles_archive"_a = *m_bubbles_archive,
 				"ID_curr"_a = m_current_id,
-				"flow_dir"_a = m_pack.flow_dir,
-				"fps"_a = m_pack.fps,
-				"pix_per_um"_a = m_pack.pix_per_um,
-				"width_border"_a = m_pack.width_border,
-				"row_lo"_a = 0,
-				"row_hi"_a = image.rows,
-				"v_max"_a = m_pack.v_max,
-				"min_size_reg"_a = m_pack.min_size_reg
+				"args"_a = m_pack.args
 			).cast<int>();
 
 			m_num_processed++;
@@ -174,9 +154,6 @@ public:
 
 private:
 //member variables
-	/// keep track of wrapped python function we want to run
-	py::function m_algo_func;
-
 	/// number of frames processed
 	int m_num_processed{0};
 	/// current ID
