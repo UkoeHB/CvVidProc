@@ -158,14 +158,17 @@ void test_assignbubbles(cv::Mat &test_frame)
 	const int min_size_reg{};
 	*/
 
+	using namespace pybind11::literals;		// for '_a'
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
 		assignbubbles_func,
-		py::make_tuple(py::make_tuple(2, 1), 	// +x direction (?)
-		3,		// not useful here...?
-		4,
-		5,
-		200,
-		40)
+		py::dict{"flow_dir"_a=py::make_tuple(2, 1), 	// +x direction (?)
+		"fps"_a=3,		// not useful here...?
+		"pix_per_um"_a=4,
+		"width_border"_a=5,
+		"row_lo"_a=0,
+		"row_hi"_a=test_frame.rows,
+		"v_max"_a=200,
+		"min_size_reg"_a=40}
 	};
 
 	// create new scope so the GIL can be released
@@ -274,14 +277,17 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	};
 
 	// create template assignbubbles pack
+	using namespace pybind11::literals;		// for '_a'
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
 		assignbubbles_func,
-		py::make_tuple(py::make_tuple(2, 1), 	// +x direction (?)
-		3,		// not useful here...?
-		4,
-		5,
-		200,
-		40)
+		py::dict{"flow_dir"_a=py::make_tuple(2.0, 1.0), 	// +x direction (?)
+		"fps"_a=3,		// not useful here...?
+		"pix_per_um"_a=4,
+		"width_border"_a=5,
+		"row_lo"_a=0,
+		"row_hi"_a=background_frame.rows,
+		"v_max"_a=200,
+		"min_size_reg"_a=40}
 	};
 
 	// create parameter pack

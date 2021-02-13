@@ -29,7 +29,7 @@ template <>
 struct TokenProcessorPack<AssignBubblesAlgo> final
 {
 	py::function bubbletracking_function{};
-	py::tuple args{};
+	py::dict kwargs{};
 };
 
 ////
@@ -118,7 +118,7 @@ public:
 				"bubbles_prev"_a = *m_bubbles_active,
 				"bubbles_archive"_a = *m_bubbles_archive,
 				"ID_curr"_a = m_current_id,
-				"args"_a = *m_pack.args
+				**m_pack.kwargs
 			).cast<int>();
 
 			m_num_processed++;

@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 	//rand_tests::test_embedded_python();
 	//rand_tests::test_timing_numpyconverter(2000, true);
 
-	//rand_tests::demo_trackbubbles(cl_pack, background_frame);
+	rand_tests::demo_trackbubbles(cl_pack, background_frame);
 
 	return 0;
 }

@@ -2,9 +2,10 @@
 
 //local headers
 #include "assign_bubbles_algo.h"
+#include "async_token_batch_generator.h"
 #include "async_token_process.h"
 #include "cv_vid_bubbletrack_helpers.h"
-#include "cv_vid_frames_generator.h"
+#include "cv_vid_frames_generator_algo.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "mat_set_intermediary.h"
@@ -43,17 +44,48 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 		trackbubble_pack.crop_width ? trackbubble_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
 		trackbubble_pack.crop_height ? trackbubble_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
 
-	// create frame generator
-	auto frame_gen{std::make_shared<CvVidFramesGenerator>(batch_size,
-		1,	// frames are not chunked
-		trackbubble_pack.print_timing_report,
-		vid,
+	/// create frame generator
+
+	// cap range of frames to analyze at the frame limit
+	long long num_frames{};
+	if (vid.isOpened())
+	{
+		num_frames = static_cast<long long>(vid.get(cv::CAP_PROP_FRAME_COUNT));
+		
+		// if frame limit is <= 0 use default (all frames in vid)
+		if (trackbubble_pack.frame_limit > 0)
+		{
+			if (num_frames > trackbubble_pack.frame_limit)
+				num_frames = trackbubble_pack.frame_limit;
+		}
+	}
+	else
+		return nullptr;
+
+	// frame generator packs
+	std::vector<TokenGeneratorPack<CvVidFramesGeneratorAlgo>> generator_packs{};
+	generator_packs.emplace_back(TokenGeneratorPack<CvVidFramesGeneratorAlgo>{
+		batch_size,
+		batch_size,
+		1,  // frames are not chunked
+		trackbubble_pack.vid_path,
 		0,
-		0,
-		trackbubble_pack.frame_limit,
+		num_frames,
 		frame_dimensions,
 		trackbubble_pack.grayscale,
-		trackbubble_pack.vid_is_grayscale)};
+		trackbubble_pack.vid_is_grayscale,
+		0,
+		0
+	});
+
+	// frame generator
+	auto frame_gen{std::make_shared<AsyncTokenBatchGenerator<CvVidFramesGeneratorAlgo>>(
+		batch_size,
+		trackbubble_pack.print_timing_report,
+		trackbubble_pack.token_storage_limit
+	)};
+
+	frame_gen->StartGenerator(std::move(generator_packs));
 
 	// create mat shuttle that passes frames with highlighted bubbles to assign bubbles algo
 	auto mat_shuttle{std::make_shared<MatSetIntermediary>(batch_size,
