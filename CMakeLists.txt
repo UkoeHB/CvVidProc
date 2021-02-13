@@ -127,7 +127,6 @@ include_directories(${GENERATED_FILES})
 set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bg_helpers.cpp
         Sources/cv_vid_bubbletrack_helpers.cpp
-        Sources/ProcessorAlgos/triframe_median_algo.cpp
         Sources/ProcessorAlgos/highlight_bubbles_algo.cpp
         Sources/Utility/cv_util.cpp
         Sources/Utility/ndarray_converter.cpp)

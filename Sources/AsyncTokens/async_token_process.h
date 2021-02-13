@@ -63,8 +63,8 @@ public:
 		m_token_generator{token_generator},
 		m_token_consumer{token_consumer}
 	{
-		static_assert(std::is_base_of<TokenProcessorAlgoBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
-			"Token processor implementation does not derive from the TokenProcessorAlgoBase!");
+		static_assert(std::is_base_of<TokenProcessorAlgo<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
+			"Token processor implementation does not derive from the TokenProcessorAlgo!");
 
 		assert(m_token_generator);
 		assert(m_token_consumer);

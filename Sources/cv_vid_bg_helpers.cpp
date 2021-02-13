@@ -7,7 +7,6 @@
 #include "cv_vid_fragment_consumer.h"
 #include "histogram_median_algo.h"
 #include "main.h"
-#include "triframe_median_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)

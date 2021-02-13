@@ -23,7 +23,7 @@
 ////
 // expected usage:
 // 		- the class TokenProcessorAlgoT must
-//			be derived from TokenProcessorAlgoBase<TokenProcessorAlgoT>
+//			be derived from TokenProcessorAlgo<TokenProcessorAlgoT>
 //		note: c++20 contracts would make this easier...
 /// 
 template <typename TokenProcessorAlgoT>
@@ -204,6 +204,7 @@ public:
 		{
 			// request from processor directly
 			// WARNING: if the processor keeps pumping out results then this will keep returning true
+			//  use ShutDown() -> NotifyNoMoreTokens() to tell worker to stop making results
 			return_val = m_worker_processor->TryGetResult();
 
 			return return_val.get() ? TokenQueueCode::Success : TokenQueueCode::GeneralFail;
@@ -242,8 +243,8 @@ private:
 	/// function that lives in a thread and does active work
 	void WorkerFunction()
 	{
-		static_assert(std::is_base_of<TokenProcessorAlgoBase<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
-			"Token processor implementation does not derive from the TokenProcessorAlgoBase!");
+		static_assert(std::is_base_of<TokenProcessorAlgo<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
+			"Token processor implementation does not derive from the TokenProcessorAlgo!");
 
 		if (!m_worker_processor)
 		{

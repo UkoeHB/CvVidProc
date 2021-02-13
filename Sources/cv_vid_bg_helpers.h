@@ -4,7 +4,7 @@
 #define CV_VID_BG_HELPERS_0089787_H
 
 //local headers
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
