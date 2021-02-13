@@ -36,7 +36,10 @@ BGAlgo GetBGAlgo(const std::string &algo)
 }
 
 template <typename MedianAlgo>
-cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs)
+cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
+	const VidBgPack &vidbg_pack,
+	std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs,
+	const bool synchronous_allowed)
 {
 	// number of fragments to create during background analysis
 	int batch_size{static_cast<int>(processor_packs.size())};
@@ -69,7 +72,7 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 
 	// create process
 	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{batch_size,
-		true,
+		synchronous_allowed,
 		vidbg_pack.print_timing_report,
 		vidbg_pack.token_storage_limit,
 		vidbg_pack.token_storage_limit,
@@ -92,12 +95,22 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
 {
+	// set the batch size
 	int batch_size{GetAdditionalThreads(1, 1, vidbg_pack.max_threads)};
+	bool synchronous{false};
+
+	// if no batch size specified then use synchronous mode (should fall through downstream)
+	// should only happen if user specified max_threads=1 or the hardware concurrency is unavailable
+	if (batch_size <= 0)
+	{
+		batch_size = 1;
+		synchronous = true;
+	}
 
 	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
 	empty_packs.resize(batch_size, TokenProcessorPack<MedianAlgo>{});
 
-	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs);
+	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs, synchronous);
 }
 
 /// get a video background

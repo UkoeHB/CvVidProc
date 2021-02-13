@@ -42,35 +42,35 @@ python3 setup.py clean && \
 Run cmake for debug or release:
 
 ```
-// in command line, for debug build (slow version)
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug
-
 // in command line, for release build (fast version)
-cmake -S . -B BuildR -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
+
+// in command line, for debug build (slow version)
+cmake -S . -B BuildD -DCMAKE_BUILD_TYPE=Debug
 
 // the OpenCV directory flags must have -D in this case
 -DCV_DIR=~/MyLibs/
 -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
 
 // for example
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -DCV_DIR=~/MyLibs/ -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -DCV_DIR=~/MyLibs/ -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
 ```
 
 Build:
 
 ```
-// in command line, for debug build (slow version)
+// in command line, for release build (fast version)
 cmake --build Build
 
-// in command line, for release build (fast version)
-cmake --build BuildR
+// in command line, for debug build (slow version)
+cmake --build BuildD
 ```
 
 Execute program.:
 
 ```
 ./Build/vid_bg --vid=vid.mp4
-./BuildR/vid_bg --vid=vid.mp4
+./BuildD/vid_bg --vid=vid.mp4
 ```
 
 Notes:
@@ -83,7 +83,7 @@ Notes:
 If you have Linux, see [this resource](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) for installing OpenCV. It may be necessary to use the `ninja` build generator instead of `make`. If, for example, you install OpenCV to the directory "`~`", then the command for generating a debug build system will be:
 
 ```
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
+cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
 ```
 
 Ubuntu users may need to download and set up an 'X server for windows' by following [this tutorial](https://seanthegeek.net/234/graphical-linux-applications-bash-ubuntu-windows/). If your Ubuntu doesn't already have it, install GTK3 for backend GUI with:

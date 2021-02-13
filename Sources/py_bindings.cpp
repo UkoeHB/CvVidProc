@@ -99,9 +99,9 @@ PYBIND11_MODULE(_core, mod)
 	/// struct VidBubbleTrackPack
 	py::class_<VidBubbleTrackPack>(mod, "VidBubbleTrackPack")
 		.def(py::init<const std::string,
-				const int,
 				TokenProcessorPack<HighlightBubblesAlgo>,
 				TokenProcessorPack<AssignBubblesAlgo>,
+				const int,
 				const long long,
 				const bool,
 				const bool,
@@ -112,9 +112,9 @@ PYBIND11_MODULE(_core, mod)
 				const int,
 				const bool>(),
 				py::arg("vid_path"),
-				py::arg("max_threads") = -1,
 				py::arg("highlightbubbles_pack"),
 				py::arg("assignbubbles_pack"),
+				py::arg("max_threads") = -1,
 				py::arg("frame_limit") = -1,
 				py::arg("grayscale") = false,
 				py::arg("vid_is_grayscale") = false,

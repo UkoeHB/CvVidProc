@@ -22,13 +22,14 @@ struct VidBubbleTrackPack
 {
 	// path to video
 	const std::string vid_path{};
-	// max number of threads allowed
-	const int max_threads{-1};
 
 	// pack of variables for HighlightBubblesAlgo
 	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack;
 	// pack of variables for AssignBubblesAlgo
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack;
+
+	// max number of threads allowed
+	const int max_threads{-1};
 
 	// max number of frames to analyze (<= 0 means use all frames in video)
 	const long long frame_limit{-1};

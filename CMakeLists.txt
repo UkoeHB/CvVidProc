@@ -23,8 +23,8 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 
 # Set project name
 project(vid_bg
-        DESCRIPTION "get background of a video"
-        LANGUAGES CXX)
+    DESCRIPTION "get background of a video"
+    LANGUAGES CXX)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
@@ -87,14 +87,17 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 # third party bubble tracking library (python scripts needed at run-time)
+# currently only used by the C++ executable
 #TODO: this pollutes the build directory a bit, could be simpler
-include (FetchContent)
-FetchContent_Declare(
-    bubbletracking
-    GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
-    GIT_TAG 5ae4b0f923434fb9a4427c343bc50d79bc933b65
-)
-FetchContent_Populate(bubbletracking)
+if (NOT SKBUILD)
+    include (FetchContent)
+    FetchContent_Declare(
+        bubbletracking
+        GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
+        GIT_TAG 5ae4b0f923434fb9a4427c343bc50d79bc933b65
+    )
+    FetchContent_Populate(bubbletracking)
+endif ()
 
 
 

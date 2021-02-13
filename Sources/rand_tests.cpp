@@ -286,9 +286,9 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 
 	// create parameter pack
 	VidBubbleTrackPack trackbubble_pack{cl_pack.vid_path,
-		cl_pack.max_threads,
 		highlightbubbles_pack,
 		assignbubbles_pack,
+		cl_pack.max_threads,
 		cl_pack.bg_frame_lim,
 		cl_pack.grayscale,
 		cl_pack.vid_is_grayscale,

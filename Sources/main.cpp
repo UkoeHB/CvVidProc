@@ -24,7 +24,7 @@ const char* g_commandline_params =
 	"{ help h           |         | Print usage }"
 	"{ vid              |         | Video name (with extension) }"
 	"{ vid_path         |         | Full path for video }"
-	"{ max_threads      |   100   | Max number of threads to use for analyzing the video }"
+	"{ max_threads      |    -1   | Max number of threads to use for analyzing the video }"
 	"{ grayscale        |  false  | Treat the video as grayscale [optimization] (true/false) }"
 	"{ vid_is_grayscale |  false  | Video is already grayscale [optimization] (true/false) }"
 	"{ bg_algo          |   hist  | Algorithm for getting background image (hist/tri) }"
@@ -41,7 +41,7 @@ int GetAdditionalThreads(int min_threads, int extra_threads, int max_threads)
 
 	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-	if (max_threads < 1 || max_threads > supported_thread_count + extra_threads)
+	if (max_threads < 1 || max_threads > (supported_thread_count + extra_threads))
 		max_threads = supported_thread_count + extra_threads;
 
 	if (max_threads > min_threads)
@@ -131,10 +131,10 @@ int main(int argc, char* argv[])
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())
 	{
-//		cv::imshow("Median Frame", background_frame);
+		cv::imshow("Median Frame", background_frame);
 
 		// wait for a keypress before ending
-//		int keypress{cv::waitKey()};
+		int keypress{cv::waitKey()};
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 	//rand_tests::test_embedded_python();
 	//rand_tests::test_timing_numpyconverter(2000, true);
 
-	rand_tests::demo_trackbubbles(cl_pack, background_frame);
+	//rand_tests::demo_trackbubbles(cl_pack, background_frame);
 
 	return 0;
 }
