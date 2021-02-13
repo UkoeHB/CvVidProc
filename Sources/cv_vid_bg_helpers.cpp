@@ -26,8 +26,6 @@ BGAlgo GetBGAlgo(const std::string &algo)
 {
 	if (algo == "hist")
 		return BGAlgo::HISTOGRAM;
-	else if (algo == "tri")
-		return BGAlgo::TRIFRAME;
 	else
 	{
 		std::cerr << "Unknown background algorithm detected: " << algo << '\n';
@@ -167,11 +165,6 @@ cv::Mat GetVideoBackground(const VidBgPack &vidbg_pack)
 			{
 				std::cerr << "warning, video appears to have over 2^32 frames! (" << total_frames << ") is way too many!\n";
 			}
-		}
-
-		case BGAlgo::TRIFRAME :
-		{
-			return VidBackgroundWithAlgoEmptyPacks<TriframeMedianAlgo>(vid, vidbg_pack);
 		}
 
 		default :

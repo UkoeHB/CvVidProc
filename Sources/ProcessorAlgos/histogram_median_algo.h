@@ -5,7 +5,7 @@
 #define HISTOGRAM_MEDIAN_ALGO_5776890_H
 
 //local headers
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -38,7 +38,7 @@ struct TokenProcessorPack<HistogramMedianAlgo<T>> final
 // collects cv::Mat frames, increments histograms for each pixel value, then gets median of each histogram for element-wise cv::Mat median
 ///
 template <typename T>
-class HistogramMedianAlgo final : public TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>
+class HistogramMedianAlgo final : public TokenProcessorAlgo<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>
 {
 public:
 //constructors
@@ -47,7 +47,7 @@ public:
 
 	/// normal constructor
 	HistogramMedianAlgo(TokenProcessorPack<HistogramMedianAlgo<T>> processor_pack) :
-		TokenProcessorAlgoBase<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>{std::move(processor_pack)}
+		TokenProcessorAlgo<HistogramMedianAlgo<T>, cv::Mat, cv::Mat>{std::move(processor_pack)}
 	{
 		static_assert(std::is_unsigned<T>::value, "HistogramMedianAlgo only works with unsigned integrals for histogram elements!");
 	}
@@ -140,7 +140,7 @@ public:
 	{
 		assert(m_histograms.size() > 0);
 		assert(m_histograms[0].size() > 0);
-		
+
 		std::vector<unsigned char> return_vec{};
 		return_vec.resize(m_histograms[0].size());
 		std::size_t max_uchar{static_cast<unsigned char>(-1)};

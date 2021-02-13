@@ -4,7 +4,7 @@
 #define HIGHLIGHT_BUBBLES_ALGO_6787878_H
 
 //local headers
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -35,7 +35,7 @@ struct TokenProcessorPack<HighlightBubblesAlgo> final
 // C++ implementation for algorithm: highlight_bubble_hyst_thresh()
 // obtains a cv::Mat image and uses heuristics to process the image so bubble-like objects are highlighted
 ///
-class HighlightBubblesAlgo final : public TokenProcessorAlgoBase<HighlightBubblesAlgo, cv::Mat, cv::Mat>
+class HighlightBubblesAlgo final : public TokenProcessorAlgo<HighlightBubblesAlgo, cv::Mat, cv::Mat>
 {
 public:
 //constructors
@@ -43,7 +43,7 @@ public:
 	HighlightBubblesAlgo() = delete;
 
 	/// normal constructor
-	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgoBase{std::move(processor_pack)}
+	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgo{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled

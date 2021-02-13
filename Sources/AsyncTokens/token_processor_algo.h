@@ -1,7 +1,7 @@
 // token processor algorithm base class
 
-#ifndef TOKEN_PROCESSOR_ALGO_BASE_039587849_H
-#define TOKEN_PROCESSOR_ALGO_BASE_039587849_H
+#ifndef TOKEN_PROCESSOR_ALGO_039587849_H
+#define TOKEN_PROCESSOR_ALGO_039587849_H
 
 //local headers
 
@@ -13,7 +13,7 @@
 
 /// by default, the processor pack is empty; add specializations for specific content
 /// WARNING: if you want to put a pointer in the pack, only use std::unique_ptr to avoid undefined behavior
-/// - note: packs are passed around with move constructors and move assignment operators until they reach TokenProcessorAlgoBase
+/// - note: packs are passed around with move constructors and move assignment operators until they reach TokenProcessorAlgo
 template <typename AlgoT>
 struct TokenProcessorPack final
 {};
@@ -22,7 +22,7 @@ struct TokenProcessorPack final
 // interface for token processing algorithms
 ///
 template <typename AlgoT, typename TokenT, typename ResultT>
-class TokenProcessorAlgoBase
+class TokenProcessorAlgo
 {
 public:
 //member types
@@ -31,22 +31,22 @@ public:
 
 //constructors
 	/// default constructor: disabled
-	TokenProcessorAlgoBase() = delete;
+	TokenProcessorAlgo() = delete;
 
 	/// normal constructor
-	TokenProcessorAlgoBase(TokenProcessorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
+	TokenProcessorAlgo(TokenProcessorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
-	TokenProcessorAlgoBase(const TokenProcessorAlgoBase&) = delete;
+	TokenProcessorAlgo(const TokenProcessorAlgo&) = delete;
 
 //destructor
-	virtual ~TokenProcessorAlgoBase() = default;
+	virtual ~TokenProcessorAlgo() = default;
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	TokenProcessorAlgoBase& operator=(const TokenProcessorAlgoBase&) = delete;
-	TokenProcessorAlgoBase& operator=(const TokenProcessorAlgoBase&) const = delete;
+	TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) = delete;
+	TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) const = delete;
 
 //member functions
 	/// insert an element to be processed

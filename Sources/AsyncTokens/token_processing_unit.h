@@ -5,7 +5,7 @@
 
 //local headers
 #include "token_queue.h"
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 #include "ts_interval_timer.h"
 
 //third party headers
@@ -59,13 +59,10 @@ public:
 	TokenProcessingUnit(const TokenProcessingUnit&) : TokenProcessingUnit{}
 	{}
 
-	/// destructor
-	~TokenProcessingUnit()
-	{
-		// join the worker thread if necessary (is joining in destructor legitimate?)
-		if (m_worker.joinable())
-			m_worker.join();
-	}
+//destructor: none
+	/// note: not exception safe, and may crash the program if unit is destroyed before calling
+	///  ShutDown() -> WaitUntilUnitStops()
+	///  - reason: want to crash fast instead of hanging on a spinning thread
 
 //overloaded operators
 	/// asignment operator: disabled

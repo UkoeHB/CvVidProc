@@ -18,7 +18,6 @@
 enum class BGAlgo
 {
 	HISTOGRAM,
-	TRIFRAME,
 	UNKNOWN
 };
 

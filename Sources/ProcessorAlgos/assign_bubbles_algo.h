@@ -6,7 +6,7 @@
 //local headers
 #include "ndarray_converter.h"
 #include "project_dir_config.h"
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -44,7 +44,7 @@ struct TokenProcessorPack<AssignBubblesAlgo> final
 //  py::object path = sys.attr("path");
 //  path.attr("insert")(0, config::bubbletracking_dir);
 ///
-class AssignBubblesAlgo final : public TokenProcessorAlgoBase<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
+class AssignBubblesAlgo final : public TokenProcessorAlgo<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
 {
 public:
 //constructors
@@ -53,7 +53,7 @@ public:
 
 	/// normal constructor
 	AssignBubblesAlgo(TokenProcessorPack<AssignBubblesAlgo> processor_pack) :
-		TokenProcessorAlgoBase{std::move(processor_pack)}
+		TokenProcessorAlgo{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled

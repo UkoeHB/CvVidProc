@@ -6,7 +6,7 @@
 //local headers
 #include "token_batch_generator.h"
 #include "token_batch_consumer.h"
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 #include "token_processing_unit.h"
 #include "token_queue.h"
 #include "ts_interval_timer.h"
