@@ -92,8 +92,8 @@ protected:
 		cv::Mat result_img{};
 		if (!cv_mat_from_chunks(result_img,
 				img_frags,
-				1,
 				static_cast<int>(GetBatchSize()),
+				1,
 				m_frame_width,
 				m_frame_height,
 				m_horizontal_buffer_pixels,

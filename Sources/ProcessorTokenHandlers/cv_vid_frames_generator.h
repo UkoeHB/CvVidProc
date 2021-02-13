@@ -135,7 +135,7 @@ protected:
 
 			if (m_chunks_per_frame == 1)
 				temp_chunk_set.emplace_back(std::make_unique<cv::Mat>(modified_frame));
-			else if (!cv_mat_to_chunks(modified_frame, temp_chunk_set, 1, static_cast<int>(GetBatchSize()), m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
+			else if (!cv_mat_to_chunks(modified_frame, temp_chunk_set, static_cast<int>(GetBatchSize()), 1, m_horizontal_buffer_pixels, m_vertical_buffer_pixels))
 				std::cerr << "Breaking frame (" << m_frames_consumed + 1 << ") into chunks failed unexpectedly!\n";
 
 			// store the set of chunks

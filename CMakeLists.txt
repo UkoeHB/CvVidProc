@@ -22,7 +22,7 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 #project setup
 
 # Set project name
-project(vid_bg
+project(cvvidproc
     DESCRIPTION "get background of a video"
     LANGUAGES CXX)
 
