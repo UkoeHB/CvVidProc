@@ -118,7 +118,7 @@ public:
 				"bubbles_prev"_a = *m_bubbles_active,
 				"bubbles_archive"_a = *m_bubbles_archive,
 				"ID_curr"_a = m_current_id,
-				"args"_a = m_pack.args
+				"args"_a = *m_pack.args
 			).cast<int>();
 
 			m_num_processed++;
