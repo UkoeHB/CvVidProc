@@ -90,10 +90,11 @@ PYBIND11_MODULE(_core, mod)
 	/// struct TokenProcessorPack<AssignBubblesAlgo>
 	py::class_<TokenProcessorPack<AssignBubblesAlgo>>(mod, "AssignBubblesPack")
 		.def(py::init<py::function,
-				py::tuple>(),
+				py::dict>(),
 				"Expected signature of input func: \
-				f(frame_bw, f, bubbles_prev, bubbles_archive, ID_curr, args)"
-				py::args("bubbletracking_function"),
+				f(frame_bw, f, bubbles_prev, bubbles_archive, ID_curr, args) \
+				note: 'args' should be a python dictionary"
+				py::args("function"),
 				py::args("args"));
 
 	/// struct VidBubbleTrackPack

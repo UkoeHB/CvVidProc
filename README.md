@@ -26,10 +26,10 @@ Dependencies that will autoinstall if absent:
 
 ## About
 
-`cvvidproc` is a small library containing utilities for processing OpenCV videos. It was developed to support [Andy Ylitalo](https://github.com/andylitalo)'s bubble-tracking project with faster implementations of video processing than can be achieved in pure Python.
+`cvvidproc` is a small library with utilities for processing OpenCV videos. It was developed to support [Andy Ylitalo](https://github.com/andylitalo)'s bubble-tracking project with faster implementations of video processing than can be achieved in pure Python.
 
 The available methods are:
-- `GetVideoBackground()`: Obtains the 'background' of a video by computing the median of each pixel. Currently only a brute-force histogram algorithm is implemented, albeit in a multithreaded manner, which provides some benefits (\~25% speedup in tests relative to single-threaded).
+- `GetVideoBackground()`: Obtains the 'background' of a video by computing the median of each pixel. Currently only a brute-force histogram algorithm is implemented, albeit in a multithreaded manner.
 - `TrackBubbles()`: Tracks bubbles in a video, and reports back a dictionary of all bubbles encountered. Frame processing is implemented in C++, while bubble identification and tracking rely on a python function that must be injected by the caller.
 
 
