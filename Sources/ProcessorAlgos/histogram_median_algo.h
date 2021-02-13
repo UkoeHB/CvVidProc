@@ -115,22 +115,22 @@ public:
 		{
 			assert(new_elements.size() > 0);
 
-			std::vector<T> element_histograms{};
+			std::vector<T> frequency_map{};
 			std::size_t max_uchar{static_cast<unsigned char>(-1)};
-			element_histograms.resize(max_uchar + 1, T{0});
-			m_histograms.resize(new_elements.size(), element_histograms);
+			frequency_map.resize(new_elements.size(), T{0});
+			m_histograms.resize(max_uchar + 1, frequency_map);
 
 			// check that it worked
-			assert(m_histograms[0].size() == max_uchar + 1);
+			assert(m_histograms[0].size() == new_elements.size());
 		}
 
 		// increment all the histograms
-		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
+		for (std::size_t element_index{0}; element_index < m_histograms[0].size(); element_index++)
 		{
 			// only increment histogram if it won't cause roll-over
-			if (m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])] != static_cast<T>(-1))
+			if (m_histograms[static_cast<std::size_t>(new_elements[element_index])][element_index] != static_cast<T>(-1))
 			{
-				m_histograms[element_index][static_cast<std::size_t>(new_elements[element_index])]++;
+				m_histograms[static_cast<std::size_t>(new_elements[element_index])][element_index]++;
 			}
 		}
 	}
@@ -138,14 +138,15 @@ public:
 	/// collect median from histograms
 	std::vector<unsigned char> MedianFromHistograms()
 	{
+		assert(m_histograms.size() > 0);
+		assert(m_histograms[0].size() > 0);
+		
 		std::vector<unsigned char> return_vec{};
-		return_vec.resize(m_histograms.size());
+		return_vec.resize(m_histograms[0].size());
 		std::size_t max_uchar{static_cast<unsigned char>(-1)};
 		unsigned long accumulator_cap{static_cast<unsigned long>(m_frames_processed)};
 
-		assert(m_histograms.size() > 0);
-
-		for (std::size_t element_index{0}; element_index < m_histograms.size(); element_index++)
+		for (std::size_t element_index{0}; element_index < m_histograms[0].size(); element_index++)
 		{
 			unsigned long accumulator{0};
 			std::size_t halfway_index{max_uchar};
@@ -153,7 +154,7 @@ public:
 			// find the histogram index that sits in the middle of all items added
 			for (std::size_t histogram_index{0}; histogram_index < max_uchar + 1; histogram_index++)
 			{
-				accumulator += static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
+				accumulator += static_cast<unsigned long>(m_histograms[histogram_index][element_index]);
 
 				if ((halfway_index == max_uchar) && (accumulator > accumulator_cap/2))
 					halfway_index = histogram_index;
@@ -167,7 +168,7 @@ public:
 
 				for (std::size_t histogram_index{halfway_index}; histogram_index != static_cast<std::size_t>(-1); histogram_index--)
 				{
-					accumulator -= static_cast<unsigned long>(m_histograms[element_index][histogram_index]);
+					accumulator -= static_cast<unsigned long>(m_histograms[histogram_index][element_index]);
 
 					// use the histogram index above the halfway mark
 					if (accumulator < temp_cap/2)
