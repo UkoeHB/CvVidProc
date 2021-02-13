@@ -201,6 +201,8 @@ private:
 	/// see if queue is open; not thread-safe since it should only be used by thread-safe member functions
 	bool QueueOpenImpl() const
 	{
+		assert(m_max_queue_size && "can't use default constructed queue!");
+
 		return m_tokenqueue.size() < m_max_queue_size;
 	}
 

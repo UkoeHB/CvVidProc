@@ -20,6 +20,7 @@ class TokenBatchGenerator
 //member types
 public:
 	using token_type = TokenT;
+	using token_set_type = std::vector<std::unique_ptr<TokenT>>;
 
 //constructors
 	/// default constructor: disabled
@@ -83,7 +84,7 @@ public:
 
 protected:
 	/// get token set from generator; should return empty vector when no more token sets to get
-	virtual std::vector<std::unique_ptr<TokenT>> GetTokenSetImpl() = 0;
+	virtual token_set_type GetTokenSetImpl() = 0;
 
 private:
 //member variables

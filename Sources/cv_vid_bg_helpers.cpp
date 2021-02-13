@@ -1,9 +1,10 @@
 // helpers for getting background of an opencv vid
 
 //local headers
+#include "async_token_batch_generator.h"
 #include "async_token_process.h"
 #include "cv_vid_bg_helpers.h"
-#include "cv_vid_frames_generator.h"
+#include "cv_vid_frames_generator_algo.h"
 #include "cv_vid_fragment_consumer.h"
 #include "histogram_median_algo.h"
 #include "main.h"
@@ -36,6 +37,7 @@ template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 	const VidBgPack &vidbg_pack,
 	std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs,
+	const int generator_threads,
 	const bool synchronous_allowed)
 {
 	// number of fragments to create during background analysis
@@ -47,17 +49,59 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 		vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
 		vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
 
-	// create frame generator
-	auto frame_gen{std::make_shared<CvVidFramesGenerator>(1,
+	/// create frame generator
+
+	// frame generator packs
+	std::vector<TokenGeneratorPack<CvVidFramesGeneratorAlgo>> generator_packs{};
+	assert(generator_threads >= 1);
+	generator_packs.reserve(generator_threads);
+
+	// divide the video into ranges of frames for the async generator
+	long long begin_frame{0};
+	long long sum_frame{0};
+	long long remainder_frames{0};
+	if (vid.isOpened())
+	{
+		int num_frames{static_cast<int>(vid.get(cv::CAP_PROP_FRAME_COUNT))};
+
+		// cap range of frames to analyze at the frame limit
+		if (vidbg_pack.frame_limit > 0)
+		{
+			if (num_frames > vidbg_pack.frame_limit)
+				num_frames = vidbg_pack.frame_limit;
+		}
+
+		sum_frame = num_frames / generator_threads;
+		remainder_frames = num_frames % generator_threads;
+	}
+
+	for (std::size_t i{0}; i < generator_threads; i++)
+	{
+		generator_packs.emplace_back(TokenGeneratorPack<CvVidFramesGeneratorAlgo>{
+			batch_size,
+			1,
+			batch_size,
+			vidbg_pack.vid_path,
+			begin_frame,
+			begin_frame + sum_frame + (i + 1 == generator_threads ? remainder_frames : 0),
+			frame_dimensions,
+			vidbg_pack.grayscale,
+			vidbg_pack.vid_is_grayscale,
+			vidbg_pack.horizontal_buffer_pixels,
+			vidbg_pack.vertical_buffer_pixels
+		});
+
+		begin_frame += sum_frame;
+	}
+
+	// frame generator
+	auto frame_gen{std::make_shared<AsyncTokenBatchGenerator<CvVidFramesGeneratorAlgo>>(
 		batch_size,
 		vidbg_pack.print_timing_report,
-		vid,
-		vidbg_pack.horizontal_buffer_pixels,
-		vidbg_pack.vertical_buffer_pixels,
-		vidbg_pack.frame_limit,
-		frame_dimensions,
-		vidbg_pack.grayscale,
-		vidbg_pack.vid_is_grayscale)};
+		vidbg_pack.token_storage_limit
+	)};
+
+	frame_gen->StartGenerator(std::move(generator_packs));
 
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(batch_size,
@@ -65,7 +109,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 		vidbg_pack.horizontal_buffer_pixels,
 		vidbg_pack.vertical_buffer_pixels,
 		frame_dimensions.width,
-		frame_dimensions.height)};
+		frame_dimensions.height
+	)};
 
 	// create process
 	AsyncTokenProcess<MedianAlgo, CvVidFragmentConsumer::final_result_type> vid_bg_prod{batch_size,
@@ -74,7 +119,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 		vidbg_pack.token_storage_limit,
 		vidbg_pack.token_storage_limit,
 		frame_gen,
-		bg_frag_consumer};
+		bg_frag_consumer
+	};
 
 	// run process to get background image
 	auto bg_img{vid_bg_prod.Run(std::move(processor_packs))};
@@ -98,16 +144,28 @@ cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &
 
 	// if no batch size specified then use synchronous mode (should fall through downstream)
 	// should only happen if user specified max_threads=1 or the hardware concurrency is unavailable
+	int generator_threads{1};
+
 	if (batch_size <= 0)
 	{
 		batch_size = 1;
 		synchronous = true;
 	}
+	else
+	{
+		// divide available threads between the token generator and processor: HEURISTIC
+		int total_threads = generator_threads + batch_size;
+		generator_threads = total_threads / 2;
+		batch_size = total_threads - generator_threads; 	//processor gets extra thread in case of odd total number
+	}
+
+	assert(generator_threads);
+	assert(batch_size);
 
 	std::vector<TokenProcessorPack<MedianAlgo>> empty_packs;
 	empty_packs.resize(batch_size, TokenProcessorPack<MedianAlgo>{});
 
-	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs, synchronous);
+	return VidBackgroundWithAlgo<MedianAlgo>(vid, vidbg_pack, empty_packs, generator_threads, synchronous);
 }
 
 /// get a video background

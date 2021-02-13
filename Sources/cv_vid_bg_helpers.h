@@ -64,7 +64,11 @@ struct VidBgPack
 
 /// encapsulates call to async tokenized video background analysis
 template <typename MedianAlgo>
-cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid, const VidBgPack &vidbg_pack, std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs);
+cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
+	const VidBgPack &vidbg_pack,
+	std::vector<TokenProcessorPack<MedianAlgo>> &processor_packs,
+	const int generator_threads,
+	const bool synchronous_allowed);
 
 /// encapsulates call to async tokenized video background analysis using empty processor packs
 template <typename MedianAlgo>
