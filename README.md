@@ -8,6 +8,7 @@ Dependencies:
 - CMake
 - compiler with c++14 support
 - Python3
+- scikit-build (for installation)
 
 Dependencies that will autoinstall if absent:
 - OpenCV
@@ -114,28 +115,3 @@ sudo apt-get install libgtk-3-0
 ## License
 
 [MIT license](https://opensource.org/licenses/MIT)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
