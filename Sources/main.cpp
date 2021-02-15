@@ -41,7 +41,8 @@ int GetAdditionalThreads(int min_threads, int extra_threads, int max_threads)
 
 	const auto supported_thread_count{std::thread::hardware_concurrency()};
 
-	if (max_threads < 1 || max_threads > (supported_thread_count + extra_threads))
+	// note: when supported thread count fails, don't modify max_threads unless necessary
+	if (max_threads < 1 || (supported_thread_count && max_threads > (supported_thread_count + extra_threads)))
 		max_threads = supported_thread_count + extra_threads;
 
 	if (max_threads > min_threads)
