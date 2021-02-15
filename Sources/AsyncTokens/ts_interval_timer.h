@@ -38,6 +38,12 @@ public:
 		time_pt_t time;
 		/// number of intervals recorded
 		unsigned long intervals;
+
+		///FIX: compiler mismatch
+		/// see: https://stackoverflow.com/questions/29483120/program-with-noexcept-constructor-accepted-by-gcc-rejected-by-clang
+#ifdef __GNUC__
+		IntervalPair() noexcept = default;
+#endif
 	};
 
 //constructors

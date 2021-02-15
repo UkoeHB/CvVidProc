@@ -6,7 +6,7 @@
 #include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "ndarray_converter.h"
-#include "token_processor_algo_base.h"
+#include "token_processor_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
