@@ -95,8 +95,8 @@ PYBIND11_MODULE(_core, mod)
 				"Expected signature of input func: \
 				f(frame_bw, f, bubbles_prev, bubbles_archive, ID_curr, args) \
 				note: 'args' should be a python dictionary",
-				py::args("function"),
-				py::args("args"));
+				py::arg("function"),
+				py::arg("args"));
 
 	/// struct VidBubbleTrackPack
 	py::class_<VidBubbleTrackPack>(mod, "VidBubbleTrackPack")

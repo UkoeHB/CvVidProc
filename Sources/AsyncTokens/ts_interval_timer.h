@@ -41,7 +41,7 @@ public:
 
 		///FIX: compiler mismatch
 		/// see: https://stackoverflow.com/questions/29483120/program-with-noexcept-constructor-accepted-by-gcc-rejected-by-clang
-#ifdef __GNUC__
+#ifndef __clang__
 		IntervalPair() noexcept = default;
 #endif
 	};
