@@ -2,6 +2,7 @@
 
 //local headers
 #include "assign_bubbles_algo.h"
+#include "cv_vid_bubbletrack_helpers.h"
 #include "cv_vid_bg_helpers.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
@@ -93,7 +94,7 @@ PYBIND11_MODULE(_core, mod)
 				py::dict>(),
 				"Expected signature of input func: \
 				f(frame_bw, f, bubbles_prev, bubbles_archive, ID_curr, args) \
-				note: 'args' should be a python dictionary"
+				note: 'args' should be a python dictionary",
 				py::args("function"),
 				py::args("args"));
 
