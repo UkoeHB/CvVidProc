@@ -242,7 +242,7 @@ public:
 
 		// reset the token generator
 		m_token_generator->ResetGenerator();
-std::cerr << "returning a result\n";
+
 		// return final result
 		return final_result;
 	}

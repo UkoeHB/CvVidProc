@@ -62,20 +62,18 @@ public:
 //destructor
 	~AssignBubblesAlgo()
 	{
-std::cerr << "assign bubbles destructor\n";
-		// it is best to always call NotifyNoMoreTokens() before destroying the algo, which will clean up the python resources,
-		// so you don't have to acquire the GIL during destruction (might cause problems)
-		if (m_bubbles_active || m_bubbles_archive || m_result)
-		{
-			// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
-			py::gil_scoped_acquire gil;
+		// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
+		//TODO: not clear if acquiring gil is adequate here - might be necessary for dtor caller to have it
+		py::gil_scoped_acquire gil;
 
-			// destroy the python dictionaries within the GIL
-			m_bubbles_active = nullptr;
-			m_bubbles_archive = nullptr;
-			m_result = nullptr;
+		// destroy the python dictionaries within the GIL
+		m_bubbles_active = nullptr;
+		m_bubbles_archive = nullptr;
+		m_result = nullptr;
+		{
+			// call destructors on python objects
+			TokenProcessorPack<AssignBubblesAlgo> temp{std::move(m_pack)};
 		}
-std::cerr << "post bubbles destructor\n";
 	}
 
 //overloaded operators

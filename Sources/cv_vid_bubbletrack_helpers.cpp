@@ -28,8 +28,10 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs,
 	std::vector<TokenProcessorPack<AssignBubblesAlgo>> &assignbubbles_packs)
 {
-	// this function releases the GIL so called functions can acquire it
-	py::gil_scoped_release nogil;
+	// we must have the gil so resource cleanup does not cause segfaults
+	//TODO: figure out how to release gil here
+	//  (segfault occurs at return of AsyncTokenProcess<AssignBubblesAlgo, PyDictConsumer::final_result_type>::Run())
+	py::gil_scoped_acquire gil;
 
 	// expect only one assignbbubbles_pack
 	assert(assignbubbles_packs.size() == 1);
