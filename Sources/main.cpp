@@ -132,10 +132,10 @@ int main(int argc, char* argv[])
 	// display the final median image
 	if (background_frame.data && !background_frame.empty())
 	{
-		cv::imshow("Median Frame", background_frame);
+//		cv::imshow("Median Frame", background_frame);
 
 		// wait for a keypress before ending
-		int keypress{cv::waitKey()};
+//		int keypress{cv::waitKey()};
 	}
 	else
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
 	//rand_tests::test_embedded_python();
 	//rand_tests::test_timing_numpyconverter(2000, true);
 
-	//rand_tests::demo_trackbubbles(cl_pack, background_frame);
+	rand_tests::demo_trackbubbles(cl_pack, background_frame);
 
 	return 0;
 }

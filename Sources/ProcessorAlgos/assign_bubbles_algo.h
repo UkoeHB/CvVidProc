@@ -62,9 +62,10 @@ public:
 //destructor
 	~AssignBubblesAlgo()
 	{
+std::cerr << "assign bubbles destructor\n";
 		// it is best to always call NotifyNoMoreTokens() before destroying the algo, which will clean up the python resources,
 		// so you don't have to acquire the GIL during destruction (might cause problems)
-		if (m_bubbles_active || m_bubbles_archive)
+		if (m_bubbles_active || m_bubbles_archive || m_result)
 		{
 			// Python GIL acquire (for interacting with python; blocks if another thread has the GIL)
 			py::gil_scoped_acquire gil;
@@ -72,7 +73,9 @@ public:
 			// destroy the python dictionaries within the GIL
 			m_bubbles_active = nullptr;
 			m_bubbles_archive = nullptr;
+			m_result = nullptr;
 		}
+std::cerr << "post bubbles destructor\n";
 	}
 
 //overloaded operators
@@ -126,7 +129,7 @@ public:
 	}
 
 	/// get the processing result
-	virtual std::unique_ptr<py::dict> TryGetResult() override
+	virtual std::unique_ptr<result_type> TryGetResult() override
 	{
 		// get result if there is one
 		if (m_result)

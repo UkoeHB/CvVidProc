@@ -13,8 +13,9 @@
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
-#include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
 //standard headers
 #include <cassert>
@@ -157,11 +158,13 @@ void test_assignbubbles(cv::Mat &test_frame)
 	const double v_max{};
 	const int min_size_reg{};
 	*/
+	std::vector<float> flow_dir_vec{2.0, 1.0};
+	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
 		assignbubbles_func,
-		py::dict{"flow_dir"_a=py::make_tuple(2, 1), 	// +x direction (?)
+		py::dict{"flow_dir"_a=flow_dir, 	// +x direction (?)
 		"fps"_a=3,		// not useful here...?
 		"pix_per_um"_a=4,
 		"width_border"_a=5,
@@ -277,10 +280,13 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	};
 
 	// create template assignbubbles pack
+	std::vector<float> flow_dir_vec{2.0, 1.0};
+	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
+
 	using namespace pybind11::literals;		// for '_a'
 	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
 		assignbubbles_func,
-		py::dict{"flow_dir"_a=py::make_tuple(2.0, 1.0), 	// +x direction (?)
+		py::dict{"flow_dir"_a=flow_dir, 	// +x direction (?)
 		"fps"_a=3,		// not useful here...?
 		"pix_per_um"_a=4,
 		"width_border"_a=5,
