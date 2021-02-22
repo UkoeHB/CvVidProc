@@ -85,6 +85,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
+# try to support threading in GCC better (https://stackoverflow.com/questions/26689162/undefined-reference-linker-error-when-using-16-byte-cas-with-gcc)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CUSTOM_COMPILE_OPTIONS ${CUSTOM_COMPILE_OPTIONS} "-mcx16")
+endif ()
+
 
 # third party bubble tracking library (python scripts needed at run-time)
 # currently only used by the C++ executable
@@ -147,11 +152,14 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/py_bindings.cpp)
 
     # connect headers to module target
-    target_include_directories(_core PUBLIC ${COMMON_INC})
+    target_include_directories(_core PRIVATE ${COMMON_INC})
 
     # connect libraries to module target
-    target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(_core PUBLIC ${MAIN_LIBS})
+    target_include_directories(_core PRIVATE ${LIB_INCLUDE_DIRS})
+    target_link_libraries(_core PRIVATE ${MAIN_LIBS})
+
+    # add compile options
+    target_compile_options(_core PRIVATE ${CUSTOM_COMPILE_OPTIONS})
 
     # install the module
     install(TARGETS _core DESTINATION .)
@@ -169,11 +177,14 @@ if (NOT SKBUILD)
     add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC} Sources/rand_tests.cpp)
 
     # connect headers to executable target
-    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${COMMON_INC})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${COMMON_INC})
 
     # connect libraries to executable target
-    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${MAIN_LIBS})
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${LIB_INCLUDE_DIRS})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${MAIN_LIBS})
+
+    # add compile options
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_COMPILE_OPTIONS})
 endif ()
 
 
