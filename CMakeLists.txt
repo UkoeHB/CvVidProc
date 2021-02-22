@@ -41,8 +41,8 @@ if(CV_DIR)
     set(${OPENCV}_DIR ${CV_INSTALL_DIR})
 endif()
 # note: lower versions of opencv seem prone to segfaulting in image processing (calls to cv::threshold)
-#  however, I don't know the version that fixed it, so go with the one that definitely works
-find_package(${OPENCV} 4.5.0 REQUIRED PATHS ${CV_DIR})
+#  however, I don't know the version that fixed it, so go with the one that probably works
+find_package(${OPENCV} 4.2.0 REQUIRED PATHS ${CV_DIR})
 set(LIB_INCLUDE_DIRS "${${OPENCV}_INCLUDE_DIRS}")
 set(MAIN_LIBS "${${OPENCV}_LIBS}")
 

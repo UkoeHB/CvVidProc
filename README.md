@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.8.1
+version 0.8.2
 
 Dependencies:
 
