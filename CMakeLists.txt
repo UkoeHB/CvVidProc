@@ -87,9 +87,10 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
-# try to support threading in GCC better (https://stackoverflow.com/questions/26689162/undefined-reference-linker-error-when-using-16-byte-cas-with-gcc)
+# try to support threading in GCC better https://gitlab.kitware.com/cmake/cmake/-/issues/21174
+#TODO: use try_compile to detect if this is necessary instead of assuming it is
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CUSTOM_COMPILE_OPTIONS ${CUSTOM_COMPILE_OPTIONS} "-mcx16")
+    set(DCMAKE_EXE_LINKER_FLAGS ${DCMAKE_EXE_LINKER_FLAGS} "-latomic")
 endif ()
 
 

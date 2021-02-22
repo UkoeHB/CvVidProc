@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.8.2
+version 0.8.3
 
 Dependencies:
 
@@ -11,7 +11,7 @@ Dependencies:
 - scikit-build (for installation)
 
 Dependencies that will autoinstall if absent:
-- OpenCV (>= 4.5.0)
+- OpenCV (>= 4.2.0)
 - NumPy
 - pybind11
 
