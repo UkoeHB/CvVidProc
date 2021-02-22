@@ -11,7 +11,7 @@ Dependencies:
 - scikit-build (for installation)
 
 Dependencies that will autoinstall if absent:
-- OpenCV
+- OpenCV (>= 4.5.0)
 - NumPy
 - pybind11
 
