@@ -69,7 +69,6 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
     // merges images to create final image
     //bubble = np.logical_or(bubble_1, bubble_2)
 	cv::bitwise_or(thresh_bw_1, thresh_bw_2, frame);
-
 }
 
 /// C++ implementation of thresh_im()
@@ -158,7 +157,7 @@ void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int m
 	std::vector<std::vector<cv::Point>> thresholded_contours{};
 	thresholded_contours.reserve(contours.size());
 
-    for (auto contour : contours)
+    for (auto &contour : contours)
     {
         //area = cv2.contourArea(c)
 		double area = cv::contourArea(contour);

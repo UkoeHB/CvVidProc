@@ -177,9 +177,9 @@ py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack)
 	/// create algo packs
 
 	// get number of frames to highlight in parallel based on number of threads available
-	// 3 -> min threads required; 1 -> add an extra thread to make sure cores are well-utilized (heuristic)
+	// 3 -> min threads required; 0 -> add no extra threads (heuristic from testing)
 	// + 1 -> roll one of the required threads into the additional threads obtained to get the batch size
-	int batch_size{GetAdditionalThreads(3, 1, trackbubble_pack.max_threads) + 1};
+	int batch_size{GetAdditionalThreads(3, 0, trackbubble_pack.max_threads) + 1};
 
 	// highlight bubbles algo packs
 	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> highlightbubbles_packs{};

@@ -61,8 +61,10 @@ public:
 				return;
 		}
 
-		// post a batch
-
+		// send a batch
+		// note: only need to call this at most once per invocation of ConsumeTokenImpl
+		//  because at most one batch can be ready at this point
+		SendABatch();
 	}
 
 	/// clean up remaining tokens (unique ptr return type is an API requirement)

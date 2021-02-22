@@ -40,7 +40,9 @@ if(CV_DIR)
     # get location of manually installed opencv
     set(${OPENCV}_DIR ${CV_INSTALL_DIR})
 endif()
-find_package(${OPENCV} REQUIRED PATHS ${CV_DIR})
+# note: lower versions of opencv seem prone to segfaulting in image processing (calls to cv::threshold)
+#  however, I don't know the version that fixed it, so go with the one that definitely works
+find_package(${OPENCV} 4.5.0 REQUIRED PATHS ${CV_DIR})
 set(LIB_INCLUDE_DIRS "${${OPENCV}_INCLUDE_DIRS}")
 set(MAIN_LIBS "${${OPENCV}_LIBS}")
 
@@ -99,7 +101,7 @@ if (NOT SKBUILD)
     FetchContent_Declare(
         bubbletracking
         GIT_REPOSITORY https://github.com/UkoeHB/bubbletracking_koe/
-        GIT_TAG 50dc382bfe1574663a384d4ec77932ae4785cdee
+        GIT_TAG 0191c5fb54ef4452666faf0d4ba07a6f54aa5ca9
     )
     FetchContent_Populate(bubbletracking)
 endif ()

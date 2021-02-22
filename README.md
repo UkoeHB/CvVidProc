@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.7.7
+version 0.8.0
 
 Dependencies:
 

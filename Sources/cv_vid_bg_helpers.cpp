@@ -139,7 +139,7 @@ template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgoEmptyPacks(cv::VideoCapture &vid, const VidBgPack &vidbg_pack)
 {
 	// set the batch size
-	int batch_size{GetAdditionalThreads(1, 1, vidbg_pack.max_threads)};
+	int batch_size{GetAdditionalThreads(1, 0, vidbg_pack.max_threads)};
 	bool synchronous{false};
 
 	// if no batch size specified then use synchronous mode (should fall through downstream)
