@@ -100,8 +100,8 @@ if (NOT SKBUILD)
     include (FetchContent)
     FetchContent_Declare(
         bubbletracking
-        GIT_REPOSITORY https://github.com/UkoeHB/bubbletracking_koe/
-        GIT_TAG 0191c5fb54ef4452666faf0d4ba07a6f54aa5ca9
+        GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
+        GIT_TAG 5452d5282e342ab512ad275a271073a7d5fb93b1
     )
     FetchContent_Populate(bubbletracking)
 endif ()
