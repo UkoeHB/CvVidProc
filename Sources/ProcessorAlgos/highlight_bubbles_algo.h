@@ -86,6 +86,12 @@ public:
 		// do nothing (each token processed is independent of the previous)
 	}
 
+	/// report if there is a result to get
+	virtual bool HasResults() override
+	{
+		return static_cast<bool>(m_result);
+	}
+
 	/// C++ implementation of highlight_bubbles()
 	void HighlightBubbles(cv::Mat &frame);
 

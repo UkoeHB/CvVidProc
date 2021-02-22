@@ -158,7 +158,7 @@ void test_assignbubbles(cv::Mat &test_frame)
 	const double v_max{};
 	const int min_size_reg{};
 	*/
-	std::vector<float> flow_dir_vec{2.0, 1.0};
+	std::vector<float> flow_dir_vec{1.0, -0.05};
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'
@@ -280,7 +280,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	};
 
 	// create template assignbubbles pack
-	std::vector<float> flow_dir_vec{2.0, 1.0};
+	std::vector<float> flow_dir_vec{1.0, -0.05};
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'

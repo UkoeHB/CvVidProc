@@ -107,6 +107,12 @@ public:
 		m_frames_processed = 0;
 	}
 
+	/// report if there is a result to get
+	virtual bool HasResults() override
+	{
+		return static_cast<bool>(m_result);
+	}
+
 	/// increment histograms
 	void ConsumeVector(const std::vector<unsigned char> &new_elements)
 	{

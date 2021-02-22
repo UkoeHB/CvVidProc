@@ -112,16 +112,27 @@ public:
 
 		// shut down token queue
 		m_token_queue.ShutDown();
-
-		// shut down result queue
-		m_result_queue.ShutDown();
 	}
 
-	/// wait until the unit's thread ends
-	void WaitUntilUnitStops()
+	/// try to stop the unit
+	bool TryStop()
 	{
-		if (m_worker.joinable())
+		if (m_synchronous)
+		{
+			// can't stop until the worker is done making results
+			return !m_worker_processor->HasResults();
+		}
+		// must not join unless result queue is completely empty to make sure unit owner does not hang on join
+		//  if the unit is stuck on inserting a result
+		else if (m_worker.joinable())
+		{
+			if (!m_result_queue.IsShuttingDown() || !m_result_queue.IsEmpty())
+				return false;
+
 			m_worker.join();
+		}
+
+		return true;
 	}
 
 	/// try insert wrapper for insert queue
@@ -221,9 +232,24 @@ public:
 	/// wait until either a token can be inserted or a result extracted
 	void WaitForUnblockingEvent()
 	{
+		if (m_synchronous)
+			return;
+
 		std::unique_lock<std::mutex> lock{m_unit_unblocking_mutex};
 
 		if (!m_token_queue.QueueOpen() && m_result_queue.IsEmpty())
+			m_condvar_unblockingevents.wait(lock);
+	}
+
+	/// wait for result queue (useful when all tokens have been inserted but results still being produced)
+	void WaitForResult()
+	{
+		if (m_synchronous)
+			return;
+
+		std::unique_lock<std::mutex> lock{m_unit_unblocking_mutex};
+
+		if (!m_result_queue.IsShuttingDown() && m_result_queue.IsEmpty())
 			m_condvar_unblockingevents.wait(lock);
 	}
 
@@ -256,6 +282,7 @@ private:
 		// create shuttles
 		std::unique_ptr<TokenT> token_shuttle{};
 		std::unique_ptr<ResultT> result_shuttle{};
+		bool notify_unblocking{false};
 
 		// prepare timer tracker
 		TSIntervalTimer::time_pt_t interval_start_time{};
@@ -271,9 +298,17 @@ private:
 				TokenQueueCode token_result{m_token_queue.GetToken(token_shuttle)};
 
 				if (token_result == TokenQueueCode::Success)
-					m_condvar_unblockingevents.notify_all();
+					notify_unblocking = true;
 				else
 					break;
+			}
+
+			// notify outside the lock for better performance
+			if (notify_unblocking)
+			{
+				m_condvar_unblockingevents.notify_all();
+
+				notify_unblocking = false;
 			}
 
 			// sanity check: if a token is obtained then it should exist
@@ -307,7 +342,15 @@ private:
 					std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
 
 					if (m_result_queue.InsertToken(result_shuttle) == TokenQueueCode::Success)
-						m_condvar_unblockingevents.notify_all();
+						notify_unblocking = true;
+				}
+
+				// notify outside the lock for better performance
+				if (notify_unblocking)
+				{
+					m_condvar_unblockingevents.notify_all();
+
+					notify_unblocking = false;
 				}
 
 				// sanity check: inserted tokens should not exist
@@ -323,13 +366,30 @@ private:
 
 		if (result_shuttle)
 		{
-			// force insert result to avoid deadlocks in shutdown procedure
-			// i.e. where the unit's owner isn't clearing out the queue
-			m_result_queue.InsertToken(result_shuttle, true);
+			{
+				std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
+
+				if (m_result_queue.InsertToken(result_shuttle) == TokenQueueCode::Success)
+					notify_unblocking = true;
+			}
+
+			// notify outside the lock for better performance
+			if (notify_unblocking)
+				m_condvar_unblockingevents.notify_all();
 
 			// sanity check: inserted tokens should not exist
 			assert(!result_shuttle);
 		}
+
+		// shut down result queue (no more results)
+		{
+			std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
+
+			m_result_queue.ShutDown();
+		}
+
+		// notify outside the lock for better performance
+		m_condvar_unblockingevents.notify_all();
 	}
 
 //member variables

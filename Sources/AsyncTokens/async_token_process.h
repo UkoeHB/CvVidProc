@@ -195,9 +195,7 @@ public:
 
 				// sleep this thread if insert failed for any unit
 				if (last_unit_stuck_on_full < m_batch_size)
-				{
 					processing_units[last_unit_stuck_on_full].WaitForUnblockingEvent();
-				}
 			}
 
 			// add interval and update start time
@@ -212,29 +210,53 @@ public:
 		}
 
 		// wait for all units to shut down, and clear out their remaining results
-		// shut down and wait-for-stop are separate so all units can do shut down procedure in parallel
-		for (std::size_t unit_index{0}; unit_index < m_batch_size; unit_index++)
+		// must spin through the units until they are done producing results
+		std::size_t remaining_alive{m_batch_size};
+		std::size_t last_unit_still_alive{m_batch_size};
+		while (remaining_alive > 0)
 		{
-			// wait for this unit to stop
-			processing_units[unit_index].WaitUntilUnitStops();
+			// recount the number of units still alive each round
+			remaining_alive = 0;
 
-			// clear remaining results
-			while (processing_units[unit_index].ExtractFinalResults(result_shuttle) == TokenQueueCode::Success)
+			// reset last unit still alive
+			last_unit_still_alive = m_batch_size;
+
+			// iterate through units trying to stop them and checking if they have results
+			for (std::size_t unit_index{0}; unit_index < m_batch_size; unit_index++)
 			{
-				// sanity check: if a result is obtained, it should exist
-				assert(result_shuttle);
+				// try to stop the unit
+				if (!processing_units[unit_index].TryStop())
+				{
+					// try to get a result from the processing unit
+					if (processing_units[unit_index].TryGetResult(result_shuttle) == TokenQueueCode::Success)
+					{
+						// sanity check: if a result is obtained, it should exist
+						assert(result_shuttle);
 
-				m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
+						// consume the result
+						m_token_consumer->ConsumeToken(std::move(result_shuttle), unit_index);
+					}
+
+					remaining_alive++;
+					last_unit_still_alive = unit_index;
+				}
+				else
+				{
+					// get timing report from unit when it is stopped (only the first time)
+					if (m_collect_timings &&
+						m_unit_timing_reports[unit_index].num_intervals == 0)
+					{
+						std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
+
+						// weird syntax! see https://stackoverflow.com/questions/3786360/confusing-template-error
+						m_unit_timing_reports[unit_index] = processing_units[unit_index].template GetTimingReport<TimingReportUnitT>();
+					}
+				}
 			}
 
-			// get timing report from unit
-			if (m_collect_timings)
-			{
-				std::lock_guard<std::mutex> lock{m_unit_timing_mutex};
-
-				// weird syntax! see https://stackoverflow.com/questions/3786360/confusing-template-error
-				m_unit_timing_reports[unit_index] = processing_units[unit_index].template GetTimingReport<TimingReportUnitT>();
-			}
+			// sleep this thread if waiting for the result queue of any unit
+			if (last_unit_still_alive < m_batch_size)
+				processing_units[last_unit_still_alive].WaitForResult();
 		}
 
 		// get final result (before resetting generator for safety/proper order of events)
@@ -302,14 +324,16 @@ public:
 			str += " batches; ";
 			{
 				std::ostringstream ss;
-				ss << (generator_timing.total_time / generator_timing.num_intervals).count();
+				if (generator_timing.num_intervals)
+					ss << (generator_timing.total_time / generator_timing.num_intervals).count();
+				else
+					ss << 0;
 				str += ss.str();
 			}
 			str += " " + unit + " avg) on generating batches\n";
 		}
 
 		// timing info for token consumer
-		// timing info for token generator
 		if (m_token_consumer)
 		{
 			auto consumer_timing{m_token_consumer->template GetTimingReport<TimingReportUnitT>()};
@@ -329,7 +353,10 @@ public:
 			str += " tokens; ";
 			{
 				std::ostringstream ss;
-				ss << (consumer_timing.total_time / consumer_timing.num_intervals).count();
+				if (consumer_timing.num_intervals)
+					ss << (consumer_timing.total_time / consumer_timing.num_intervals).count();
+				else
+					ss << 0;
 				str += ss.str();
 			}
 			str += " " + unit + " avg) on handling results\n";
@@ -368,7 +395,10 @@ public:
 			str += " tokens; ";
 			{
 				std::ostringstream ss;
-				ss << (report.total_time / report.num_intervals).count();
+				if (report.num_intervals)
+					ss << (report.total_time / report.num_intervals).count();
+				else
+					ss << 0;
 				str += ss.str();
 			}
 			str += " " + unit + " avg) on ingesting tokens in workers\n";
@@ -376,6 +406,9 @@ public:
 
 		// reset timer
 		m_timer.Reset();
+
+		// reset timing reports
+		m_unit_timing_reports.resize(m_batch_size);
 
 		return str;
 	}

@@ -58,6 +58,9 @@ public:
 	/// get notified there won't be any more tokens
 	virtual void NotifyNoMoreTokens() = 0;
 
+	/// tell handler if the processor still wants to return results
+	virtual bool HasResults() = 0;
+
 protected:
 //member variables
 	TokenProcessorPack<AlgoT> m_pack{};

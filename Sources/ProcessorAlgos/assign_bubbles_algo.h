@@ -153,6 +153,12 @@ public:
 		m_bubbles_archive = nullptr;
 	}
 
+	/// report if there is a result to get
+	virtual bool HasResults() override
+	{
+		return static_cast<bool>(m_result);
+	}
+
 private:
 //member variables
 	/// number of frames processed
