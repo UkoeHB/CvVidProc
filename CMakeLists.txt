@@ -9,6 +9,7 @@ message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMA
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
 
 
+
 ######################################
 #inputs
 
@@ -84,12 +85,15 @@ find_package(pybind11 CONFIG REQUIRED)
 set(MAIN_LIBS ${MAIN_LIBS} pybind11::embed)
 
 
-# threading support (thanks to https://stackoverflow.com/a/29871891/14080627)
+# threading support
+# (thanks to https://stackoverflow.com/a/29871891/14080627)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
-# try to support threading in GCC better https://gitlab.kitware.com/cmake/cmake/-/issues/21174
+
+# atomic operations
+# GCC problems... https://gitlab.kitware.com/cmake/cmake/-/issues/21174
 #TODO: use try_compile to detect if this is necessary instead of assuming it is
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-latomic")
@@ -104,6 +108,7 @@ if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
         set(MAIN_LIBS ${MAIN_LIBS} atomic)
     endif()
 endif()
+
 
 # third party bubble tracking library (python scripts needed at run-time)
 # currently only used by the C++ executable
@@ -127,7 +132,7 @@ endif ()
 set(VIDEO_DIR ${CMAKE_SOURCE_DIR}/Videos/)
 
 # config setting: directory containing local python libs
-set(PYLIBS_DIR ${CMAKE_BINARY_DIR}/PyLibs/)
+set(PYLIBS_DIR ${CMAKE_SOURCE_DIR}/PySources/PyLibs/)
 
 # config setting: directory containing third party bubble tracking lib
 set(BUBBLETRACKING_DIR ${bubbletracking_SOURCE_DIR})
@@ -202,12 +207,13 @@ endif ()
 
 # copy python scripts
 # currently these are only used by the C++ executable, so don't copy them for python module
-if (NOT SKBUILD)
-    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
-    )
-endif ()
+#TODO: is it really necessary to copy these to build dir? for now, just use source dir
+#if (NOT SKBUILD)
+#    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
+#    )
+#endif ()
 
 
 

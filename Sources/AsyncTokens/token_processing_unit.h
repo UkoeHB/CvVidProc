@@ -25,6 +25,8 @@
 // 		- the class TokenProcessorAlgoT must
 //			be derived from TokenProcessorAlgo<TokenProcessorAlgoT>
 //		note: c++20 contracts would make this easier...
+//
+// note: should only be handled by one thread
 /// 
 template <typename TokenProcessorAlgoT>
 class TokenProcessingUnit final
@@ -70,7 +72,7 @@ public:
 	TokenProcessingUnit& operator=(const TokenProcessingUnit&) const = delete;
 
 //member functions
-	/// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() and ExtractFinalResults() used)
+	/// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() called and TryStop() returns true)
 	bool Start(TokenProcessorPack<TokenProcessorAlgoT> processor_pack)
 	{
 		if (!m_worker.joinable() && m_token_queue.IsEmpty() && m_result_queue.IsEmpty())
@@ -114,7 +116,7 @@ public:
 		m_token_queue.ShutDown();
 	}
 
-	/// try to stop the unit
+	/// try to stop the unit; fails when the worker may still have results to give/produce
 	bool TryStop()
 	{
 		if (m_synchronous)
@@ -197,35 +199,6 @@ public:
 		else
 		{
 			return m_result_queue.TryGetToken(return_val);
-		}
-	}
-
-	/// extract results lingering in queue when unit is stopped
-	/// returns true if a result was extracted
-	TokenQueueCode ExtractFinalResults(std::unique_ptr<ResultT> &return_val)
-	{
-		assert(!m_worker.joinable() && "ExtractFinalResults() can only be called after WaitUntilUnitStops()!");
-		assert(m_result_queue.IsShuttingDown() && "ExtractFinalResults() can only be called after ShutDown()!");
-
-		// sanity check; return val shouldn't have a value since it would be destroyed (not responsibility of this object)
-		assert(!return_val);
-
-		// synchronous mode
-		if (m_synchronous)
-		{
-			// request from processor directly
-			// WARNING: if the processor keeps pumping out results then this will keep returning true
-			//  use ShutDown() -> NotifyNoMoreTokens() to tell worker to stop making results
-			return_val = m_worker_processor->TryGetResult();
-
-			return return_val.get() ? TokenQueueCode::Success : TokenQueueCode::GeneralFail;
-		}
-		// asynchronous mode
-		else
-		{
-			// if there are elements remaining in the queue, grab one
-			// this should not block because the queue should be shutting down, and the worker thread has ended
-			return m_result_queue.GetToken(return_val);
 		}
 	}
 
@@ -361,24 +334,29 @@ private:
 		// tell token processor there are no more tokens so it can prepare final results
 		m_worker_processor->NotifyNoMoreTokens();
 
-		// obtain final result if it exists
-		result_shuttle = m_worker_processor->TryGetResult();
-
-		if (result_shuttle)
+		// obtain final results if they exist
+		while (true)
 		{
+			result_shuttle = m_worker_processor->TryGetResult();
+
+			if (result_shuttle)
 			{
-				std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
+				{
+					std::lock_guard<std::mutex> lock{m_unit_unblocking_mutex};
 
-				if (m_result_queue.InsertToken(result_shuttle) == TokenQueueCode::Success)
-					notify_unblocking = true;
+					if (m_result_queue.InsertToken(result_shuttle) == TokenQueueCode::Success)
+						notify_unblocking = true;
+				}
+
+				// notify outside the lock for better performance
+				if (notify_unblocking)
+					m_condvar_unblockingevents.notify_all();
+
+				// sanity check: inserted tokens should not exist
+				assert(!result_shuttle);
 			}
-
-			// notify outside the lock for better performance
-			if (notify_unblocking)
-				m_condvar_unblockingevents.notify_all();
-
-			// sanity check: inserted tokens should not exist
-			assert(!result_shuttle);
+			else
+				break;
 		}
 
 		// shut down result queue (no more results)
