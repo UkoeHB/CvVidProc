@@ -90,7 +90,7 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 # try to support threading in GCC better https://gitlab.kitware.com/cmake/cmake/-/issues/21174
 #TODO: use try_compile to detect if this is necessary instead of assuming it is
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(DCMAKE_EXE_LINKER_FLAGS ${DCMAKE_EXE_LINKER_FLAGS} "-latomic")
+    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-latomic")
 endif ()
 
 
