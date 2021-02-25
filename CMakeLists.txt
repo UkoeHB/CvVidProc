@@ -2,7 +2,7 @@
 #cmake setup
 
 # obligatory CMake minimum version
-cmake_minimum_required(VERSION 3.15...3.17)
+cmake_minimum_required(VERSION 3.15...3.19)
 message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 # module path
@@ -95,10 +95,10 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 # atomic operations
 # GCC problems... https://gitlab.kitware.com/cmake/cmake/-/issues/21174
 #TODO: use try_compile to detect if this is necessary instead of assuming it is
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-latomic")
-    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-latomic")
-endif ()
+#if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-latomic")
+#    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-latomic")
+#endif ()
 
 # test if atomic lib must be linked
 # https://phabricator.kde.org/D16184
@@ -171,11 +171,11 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
     pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/py_bindings.cpp)
 
     # connect headers to module target
-    target_include_directories(_core PRIVATE ${COMMON_INC})
+    target_include_directories(_core PUBLIC ${COMMON_INC})
 
     # connect libraries to module target
-    target_include_directories(_core PRIVATE ${LIB_INCLUDE_DIRS})
-    target_link_libraries(_core PRIVATE ${MAIN_LIBS})
+    target_include_directories(_core PUBLIC ${LIB_INCLUDE_DIRS})
+    target_link_libraries(_core PUBLIC ${MAIN_LIBS})
 
     # install the module
     install(TARGETS _core DESTINATION .)
@@ -193,11 +193,11 @@ if (NOT SKBUILD)
     add_executable(${CMAKE_PROJECT_NAME} ${COMMON_SRC} Sources/rand_tests.cpp)
 
     # connect headers to executable target
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${COMMON_INC})
+    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${COMMON_INC})
 
     # connect libraries to executable target
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${LIB_INCLUDE_DIRS})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${MAIN_LIBS})
+    target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${LIB_INCLUDE_DIRS})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC ${MAIN_LIBS})
 endif ()
 
 
@@ -217,7 +217,9 @@ endif ()
 
 
 
-
+message("project: ${CMAKE_PROJECT_NAME}")
+get_target_property(OUT ${CMAKE_PROJECT_NAME} LINK_LIBRARIES)
+message("target libs: ${OUT}")
 
 
 

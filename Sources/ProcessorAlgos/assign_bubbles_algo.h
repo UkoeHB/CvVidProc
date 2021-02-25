@@ -43,6 +43,8 @@ struct TokenProcessorPack<AssignBubblesAlgo> final
 // 	py::module_ sys = py::module_::import("sys");
 //  py::object path = sys.attr("path");
 //  path.attr("insert")(0, config::bubbletracking_dir);
+//
+// WARNING: if the GIL is not held when this object is destroyed, there will be a SEGFAULT (TODO: fixme)
 ///
 class AssignBubblesAlgo final : public TokenProcessorAlgo<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
 {
