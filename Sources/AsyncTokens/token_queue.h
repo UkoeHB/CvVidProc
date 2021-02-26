@@ -59,7 +59,7 @@ public:
 			m_shutting_down = true;
 		}
 
-		// notify all threads in case they are stuck waiting for a token
+		// notify all threads in case they are stuck waiting for a token or trying to insert
 		m_condvar_gettoken.notify_all();
 	}
 
@@ -81,6 +81,10 @@ public:
 		// wait until the token queue is open
 		while (!force_insert && !QueueOpenImpl())
 		{
+			// if shutting down then can no longer insert a token, and don't want to hang the inserting thread
+			if (m_shutting_down)
+				return TokenQueueCode::ShutDown;
+
 			m_condvar_fill.wait(lock);
 		}
 
@@ -157,6 +161,10 @@ private:
 		// expect to own the lock by this point
 		if (!lock.owns_lock())
 			return TokenQueueCode::LockFail;
+
+		// if shutting down then can no longer insert a token unless forced
+		if (!force_insert && m_shutting_down)
+			return TokenQueueCode::ShutDown;
 
 		// expect the queue to be open at this point
 		if (!force_insert && !QueueOpenImpl())

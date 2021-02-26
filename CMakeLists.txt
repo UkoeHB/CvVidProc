@@ -93,13 +93,6 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 # atomic operations
-# GCC problems... https://gitlab.kitware.com/cmake/cmake/-/issues/21174
-#TODO: use try_compile to detect if this is necessary instead of assuming it is
-#if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-#    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-latomic")
-#    set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} "-latomic")
-#endif ()
-
 # test if atomic lib must be linked
 # https://phabricator.kde.org/D16184
 include(CheckAtomic)
@@ -214,12 +207,6 @@ endif ()
 #        ${CMAKE_SOURCE_DIR}/PySources/PyLibs $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/PyLibs
 #    )
 #endif ()
-
-
-
-message("project: ${CMAKE_PROJECT_NAME}")
-get_target_property(OUT ${CMAKE_PROJECT_NAME} LINK_LIBRARIES)
-message("target libs: ${OUT}")
 
 
 
