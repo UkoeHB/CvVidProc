@@ -104,6 +104,7 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 include(CheckAtomic)
 if(NEED_ATOMICS OR NEED_ATOMICS_FOR_64 OR NEED_ATOMICS_FOR_128)
     set(MAIN_LIBS ${MAIN_LIBS} atomic)
+    message("Adding libatomic to MAIN_LIBS")
 endif()
 
 
