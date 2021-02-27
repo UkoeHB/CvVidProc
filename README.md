@@ -10,8 +10,8 @@ Dependencies:
 - Python3
 - scikit-build (for installation)
 - OpenCV (>= 4.2.0)
-- NumPy
-- pybind11
+- NumPy (`pip3 install numpy`)
+- pybind11 (`pip3 install pybind11`)
 
 
 ## Table Of Contents
