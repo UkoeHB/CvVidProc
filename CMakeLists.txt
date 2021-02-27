@@ -2,7 +2,7 @@
 #cmake setup
 
 # obligatory CMake minimum version
-cmake_minimum_required(VERSION 3.15...3.19)
+cmake_minimum_required(VERSION 3.16...3.19)
 message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 # module path
@@ -68,6 +68,11 @@ endif ()
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 set(MAIN_LIBS ${MAIN_LIBS} Python3::NumPy)
 
+message("Python_FOUND:${Python3_FOUND}")
+message("Python_VERSION:${Python3_VERSION}")
+message("Python_Development_FOUND:${Python3_Development_FOUND}")
+message("Python_LIBRARIES:${Python3_LIBRARIES}")
+
 
 # pybind11
 # Scikit-Build does not add your site-packages to the search path automatically,
@@ -93,13 +98,12 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 # atomic operations
+
 # test if atomic lib must be linked
 # https://phabricator.kde.org/D16184
 include(CheckAtomic)
-if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
-    if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-        set(MAIN_LIBS ${MAIN_LIBS} atomic)
-    endif()
+if(NEED_ATOMICS OR NEED_ATOMICS_FOR_64 OR NEED_ATOMICS_FOR_128)
+    set(MAIN_LIBS ${MAIN_LIBS} atomic)
 endif()
 
 
