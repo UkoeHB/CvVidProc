@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.8.6
+version 0.9.0
 
 Dependencies:
 
@@ -9,8 +9,6 @@ Dependencies:
 - compiler with c++14 support
 - Python3
 - scikit-build (for installation)
-
-Dependencies that will autoinstall if absent:
 - OpenCV (>= 4.2.0)
 - NumPy
 - pybind11
@@ -38,7 +36,7 @@ The available methods are:
 
 As simple as:
 ```
-python3 setup.py clean && pip3 install .
+pip3 install .
 ```
 
 For manually installed OpenCV, you must define these environment variables:
@@ -47,13 +45,12 @@ CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
 CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
 
 # full call for installing python module
-python3 setup.py clean && \
-	CV_DIR=~/MyLibs/ \
+CV_DIR=~/MyLibs/ \
 	CV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/ \
 	pip3 install .
 ```
 
-- Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `python3 setup.py ... (etc.)`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
+- Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
 
 
 ## Building and Running as standalone program

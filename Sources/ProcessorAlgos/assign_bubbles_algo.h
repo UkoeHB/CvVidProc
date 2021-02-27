@@ -26,7 +26,7 @@ class AssignBubblesAlgo;
 
 /// specialization of variable pack
 template <>
-struct TokenProcessorPack<AssignBubblesAlgo> final
+struct __attribute__ ((visibility("hidden"))) TokenProcessorPack<AssignBubblesAlgo> final
 {
 	py::function bubbletracking_function{};
 	py::dict kwargs{};
@@ -46,7 +46,7 @@ struct TokenProcessorPack<AssignBubblesAlgo> final
 //
 // WARNING: if the GIL is not held when this object is destroyed, there will be a SEGFAULT (TODO: fixme)
 ///
-class AssignBubblesAlgo final : public TokenProcessorAlgo<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
+class __attribute__ ((visibility("hidden"))) AssignBubblesAlgo final : public TokenProcessorAlgo<AssignBubblesAlgo, std::vector<cv::Mat>, py::dict>
 {
 public:
 //constructors

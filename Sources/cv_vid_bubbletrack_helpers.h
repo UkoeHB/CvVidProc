@@ -18,7 +18,7 @@
 
 
 /// settings necessary to track bubbles in a video
-struct VidBubbleTrackPack
+struct __attribute__ ((visibility("hidden"))) VidBubbleTrackPack
 {
 	// path to video
 	const std::string vid_path{};

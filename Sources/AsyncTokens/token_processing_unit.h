@@ -29,7 +29,7 @@
 // note: should only be handled by one thread
 /// 
 template <typename TokenProcessorAlgoT>
-class TokenProcessingUnit final
+class __attribute__ ((visibility("hidden"))) TokenProcessingUnit final
 {
 public:
 //member types

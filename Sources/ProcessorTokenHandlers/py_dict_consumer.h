@@ -17,7 +17,7 @@
 
 /// does not care if inputs are batched, just stores them in a list as they appear
 /// the goal of storing them in unique_ptrs is to avoid interacting with the python GIL
-class PyDictConsumer final : public TokenBatchConsumer<py::dict, std::list<std::unique_ptr<py::dict>>>
+class __attribute__ ((visibility("hidden"))) PyDictConsumer final : public TokenBatchConsumer<py::dict, std::list<std::unique_ptr<py::dict>>>
 {
 public:
 //constructors
