@@ -131,10 +131,14 @@ if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
 			message(WARNING "Host compiler does not support std::atomic!")
 		endif()
 	endif()
+else ()
+	set(HAVE_CXX_ATOMICS_WITHOUT_LIB 1)
 endif()
 
 # set output variable
-set(NEED_ATOMICS ${HAVE_CXX_ATOMICS_WITHOUT_LIB})
+if (HAVE_CXX_ATOMICS_WITHOUT_LIB EQUAL 0)
+	set(NEED_ATOMICS 1)
+endif ()
 
 # Check for 64 bit atomic operations.
 if(MSVC)
@@ -152,7 +156,9 @@ if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
 	endif()
 endif()
 
-set(NEED_ATOMICS_FOR_64 ${HAVE_CXX_ATOMICS64_WITHOUT_LIB})
+if (HAVE_CXX_ATOMICS64_WITHOUT_LIB EQUAL 0)
+	set(NEED_ATOMICS_FOR_64 1)
+endif ()
 
 # Check 128-bit atomics
 # first see if 128-bit atomics are available without 'atomic'
@@ -167,4 +173,8 @@ if(NOT HAVE_CXX_ATOMICS128_WITHOUT_LIB)
 	endif()
 endif()
 
-set(NEED_ATOMICS_FOR_128 ${HAVE_CXX_ATOMICS128_WITHOUT_LIB})
+if (HAVE_CXX_ATOMICS128_WITHOUT_LIB EQUAL 0)
+	set(NEED_ATOMICS_FOR_128 1)
+endif ()
+
+
