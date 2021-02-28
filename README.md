@@ -96,7 +96,13 @@ Notes:
 
 ## Installing OpenCV on Ubuntu
 
-If you have Linux, see [this resource](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) for installing OpenCV. It may be necessary to use the `ninja` build generator instead of `make`. If, for example, you install OpenCV to the directory "`~`", then the command for generating a debug build system will be:
+If you have Linux, see [this resource](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) for installing OpenCV. It may be necessary to use the `ninja` build generator instead of `make`. To support video processing, OpenCV must be built with FFMPEG support. *Before* trying to install OpenCV, install the following packages.
+
+```
+sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+```
+
+If you decline to install with `sudo make install` according to the instructions, then you must manually link OpenCV to `cvvidproc`. If, for example, you build OpenCV in the directory "`~`", then the command for generating a release build system will be:
 
 ```
 cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
