@@ -99,19 +99,73 @@ Notes:
 
 ## Installing OpenCV on Ubuntu
 
-If you have Linux, see [this resource](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) for installing OpenCV. It may be necessary to use the `ninja` build generator instead of `make`. To support video processing, OpenCV must be built with FFMPEG support. *Before* trying to install OpenCV, install the following packages.
+If you have Linux, here are all the recommended packages to install first, and steps to take.
 
+- start by updating your existing packages
+```
+sudo apt-get update
+sudo apt-get upgrade
+```
+
+- for video I/O
+```
+sudo apt-get install build-essential cmake unzip pkg-config
+sudo apt-get install libjpeg-dev libpng-dev libtiff-dev
+sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+sudo apt-get install libxvidcore-dev libx264-dev
+```
+
+- for GTK as GUI backend
+```
+sudo apt-get install libgtk-3-dev
+```
+
+- for mathematical optimizations
+```
+sudo apt-get install libatlas-base-dev gfortran 
+```
+
+- FFMPEG and supporting packages for video support
 ```
 sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
 ```
 
-If you decline to install with `sudo make install` according to the instructions, then you must manually link OpenCV to `cvvidproc`. If, for example, you build OpenCV in the directory "`~`", then the command for generating a release build system will be:
+- gstreamer for opening and viewing mp4 files (not required for opencv, but nice to have if dealing with mp4s)
+```
+sudo apt install gstreamer1.0-libav
+```
+
+- packages for gstreamer to be found by cmake during OpenCV build
+```
+sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+```
+
+- download and unzip opencv source (from [OpenCV install tutorial](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html))
+```
+wget -O opencv.zip https://github.com/opencv/opencv/archive/master.zip
+unzip opencv.zip
+mv opencv-master opencv
+mkdir -p build && cd build
+```
+
+- combined CMake flags from [here](https://github.com/UkoeHB/CvVidProc/issues/6), [here](https://www.pyimagesearch.com/2018/08/15/how-to-install-opencv-4-on-ubuntu/), [here](https://stackoverflow.com/questions/37678324/compiling-opencv-with-gstreamer-cmake-not-finding-gstreamer), and [here](https://stackoverflow.com/questions/28776053/opencv-gtk2-x-error)
+```
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local/ -D INSTALL_C_EXAMPLES=OFF -D BUILD_TEST=OFF -D WITH_FFMPEG=ON -D WITH_OPENCL=OFF -D BUILD_PERF_TESTS=OFF -D WITH_GTK=ON -D WITH_GSTREAMER=ON ..
+```
+
+- assuming you are in directory `opencv/build`, first build then install OpenCV (note: installing is optional, see [the tutorial's warning](https://docs.opencv.org/master/d7/d9f/tutorial_linux_install.html) on that subject)
+```
+make -j4
+sudo make install
+```
+
+If you decline to install with `sudo make install`, then you must manually link OpenCV to `cvvidproc`. If, for example, you build OpenCV in the directory "`~`", then the command for generating a release build system will be:
 
 ```
 cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
 ```
 
-Ubuntu users may need to download and set up an 'X server for windows' by following [this tutorial](https://seanthegeek.net/234/graphical-linux-applications-bash-ubuntu-windows/). If your Ubuntu doesn't already have it, install GTK3 for backend GUI with:
+Ubuntu users may need to download and set up an 'X server for Windows' by following [this tutorial](https://seanthegeek.net/234/graphical-linux-applications-bash-ubuntu-windows/). If your Ubuntu doesn't already have it, install GTK3 for backend GUI with:
 
 ```
 sudo apt-get install libgtk-3-0
