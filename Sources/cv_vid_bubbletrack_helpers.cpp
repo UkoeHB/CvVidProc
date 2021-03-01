@@ -90,8 +90,8 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 
 	// create mat shuttle that passes frames with highlighted bubbles to assign bubbles algo
 	auto mat_shuttle{std::make_shared<MatSetIntermediary>(batch_size,
-		trackbubble_pack.token_storage_limit,
-		trackbubble_pack.print_timing_report)};
+		trackbubble_pack.print_timing_report,
+		trackbubble_pack.token_storage_limit)};
 
 	// create consumer that collects final bubbles archive
 	auto dict_collector{std::make_shared<PyDictConsumer>(1,

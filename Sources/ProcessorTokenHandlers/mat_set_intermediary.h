@@ -26,10 +26,10 @@ public:
 
 	/// normal constructor
 	MatSetIntermediary(const int batch_size,
-			const int max_shuttle_queue_size,
-			const bool collect_timings) :
+			const bool collect_timings,
+			const int max_shuttle_queue_size) :
 		// output batch size is 1
-		TokenProcessIntermediary{batch_size, 1, max_shuttle_queue_size, collect_timings}
+		TokenProcessIntermediary{batch_size, 1, collect_timings, max_shuttle_queue_size}
 	{
 		m_elements.resize(batch_size);
 	}

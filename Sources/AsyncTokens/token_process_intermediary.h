@@ -28,8 +28,8 @@ public:
 	/// normal constructor
 	TokenProcessIntermediary(const int consumer_batch_size,
 			const int generator_batch_size,
-			const int max_shuttle_queue_size,
-			const bool collect_timings) :
+			const bool collect_timings,
+			const int max_shuttle_queue_size) :
 		TokenBatchConsumer<InTokenT, FinalResultT>{consumer_batch_size, collect_timings},
 		TokenBatchGenerator<OutTokenT>{generator_batch_size, collect_timings},
 		m_shuttle_queue{max_shuttle_queue_size}

@@ -108,7 +108,6 @@ public:
 		return TSIntervalReport<TimeUnit>{duration, temp_record.intervals};
 	}
 
-
 private:
 //member variables
 	/// atomic interval pair
