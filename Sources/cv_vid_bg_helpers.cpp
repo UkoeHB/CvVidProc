@@ -33,6 +33,38 @@ BGAlgo GetBGAlgo(const std::string &algo)
 	}
 }
 
+cv::Rect GetCroppedFrameDims(int x, int y, int width, int height, int hor_pixels, int vert_pixels)
+{
+	// note: the returned frame is not allowed to be empty
+	assert(x >= 0);
+	assert(y >= 0);
+	assert(width >= 0);
+	assert(height >= 0);
+	assert(hor_pixels > 0);
+	assert(vert_pixels > 0);
+
+	if (width == 0 || width + x > hor_pixels)
+		width = hor_pixels - x;
+
+	if (height == 0 || height + y > hor_pixels)
+		height = vert_pixels - y;
+
+	if (x + 1 >= hor_pixels)
+	{
+		// note: x + 1 == hor_pixels is invalid because x,y are 0-indexed
+		x = 0;
+		width = hor_pixels;
+	}
+
+	if (y + 1 >= vert_pixels)
+	{
+		y = 0;
+		height = vert_pixels;
+	}
+
+	return cv::Rect{x, y, width, height};
+}
+
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 	const VidBgPack &vidbg_pack,
@@ -44,10 +76,9 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 	int batch_size{static_cast<int>(processor_packs.size())};
 	assert(batch_size);
 
-	cv::Rect frame_dimensions{vidbg_pack.crop_x,
-		vidbg_pack.crop_y,
-		vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
-		vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
+	cv::Rect frame_dimensions{GetCroppedFrameDims(vidbg_pack.crop_x, vidbg_pack.crop_y, vidbg_pack.crop_width, vidbg_pack.crop_height,
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)))};
 
 	/// create frame generator
 
@@ -186,11 +217,14 @@ cv::Mat GetVideoBackground(const VidBgPack &vidbg_pack)
 
 	std::cout << "Frames: " << total_frames <<
 				  "; Res: " << vid.get(cv::CAP_PROP_FRAME_WIDTH) << 'x' << vid.get(cv::CAP_PROP_FRAME_HEIGHT);
-	if (vidbg_pack.crop_width || vidbg_pack.crop_height)
+
+	if (vidbg_pack.crop_x || vidbg_pack.crop_y || vidbg_pack.crop_width || vidbg_pack.crop_height)
 	{
-		int width = vidbg_pack.crop_width ? vidbg_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH));
-		int height = vidbg_pack.crop_height ? vidbg_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT));
-		std::cout << "(" << width << 'x' << height << " cropped)";
+		cv::Rect frame_dimensions{GetCroppedFrameDims(vidbg_pack.crop_x, vidbg_pack.crop_y, vidbg_pack.crop_width, vidbg_pack.crop_height,
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)))};
+
+		std::cout << "(" << frame_dimensions.width << 'x' << frame_dimensions.height << " cropped)";
 	}
 	std::cout << "; FPS: " << vid.get(cv::CAP_PROP_FPS) << '\n';
 

@@ -62,6 +62,9 @@ struct VidBgPack
 	const bool print_timing_report{false};
 };
 
+/// get a frame crop rectangle from inputs
+cv::Rect GetCroppedFrameDims(int x, int y, int width, int height, int hor_pixels, int vert_pixels);
+
 /// encapsulates call to async tokenized video background analysis
 template <typename MedianAlgo>
 cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,

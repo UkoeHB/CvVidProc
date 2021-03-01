@@ -41,10 +41,9 @@ std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
 	assert(batch_size);
 
 	// create crop-window for processing frames
-	cv::Rect frame_dimensions{trackbubble_pack.crop_x,
-		trackbubble_pack.crop_y,
-		trackbubble_pack.crop_width ? trackbubble_pack.crop_width : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
-		trackbubble_pack.crop_height ? trackbubble_pack.crop_height : static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
+	cv::Rect frame_dimensions{GetCroppedFrameDims(trackbubble_pack.crop_x, trackbubble_pack.crop_y, trackbubble_pack.crop_width, trackbubble_pack.crop_height,
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)),
+		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)))};
 
 	/// create frame generator
 

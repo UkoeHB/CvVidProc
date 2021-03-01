@@ -1,15 +1,18 @@
 # README
 
 <!-- must update setup.py version as well -->
-version 0.9.2
+version 0.9.3
 
 Dependencies:
 
 - CMake
 - compiler with c++14 support
 - Python3
-- scikit-build (for installation)
+- scikit-build (`pip3 install scikit-build`)
 - OpenCV (>= 4.2.0)
+	- MacOS: `brew install opencv`
+	- Windows: [tutorial](https://docs.opencv.org/master/d3/d52/tutorial_windows_install.html)
+	- Linux: [Installing OpenCV on Ubuntu](#Installing-OpenCV-on-Ubuntu)
 - NumPy (`pip3 install numpy`)
 - pybind11 (`pip3 install pybind11`)
 

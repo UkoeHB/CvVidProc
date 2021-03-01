@@ -90,6 +90,7 @@ void test_embedded_python()
 {
 	// test python interpreter
 	// create Python interpreter
+	std::cout << "Starting Python interpreter...\n";
 	py::scoped_interpreter guard{};
 
 	// add location of local python libs to path so they can be found
@@ -136,6 +137,7 @@ void test_embedded_python()
 void test_assignbubbles(cv::Mat &test_frame)
 {
 	// create Python interpreter
+	std::cout << "Starting Python interpreter...\n";
 	py::scoped_interpreter guard{};
 
 	// add location of bubbletracking python libs to path so they can be found
@@ -158,7 +160,7 @@ void test_assignbubbles(cv::Mat &test_frame)
 	const double v_max{};
 	const int min_size_reg{};
 	*/
-	std::vector<float> flow_dir_vec{1.0, -0.05};
+	std::vector<float> flow_dir_vec{0.05, 1.0};
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'
@@ -209,6 +211,7 @@ void test_timing_numpyconverter(const int num_rounds, const bool include_convers
 {
 	// test python interpreter
 	// create Python interpreter
+	std::cout << "Starting Python interpreter...\n";
 	py::scoped_interpreter guard{};
 
 	// add location of local python libs to path so they can be found
@@ -254,6 +257,7 @@ void test_timing_numpyconverter(const int num_rounds, const bool include_convers
 void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 {
 	// create Python interpreter
+	std::cout << "Starting Python interpreter...\n";
 	py::scoped_interpreter guard{};
 
 	// add location of bubbletracking python libs to path so they can be found
@@ -280,7 +284,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	};
 
 	// create template assignbubbles pack
-	std::vector<float> flow_dir_vec{1.0, -0.05};
+	std::vector<float> flow_dir_vec{0.05, 1.0};
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'

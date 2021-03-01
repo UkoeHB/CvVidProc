@@ -68,11 +68,6 @@ endif ()
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 set(MAIN_LIBS ${MAIN_LIBS} Python3::NumPy)
 
-message("Python_FOUND:${Python3_FOUND}")
-message("Python_VERSION:${Python3_VERSION}")
-message("Python_Development_FOUND:${Python3_Development_FOUND}")
-message("Python_LIBRARIES:${Python3_LIBRARIES}")
-
 
 # pybind11
 # Scikit-Build does not add your site-packages to the search path automatically,
@@ -98,14 +93,21 @@ set(MAIN_LIBS ${MAIN_LIBS} Threads::Threads)
 
 
 # atomic operations
-
 # test if atomic lib must be linked
-# https://phabricator.kde.org/D16184
+# (thanks to https://phabricator.kde.org/D16184)
 include(CheckAtomic)
-if(NEED_ATOMICS OR NEED_ATOMICS_FOR_64 OR NEED_ATOMICS_FOR_128)
+if (NEED_ATOMICS OR NEED_ATOMICS_FOR_64 OR NEED_ATOMICS_FOR_128)
+    if (NEED_ATOMICS AND NOT HAVE_CXX_ATOMICS_WITH_LIB)
+        message(FATAL_ERROR "Need libatomic but support was not found!")
+    elseif (NEED_ATOMICS_FOR_64 AND NOT HAVE_CXX_ATOMICS64_WITH_LIB)
+        message(FATAL_ERROR "Need libatomic for 64-bit atomics but support was not found!")
+    elseif (NEED_ATOMICS_FOR_128 AND NOT HAVE_CXX_ATOMICS128_WITH_LIB)
+        message(FATAL_ERROR "Need libatomic for 128-bit atomics but support was not found!")
+    endif ()
+
     set(MAIN_LIBS ${MAIN_LIBS} atomic)
     message("Adding libatomic to MAIN_LIBS")
-endif()
+endif ()
 
 
 # third party bubble tracking library (python scripts needed at run-time)
@@ -205,7 +207,7 @@ endif ()
 
 # copy python scripts
 # currently these are only used by the C++ executable, so don't copy them for python module
-#TODO: is it really necessary to copy these to build dir? for now, just use source dir
+#TODO: is it really necessary to copy these to build dir? for now, just use source dir (BUBBLETRACKING_DIR)
 #if (NOT SKBUILD)
 #    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
 #        COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -44,10 +44,15 @@
 
 # MODIFIED 02/27/21 to support checking for 128-bit atomics
 
-# outputs:
-# NEED_ATOMICS  - normal atomics
+# - outputs
+# NEED_ATOMICS  		- normal atomics
 # NEED_ATOMICS_FOR_64 	- atomics with 64-bit variables
-# NEED_ATOMICS_FOR_128 		- atomics with 128-bit variables
+# NEED_ATOMICS_FOR_128 	- atomics with 128-bit variables
+#
+# - if need atomics, then check if it is available
+# HAVE_CXX_ATOMICS_WITH_LIB
+# HAVE_CXX_ATOMICS64_WITH_LIB
+# HAVE_CXX_ATOMICS128_WITH_LIB
 
 INCLUDE(CheckCXXSourceCompiles)
 #INCLUDE(CheckLibraryExists)
@@ -152,7 +157,7 @@ if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
 	list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 	check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
 	if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
-		message(WARNING "Host compiler does not support std::atomic!")
+		message(WARNING "Host compiler does not support std::atomic with 64-bit vars!")
 	endif()
 endif()
 
@@ -169,7 +174,7 @@ if(NOT HAVE_CXX_ATOMICS128_WITHOUT_LIB)
 	list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
 	check_working_cxx_atomics128(HAVE_CXX_ATOMICS128_WITH_LIB)
 	if (NOT HAVE_CXX_ATOMICS128_WITH_LIB)
-		message(WARNING "Host compiler does not support std::atomic!")
+		message(WARNING "Host compiler does not support std::atomic with 128-bit vars!")
 	endif()
 endif()
 
