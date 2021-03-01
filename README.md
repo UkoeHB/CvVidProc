@@ -58,38 +58,30 @@ CV_DIR=~/MyLibs/ \
 
 ## Building and Running as standalone program
 
-Run cmake for debug or release:
+Generate the build system:
 
 ```
-// in command line, for release build (fast version)
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release
-
-// in command line, for debug build (slow version)
-cmake -S . -B BuildD -DCMAKE_BUILD_TYPE=Debug
+// in command line
+cmake -S . -B Build
 
 // the OpenCV directory flags must have -D in this case
 -DCV_DIR=~/MyLibs/
 -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
 
 // for example
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -DCV_DIR=~/MyLibs/ -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
+cmake -S . -B Build -DCV_DIR=~/MyLibs/ -DCV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/
 ```
 
-Build:
+Build the project:
 
 ```
-// in command line, for release build (fast version)
 cmake --build Build
-
-// in command line, for debug build (slow version)
-cmake --build BuildD
 ```
 
-Execute program.:
+Execute program:
 
 ```
 ./Build/cvvidproc --vid=vid.mp4
-./BuildD/cvvidproc --vid=vid.mp4
 ```
 
 Notes:
@@ -159,10 +151,10 @@ make -j4
 sudo make install
 ```
 
-If you decline to install with `sudo make install`, then you must manually link OpenCV to `cvvidproc`. If, for example, you build OpenCV in the directory "`~`", then the command for generating a release build system will be:
+If you decline to install with `sudo make install`, then you must manually link OpenCV to `cvvidproc`. If, for example, you build OpenCV in the directory "`~`", then the command for generating a build system will be:
 
 ```
-cmake -S . -B Build -DCMAKE_BUILD_TYPE=Release -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
+cmake -S . -B Build -D CV_DIR=/~/ -D CV_INSTALL_DIR=/~/opencv/build/
 ```
 
 Ubuntu users may need to download and set up an 'X server for Windows' by following [this tutorial](https://seanthegeek.net/234/graphical-linux-applications-bash-ubuntu-windows/). If your Ubuntu doesn't already have it, install GTK3 for backend GUI with:

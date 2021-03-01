@@ -8,6 +8,9 @@ message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMA
 # module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
 
+# build type
+include(SetDefaultBuildType)
+
 
 
 ######################################
@@ -52,7 +55,7 @@ set(MAIN_LIBS "${${OPENCV}_LIBS}")
 
 # python and numpy
 # for scikit-build must do this
-if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
+if (SKBUILD)
     # thanks to: https://github.com/pybind/scikit_build_example
     # Currently, Scikit-build does not support FindPython, so we convert the
     # provided hints ourselves.
@@ -106,7 +109,7 @@ if (NEED_ATOMICS OR NEED_ATOMICS_FOR_64 OR NEED_ATOMICS_FOR_128)
     endif ()
 
     set(MAIN_LIBS ${MAIN_LIBS} atomic)
-    message("Adding libatomic to MAIN_LIBS")
+    message(STATUS "Adding libatomic to MAIN_LIBS")
 endif ()
 
 
@@ -164,10 +167,10 @@ set(COMMON_INC Sources/AsyncTokens
 
 
 ######################################
-#python bindings module target
+#target: python bindings module
 
 # only create python bindings in Release mode
-if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
+if (SKBUILD)
     pybind11_add_module(_core MODULE ${COMMON_SRC} Sources/py_bindings.cpp)
 
     # connect headers to module target
@@ -179,14 +182,12 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Release AND SKBUILD)
 
     # install the module
     install(TARGETS _core DESTINATION .)
-elseif (SKBUILD)
-    message(WARNING ":: unexpectedly tried to build with scikit-build but not in Release mode! Python module not built.")
 endif ()
 
 
 
 ######################################
-#executable target
+#target: executable
 
 # do not build main executable when python module is being installed
 if (NOT SKBUILD)
