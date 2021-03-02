@@ -45,12 +45,10 @@ PYBIND11_MODULE(_core, mod)
 				const int,
 				const int,
 				const int,
-				const int,
-				const int,
 				const bool>(),
 				py::arg("vid_path"),
 				py::arg("bg_algo") = "hist",
-				py::arg("max_threads") = -1,
+				py::arg("max_threads") = -1,			// only set to limit how many threads can be used
 				py::arg("frame_limit") = -1,
 				py::arg("grayscale") = false,
 				py::arg("vid_is_grayscale") = false,
@@ -58,9 +56,7 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("crop_y") = 0,
 				py::arg("crop_width") = 0,
 				py::arg("crop_height") = 0,
-				py::arg("horizontal_buffer_pixels") = 0,
-				py::arg("vertical_buffer_pixels") = 0,
-				py::arg("token_storage_limit") = 200,
+				py::arg("token_storage_limit") = 10,
 				py::arg("print_timing_report") = false);
 
 	/// funct GetVideoBackground()
@@ -116,7 +112,7 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("vid_path"),
 				py::arg("highlightbubbles_pack"),
 				py::arg("assignbubbles_pack"),
-				py::arg("max_threads") = -1,
+				py::arg("max_threads") = -1,			// only set to limit how many threads can be used
 				py::arg("frame_limit") = -1,
 				py::arg("grayscale") = false,
 				py::arg("vid_is_grayscale") = false,

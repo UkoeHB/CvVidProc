@@ -43,24 +43,35 @@ cv::Rect GetCroppedFrameDims(int x, int y, int width, int height, int hor_pixels
 	assert(hor_pixels > 0);
 	assert(vert_pixels > 0);
 
+	// asserts are disabled in release, so set defaults to be safe
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+	if (hor_pixels <= 0)
+		hor_pixels = 1;
+	if (vert_pixels <= 0)
+		vert_pixels = 1;
+	if (width < 0)
+		width = hor_pixels;
+	if (height < 0)
+		height = vert_pixels;
+
+	// start of crop window can't be outside frame
+	if (x + 1 >= hor_pixels)
+		x = 0;
+
+	// start of crop window can't be outside frame
+	if (y + 1 >= vert_pixels)
+		y = 0;
+
+	// width can be no greater than nominal width of frame
 	if (width == 0 || width + x > hor_pixels)
 		width = hor_pixels - x;
 
+	// height can be no greater than nominal height of frame
 	if (height == 0 || height + y > hor_pixels)
 		height = vert_pixels - y;
-
-	if (x + 1 >= hor_pixels)
-	{
-		// note: x + 1 == hor_pixels is invalid because x,y are 0-indexed
-		x = 0;
-		width = hor_pixels;
-	}
-
-	if (y + 1 >= vert_pixels)
-	{
-		y = 0;
-		height = vert_pixels;
-	}
 
 	return cv::Rect{x, y, width, height};
 }
@@ -118,8 +129,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 			frame_dimensions,
 			vidbg_pack.grayscale,
 			vidbg_pack.vid_is_grayscale,
-			vidbg_pack.horizontal_buffer_pixels,
-			vidbg_pack.vertical_buffer_pixels
+			0,	//no buffer
+			0	//no buffer
 		});
 
 		begin_frame += sum_frame;
@@ -137,8 +148,8 @@ cv::Mat VidBackgroundWithAlgo(cv::VideoCapture &vid,
 	// create fragment consumer
 	auto bg_frag_consumer{std::make_shared<CvVidFragmentConsumer>(batch_size,
 		vidbg_pack.print_timing_report,
-		vidbg_pack.horizontal_buffer_pixels,
-		vidbg_pack.vertical_buffer_pixels,
+		0,	//no buffer
+		0,	//no buffer
 		frame_dimensions.width,
 		frame_dimensions.height
 	)};

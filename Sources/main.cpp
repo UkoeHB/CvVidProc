@@ -92,21 +92,19 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 VidBgPack vidbgpack_from_clpack(const CommandLinePack &cl_pack)
 {
 	return VidBgPack{
-			cl_pack.vid_path,
-			cl_pack.bg_algo,
-			cl_pack.max_threads,
-			cl_pack.bg_frame_lim,
-			cl_pack.grayscale,
-			cl_pack.vid_is_grayscale,
-			0,
-			0,
-			0,
-			0,
-			0,
-			0,
-			200,
-			cl_pack.print_timing_report
-		};
+		cl_pack.vid_path,
+		cl_pack.bg_algo,
+		cl_pack.max_threads,
+		cl_pack.bg_frame_lim,
+		cl_pack.grayscale,
+		cl_pack.vid_is_grayscale,
+		0,
+		0,
+		0,
+		0,
+		10,
+		cl_pack.print_timing_report
+	};
 }
 
 int main(int argc, char* argv[])

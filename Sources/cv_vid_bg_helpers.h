@@ -50,11 +50,6 @@ struct VidBgPack
 	// height of frame-crop region
 	const int crop_height{0};
 
-	// number of horizontal buffer pixels to add to analyzed fragments
-	const int horizontal_buffer_pixels{0};
-	// number of vertical buffer pixels to add to analyzed fragments
-	const int vertical_buffer_pixels{0};
-
 	// max number of input fragments to store at a time (memory conservation vs efficiency)
 	const int token_storage_limit{-1};
 

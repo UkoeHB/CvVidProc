@@ -4,6 +4,7 @@
 #include "assign_bubbles_algo.h"
 #include "async_token_batch_generator.h"
 #include "async_token_process.h"
+#include "cv_vid_bg_helpers.h"
 #include "cv_vid_bubbletrack_helpers.h"
 #include "cv_vid_frames_generator_algo.h"
 #include "highlight_bubbles_algo.h"

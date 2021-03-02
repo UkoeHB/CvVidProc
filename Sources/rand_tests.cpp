@@ -312,7 +312,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 		0,
 		0,
 		0,
-		200,
+		10,
 		cl_pack.print_timing_report
 	};
 
