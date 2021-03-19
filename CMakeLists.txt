@@ -30,7 +30,8 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 # Set project name
 project(cvvidproc
     DESCRIPTION "get background of a video"
-    LANGUAGES CXX)
+    LANGUAGES CXX
+    VERSION 0.10.1)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
@@ -142,7 +143,7 @@ set(BUBBLETRACKING_DIR ${bubbletracking_SOURCE_DIR})
 
 # config setup: for project directory (auto generated header)
 set(GENERATED_FILES ${CMAKE_BINARY_DIR}/generated)
-configure_file(Config/project_dir_config.h.in ${GENERATED_FILES}/project_dir_config.h)
+configure_file(Config/project_config.h.in ${GENERATED_FILES}/project_config.h)
 include_directories(${GENERATED_FILES})
 
 
@@ -156,7 +157,9 @@ set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bubbletrack_helpers.cpp
         Sources/ProcessorAlgos/highlight_bubbles_algo.cpp
         Sources/Utility/cv_util.cpp
-        Sources/Utility/ndarray_converter.cpp)
+        Sources/Utility/ndarray_converter.cpp
+        Sources/Utility/exception_assert.cpp
+        Sources/Utility/string_utils.cpp)
 
 # common headers
 set(COMMON_INC Sources/AsyncTokens

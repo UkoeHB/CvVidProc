@@ -21,6 +21,8 @@ void test_assignbubbles(cv::Mat &test_frame);
 
 void test_timing_numpyconverter(const int num_rounds, const bool include_conversion = false);
 
+void test_exception_assert();
+
 void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame);
 
 }

@@ -6,6 +6,7 @@
 #include "cv_vid_bg_helpers.h"
 #include "cv_vid_frames_generator_algo.h"
 #include "cv_vid_fragment_consumer.h"
+#include "exception_assert.h"
 #include "histogram_median_algo.h"
 #include "main.h"
 
@@ -36,34 +37,14 @@ BGAlgo GetBGAlgo(const std::string &algo)
 cv::Rect GetCroppedFrameDims(int x, int y, int width, int height, int hor_pixels, int vert_pixels)
 {
 	// note: the returned frame is not allowed to be empty
-	assert(x >= 0);
-	assert(y >= 0);
-	assert(width >= 0);
-	assert(height >= 0);
-	assert(hor_pixels > 0);
-	assert(vert_pixels > 0);
-
-	// asserts are disabled in release, so set defaults to be safe
-	if (x < 0)
-		x = 0;
-	if (y < 0)
-		y = 0;
-	if (hor_pixels <= 0)
-		hor_pixels = 1;
-	if (vert_pixels <= 0)
-		vert_pixels = 1;
-	if (width < 0)
-		width = hor_pixels;
-	if (height < 0)
-		height = vert_pixels;
-
-	// start of crop window can't be outside frame
-	if (x + 1 >= hor_pixels)
-		x = 0;
-
-	// start of crop window can't be outside frame
-	if (y + 1 >= vert_pixels)
-		y = 0;
+	EXCEPTION_ASSERT(x >= 0);
+	EXCEPTION_ASSERT(y >= 0);
+	EXCEPTION_ASSERT(width >= 0);
+	EXCEPTION_ASSERT(height >= 0);
+	EXCEPTION_ASSERT_MSG(hor_pixels > 0, "frame must have horizontal size");
+	EXCEPTION_ASSERT_MSG(vert_pixels > 0, "frame must have verical size");
+	EXCEPTION_ASSERT_MSG(x < hor_pixels, "start of crop window can't be outside frame");
+	EXCEPTION_ASSERT_MSG(y < vert_pixels, "start of crop window can't be outside frame");
 
 	// width can be no greater than nominal width of frame
 	if (width == 0 || width + x > hor_pixels)

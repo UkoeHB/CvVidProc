@@ -5,7 +5,7 @@
 
 //local headers
 #include "ndarray_converter.h"
-#include "project_dir_config.h"
+#include "project_config.h"
 #include "token_processor_algo.h"
 
 //third party headers
@@ -38,7 +38,7 @@ struct __attribute__ ((visibility("hidden"))) TokenProcessorPack<AssignBubblesAl
 // keeps track of all the bubbles that have been identified, and the most recent 'active bubbles'
 // 	so bubbles that appear in more than one frame can be tracked
 // note: expects the bubbletracking module to be available in sys.path, which may need to be pointed to by the caller
-//  #include "project_dir_config.h"
+//  #include "project_config.h"
 //
 // 	py::module_ sys = py::module_::import("sys");
 //  py::object path = sys.attr("path");

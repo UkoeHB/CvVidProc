@@ -11,4 +11,8 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	# Set the allowed build type values for cmake-gui
 	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 		"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+elseif (CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "Configuration types detected: '${CMAKE_CONFIGURATION_TYPES}'")
+else ()
+	message(STATUS "Build type detected: '${CMAKE_BUILD_TYPE}'")
 endif ()

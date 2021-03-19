@@ -4,8 +4,9 @@
 #define CV_VID_BG_FRAGMENT_CONSUMER_4567876_H
 
 //local headers
-#include "token_batch_consumer.h"
 #include "cv_util.h"
+#include "exception_assert.h"
+#include "token_batch_consumer.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -42,10 +43,10 @@ public:
 		m_frame_height{frame_height}
 	{
 		// sanity checks
-		assert(m_horizontal_buffer_pixels >= 0);
-		assert(m_vertical_buffer_pixels >= 0);
-		assert(m_frame_width > 0);
-		assert(m_frame_height > 0);
+		EXCEPTION_ASSERT(m_horizontal_buffer_pixels >= 0);
+		EXCEPTION_ASSERT(m_vertical_buffer_pixels >= 0);
+		EXCEPTION_ASSERT(m_frame_width > 0);
+		EXCEPTION_ASSERT(m_frame_height > 0);
 
 		m_fragments.resize(GetBatchSize());
 	}

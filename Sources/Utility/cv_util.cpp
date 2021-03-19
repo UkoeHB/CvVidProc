@@ -2,6 +2,7 @@
 
 //local headers
 #include "cv_util.h"
+#include "exception_assert.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
@@ -246,7 +247,7 @@ bool cv_mat_to_std_vector_uchar(const cv::Mat &mat_input, std::vector<unsigned c
 
 	// make sure the Mat is an unsigned char
 	// http://ninghang.blogspot.com/2012/11/list-of-mat-type-in-opencv.html
-	assert(mat_input.type() == CV_8UC1 ||
+	EXCEPTION_ASSERT(mat_input.type() == CV_8UC1 ||
 			mat_input.type() == CV_8UC2 ||
 			mat_input.type() == CV_8UC3 || 
 			mat_input.type() == CV_8UC4);

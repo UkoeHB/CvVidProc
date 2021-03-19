@@ -7,6 +7,7 @@
 #include "cv_vid_bg_helpers.h"
 #include "cv_vid_bubbletrack_helpers.h"
 #include "cv_vid_frames_generator_algo.h"
+#include "exception_assert.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "mat_set_intermediary.h"
@@ -161,18 +162,18 @@ py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack)
 
 	// validate inputs
 	// frame cropping should match background image passed in
-	assert(trackbubble_pack.highlightbubbles_pack.background.data && !trackbubble_pack.highlightbubbles_pack.background.empty());
-	assert(trackbubble_pack.crop_width - trackbubble_pack.crop_x >= 0);
-	assert(trackbubble_pack.crop_height - trackbubble_pack.crop_y >= 0);
-	assert(trackbubble_pack.crop_width ?
+	EXCEPTION_ASSERT(trackbubble_pack.highlightbubbles_pack.background.data && !trackbubble_pack.highlightbubbles_pack.background.empty());
+	EXCEPTION_ASSERT(trackbubble_pack.crop_width - trackbubble_pack.crop_x >= 0);
+	EXCEPTION_ASSERT(trackbubble_pack.crop_height - trackbubble_pack.crop_y >= 0);
+	EXCEPTION_ASSERT(trackbubble_pack.crop_width ?
 		trackbubble_pack.crop_width - trackbubble_pack.crop_x == trackbubble_pack.highlightbubbles_pack.background.cols :
 		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_WIDTH)) == trackbubble_pack.highlightbubbles_pack.background.cols);
-	assert(trackbubble_pack.crop_height ?
+	EXCEPTION_ASSERT(trackbubble_pack.crop_height ?
 		trackbubble_pack.crop_height - trackbubble_pack.crop_y == trackbubble_pack.highlightbubbles_pack.background.rows :
 		static_cast<int>(vid.get(cv::CAP_PROP_FRAME_HEIGHT)) == trackbubble_pack.highlightbubbles_pack.background.rows);
 
 	// the structuring element should exist
-	assert(trackbubble_pack.highlightbubbles_pack.struct_element.data && !trackbubble_pack.highlightbubbles_pack.struct_element.empty());
+	EXCEPTION_ASSERT(trackbubble_pack.highlightbubbles_pack.struct_element.data && !trackbubble_pack.highlightbubbles_pack.struct_element.empty());
 
 	/// create algo packs
 

@@ -4,7 +4,7 @@
 #include "cv_vid_bg_helpers.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
-#include "project_dir_config.h"
+#include "project_config.h"
 #include "rand_tests.h"
 #include "ts_interval_timer.h"
 
@@ -142,6 +142,7 @@ int main(int argc, char* argv[])
 	//rand_tests::test_bubblehighlighting(background_frame, cl_pack, true);
 	//rand_tests::test_embedded_python();
 	//rand_tests::test_timing_numpyconverter(2000, true);
+	//rand_tests::test_exception_assert();
 
 	rand_tests::demo_trackbubbles(cl_pack, background_frame);
 

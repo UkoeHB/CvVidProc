@@ -4,6 +4,7 @@
 #define ASYNC_TOKEN_PROCESS_4567898765_H
 
 //local headers
+#include "exception_assert.h"
 #include "token_batch_generator.h"
 #include "token_batch_consumer.h"
 #include "token_processor_algo.h"
@@ -66,15 +67,15 @@ public:
 		static_assert(std::is_base_of<TokenProcessorAlgo<TokenProcessorAlgoT, TokenT, ResultT>, TokenProcessorAlgoT>::value,
 			"Token processor implementation does not derive from the TokenProcessorAlgo!");
 
-		assert(m_token_generator);
-		assert(m_token_consumer);
+		EXCEPTION_ASSERT(m_token_generator);
+		EXCEPTION_ASSERT(m_token_consumer);
 
 		if (m_token_generator)
 			m_batch_size = m_token_generator->GetBatchSize();
 
-		assert(m_batch_size > 0);
-		assert(m_batch_size <= m_worker_thread_limit);
-		assert(m_batch_size == m_token_consumer->GetBatchSize());
+		EXCEPTION_ASSERT(m_batch_size > 0);
+		EXCEPTION_ASSERT(m_batch_size <= m_worker_thread_limit);
+		EXCEPTION_ASSERT(m_batch_size == m_token_consumer->GetBatchSize());
 
 		if (m_collect_timings)
 			m_unit_timing_reports.resize(m_batch_size);

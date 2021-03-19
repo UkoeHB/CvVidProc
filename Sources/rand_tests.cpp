@@ -4,11 +4,13 @@
 #include "assign_bubbles_algo.h"
 #include "cv_vid_bg_helpers.h"
 #include "cv_vid_bubbletrack_helpers.h"
+#include "exception_assert.h"
 #include "highlight_bubbles_algo.h"
 #include "main.h"
 #include "ndarray_converter.h"
-#include "project_dir_config.h"
+#include "project_config.h"
 #include "rand_tests.h"
+#include "string_utils.h"
 #include "ts_interval_timer.h"
 
 //third party headers
@@ -251,6 +253,60 @@ void test_timing_numpyconverter(const int num_rounds, const bool include_convers
 	std::cout << "init_numpy timing: " << interval_s_float << " s; " <<
 		timer_report.num_intervals << " rounds; " <<
 		(timer_report.total_time / timer_report.num_intervals).count() << " ms avg\n";
+}
+
+/// test exception assert
+void test_exception_assert()
+{
+	// first exercise the string utils
+
+	// format_string()
+	const char *buf = "char(%c), int(%i), float(%f), cstring(%s)";
+	std::cout << format_string(buf, 'x', 5, 2.2, "hello world") << '\n';
+
+	// then test exception asserts
+
+	// assert(false) should throw an exception
+	try
+	{
+		EXCEPTION_ASSERT(false);
+		std::cout << "EXCEPTION_ASSERT(false) test failed!\n";
+	}
+	catch (std::exception &exc)
+	{
+		std::cout << "EXCEPTION_ASSERT(false) test succeeded! Output: \n" << exc.what() << '\n';
+	}
+		
+	// assert(true) should not throw an exception
+	try
+	{
+		EXCEPTION_ASSERT(true);
+		std::cout << "EXCEPTION_ASSERT(true) test succeeded!\n";
+	}
+	catch (std::exception &exc)
+	{
+		std::cout << "EXCEPTION_ASSERT(true) test failed! Output: \n" << exc.what() << '\n';
+	}
+
+	// assert(expression) should propagate the exception correctly
+	try
+	{
+		EXCEPTION_ASSERT(10 == 11);
+	}
+	catch (std::exception &exc)
+	{
+		std::cout << "EXCEPTION_ASSERT(10 == 11) test! Output: \n" << exc.what() << '\n';
+	}
+
+	// assert(expression, message) should propagate the message correctly
+	try
+	{
+		EXCEPTION_ASSERT_MSG(false, "exception assert with message - success");
+	}
+	catch (std::exception &exc)
+	{
+		std::cout << "EXCEPTION_ASSERT_MSG() test! Output: \n" << exc.what() << '\n';
+	}
 }
 
 /// demo the TrackBubbles function

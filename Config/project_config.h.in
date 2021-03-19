@@ -1,11 +1,15 @@
 // auto-generated header for project directory configuration details
 
-#ifndef PROJECT_DIR_CONFIG_57899293_H
-#define PROJECT_DIR_CONFIG_57899293_H
+#ifndef PROJECT_CONFIG_57899293_H
+#define PROJECT_CONFIG_57899293_H
 
 namespace config
 {
 
+/// project configs
+constexpr const char *cvvidproc_version = "${CMAKE_PROJECT_VERSION}";
+
+/// directory configs
 constexpr const char *videos_dir = "${VIDEO_DIR}";
 constexpr const char *pylibs_dir = "${PYLIBS_DIR}";
 constexpr const char *bubbletracking_dir = "${BUBBLETRACKING_DIR}";

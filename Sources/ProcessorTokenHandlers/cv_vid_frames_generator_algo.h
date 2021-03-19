@@ -4,6 +4,7 @@
 #define CV_VID_FRAMES_GENERATOR_ALGO_765678987_H
 
 //local headers
+#include "exception_assert.h"
 #include "token_generator_algo.h"
 #include "cv_util.h"
 
@@ -64,38 +65,38 @@ public:
 		m_vid = cv::VideoCapture{param_pack.vid_path};
 
 		// sanity checks
-		assert(m_pack.batch_size == m_pack.frames_in_batch*m_pack.chunks_per_frame);
-		assert(m_vid.isOpened());
+		EXCEPTION_ASSERT(m_pack.batch_size == m_pack.frames_in_batch*m_pack.chunks_per_frame);
+		EXCEPTION_ASSERT(m_vid.isOpened());
 
 		int frame_width{static_cast<int>(m_vid.get(cv::CAP_PROP_FRAME_WIDTH))};
 		int frame_height{static_cast<int>(m_vid.get(cv::CAP_PROP_FRAME_HEIGHT))};
 
-		assert(m_pack.horizontal_buffer_pixels >= 0);
-		assert(m_pack.vertical_buffer_pixels >= 0);
-		assert(frame_width > 0);
-		assert(frame_height > 0);
-		assert(m_pack.frames_in_batch > 0 && m_pack.chunks_per_frame > 0);
+		EXCEPTION_ASSERT(m_pack.horizontal_buffer_pixels >= 0);
+		EXCEPTION_ASSERT(m_pack.vertical_buffer_pixels >= 0);
+		EXCEPTION_ASSERT(frame_width > 0);
+		EXCEPTION_ASSERT(frame_height > 0);
+		EXCEPTION_ASSERT(m_pack.frames_in_batch > 0 && m_pack.chunks_per_frame > 0);
 
 		// make sure the Mats obtained will be composed of unsigned chars
 		// http://ninghang.blogspot.com/2012/11/list-of-mat-type-in-opencv.html
 		auto format{m_vid.get(cv::CAP_PROP_FORMAT)};
-		assert(format == CV_8UC1 ||
+		EXCEPTION_ASSERT(format == CV_8UC1 ||
 				format == CV_8UC2 ||
 				format == CV_8UC3 || 
 				format == CV_8UC4);
 
 		// make sure crop rectangle actually fits in the frame
-		assert(m_pack.crop_rectangle.x + m_pack.crop_rectangle.width <= frame_width &&
+		EXCEPTION_ASSERT(m_pack.crop_rectangle.x + m_pack.crop_rectangle.width <= frame_width &&
 			m_pack.crop_rectangle.y + m_pack.crop_rectangle.height <= frame_height);
 
 		// start video on 'start frame'
-		assert(m_pack.start_frame >= 0);
-		assert(m_pack.start_frame < static_cast<int>(m_vid.get(cv::CAP_PROP_FRAME_COUNT)));
+		EXCEPTION_ASSERT(m_pack.start_frame >= 0);
+		EXCEPTION_ASSERT(m_pack.start_frame < static_cast<int>(m_vid.get(cv::CAP_PROP_FRAME_COUNT)));
 		m_vid.set(cv::CAP_PROP_POS_FRAMES, m_pack.start_frame);
 
 		// validate last frame
-		assert(m_pack.last_frame > 0);
-		assert(m_pack.last_frame - m_pack.start_frame > 0);
+		EXCEPTION_ASSERT(m_pack.last_frame > 0);
+		EXCEPTION_ASSERT(m_pack.last_frame - m_pack.start_frame > 0);
 		//note: if last_frame > num_frames ignore it
 
 		// try to interpet video frames as RGB format for consistency (only when not grayscale already)
