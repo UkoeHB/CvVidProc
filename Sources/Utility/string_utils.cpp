@@ -6,6 +6,7 @@
 //third party headers
 
 //standard headers
+#include <cassert>
 #include <cstdarg>
 #include <cstring>
 #include <string>
