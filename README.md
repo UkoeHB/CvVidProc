@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py and cmake versions as well -->
-version 0.11.0
+version 0.12.0
 
 Dependencies:
 

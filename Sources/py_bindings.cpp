@@ -88,11 +88,11 @@ PYBIND11_MODULE(_core, mod)
 	py::class_<TokenProcessorPack<AssignObjectsAlgo>>(mod, "AssignObjectsPack")
 		.def(py::init<py::function,
 				py::dict>(),
-				"Expected signature of input func: \
-				f(frame_bw, f, objects_prev, objects_archive, ID_curr, args) \
-				note: 'args' should be a python dictionary",
+				"Expected signature/behavior of input func: \
+				next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs) \
+				note: 'kwargs' should be a python dictionary",
 				py::arg("function"),
-				py::arg("args"));
+				py::arg("kwargs"));
 
 	/// struct VidObjectTrackPack
 	py::class_<VidObjectTrackPack>(mod, "VidObjectTrackPack")

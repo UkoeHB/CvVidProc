@@ -3,7 +3,7 @@
 
 # obligatory CMake minimum version
 cmake_minimum_required(VERSION 3.16...3.19)
-message("CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+message(STATUS "CMAKE version used: ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
 
 # module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
@@ -31,7 +31,7 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 project(cvvidproc
     DESCRIPTION "get background of a video"
     LANGUAGES CXX
-    VERSION 0.11.0)
+    VERSION 0.12.0)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
@@ -122,7 +122,7 @@ if (NOT SKBUILD)
     FetchContent_Declare(
         bubbletracking
         GIT_REPOSITORY https://github.com/UkoeHB/bubbletracking_koe
-        GIT_TAG c34eb72382969214da4ae35d5a496418bd4d11f5
+        GIT_TAG ef22f19b77bf08568eba8eeb1c2a58554165e3fa
     )
     FetchContent_Populate(bubbletracking)
 endif ()

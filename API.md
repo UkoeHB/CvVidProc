@@ -111,14 +111,21 @@ Structures/Classes:
 
 - `AssignObjectsPack`
 	- Parameters (no defaults):
-		- `function`: *functor*, Python function object for assigning objects in highlighted frames; expected signature:
-			- `func(frame_bw, f, objects_prev, objects_archive, ID_curr, args)`
+		- `function`: *functor*, Python function object for assigning objects in highlighted frames; expected signature/behavior:
+			- `next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)`
 		- `args`: *Dictionary*, Dictionary of args to forward to function
 
 ### Example Use
 
 ```
 import cvvidproc
+
+
+def assign_bubbles_cvvidproc(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs):
+    # wrapper on assign_bubbles() to meet cvvidproc API expectation
+
+    return assign_bubbles(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, **kwargs)
+
 
 def track_bubble_cvvidproc(track_kwargs, highlight_kwargs, assignbubbles_kwargs):
     highlightpack = cvvidproc.HighlightObjectsPack(
@@ -132,7 +139,7 @@ def track_bubble_cvvidproc(track_kwargs, highlight_kwargs, assignbubbles_kwargs)
         width_border=highlight_kwargs['width_border'])
 
     assignpack = cvvidproc.AssignObjectsPack(
-        assign_bubbles,     # pass in function name as functor (not string)
+        assign_bubbles_cvvidproc,     # pass in function name as functor (not string)
         assignbubbles_kwargs)
 
     # fields not defined will be defaulted
@@ -146,13 +153,7 @@ def track_bubble_cvvidproc(track_kwargs, highlight_kwargs, assignbubbles_kwargs)
         crop_height=assignbubbles_kwargs['row_hi']-assignbubbles_kwargs['row_lo'],
         print_timing_report=True)
 
-    print('tracking objects...')
-    start_time = time.time()
-
     objects_archive = cvvidproc.TrackObjects(trackpack)
-
-    end_time = time.time()
-    print('objects tracked ({0:f} bubble(s); {1:f} s)'.format(len(objects_archive), end_time - start_time))
 
     return objects_archive
 ```

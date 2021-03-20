@@ -30,13 +30,13 @@ struct __attribute__ ((visibility("hidden"))) TokenProcessorPack<AssignObjectsAl
 {
 	////
 	// expected function signature:
-	// ID_curr = func(frame_bw, f, objects_prev, objects_archive, ID_curr, args)
-	// frame_bw: black/white frame
-	// f: frame number
+	// next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)
+	// bkgd_frame: black/white frame
+	// frames_processed: number of frames processed so far
 	// objects_prev: python Dictionary of active objects
 	// objects_archive: python Dictionary of all objects encountered
-	// ID_curr: ID of next object to be assigned (updated via return value of func())
-	// args: user-defined parameters (can be anything, even malleable types)
+	// next_ID: ID of next object to be assigned (updated via return value of func())
+	// kwargs: python Dict of user-defined parameters (can be anything, even malleable types)
 	///
 	py::function object_tracking_function{};
 	/// miscellaneous user-defined args that will be passed to the object tracking function
@@ -122,12 +122,12 @@ public:
 			// process the Mat
 			// - python call
 			using namespace pybind11::literals;		// for '_a'
-			m_current_id = m_pack.object_tracking_function("frame_bw"_a = image,
-				"f"_a = m_num_processed,
+			m_next_id = m_pack.object_tracking_function("bkgd_frame"_a = image,
+				"frames_processed"_a = m_num_processed,
 				"objects_prev"_a = *m_objects_active,
 				"objects_archive"_a = *m_objects_archive,
-				"ID_curr"_a = m_current_id,
-				**m_pack.kwargs
+				"next_ID"_a = m_next_id,
+				"kwargs"_a = *m_pack.kwargs
 			).cast<int>();
 
 			m_num_processed++;
@@ -156,7 +156,7 @@ public:
 
 		// reset variables
 		m_num_processed = 0;
-		m_current_id = 0;
+		m_next_id = 0;
 		m_objects_active = nullptr;
 		m_objects_archive = nullptr;
 	}
@@ -172,7 +172,7 @@ private:
 	/// number of frames processed
 	int m_num_processed{0};
 	/// current ID
-	int m_current_id{0};
+	int m_next_id{0};
 	/// still-alive objects
 	std::unique_ptr<py::dict> m_objects_active;
 	/// all objects encountered

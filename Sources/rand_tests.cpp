@@ -151,7 +151,7 @@ void test_assignobjects(cv::Mat &test_frame)
 
 	// get the function to track bubbles with as functor
 	py::module_ objecttracking_mod = py::module_::import("cvimproc.improc");
-	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles");
+	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles_cvvidproc");
 
 	// set parameters
 	/*
@@ -325,7 +325,7 @@ void demo_trackobjects(CommandLinePack &cl_pack, cv::Mat &background_frame)
 
 	// get the function to track bubbles with as functor
 	py::module_ objecttracking_mod = py::module_::import("cvimproc.improc");
-	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles");
+	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles_cvvidproc");
 
 	// create template highlightbubbles pack
 	TokenProcessorPack<HighlightObjectsAlgo> highlightobjects_pack{
