@@ -1,10 +1,10 @@
 // python bindings for opencv vid processing
 
 //local headers
-#include "assign_bubbles_algo.h"
-#include "cv_vid_bubbletrack_helpers.h"
+#include "assign_objects_algo.h"
+#include "cv_vid_objecttrack_helpers.h"
 #include "cv_vid_bg_helpers.h"
-#include "highlight_bubbles_algo.h"
+#include "highlight_objects_algo.h"
 #include "main.h"
 #include "ndarray_converter.h"
 #include "token_processor_algo.h"
@@ -65,8 +65,8 @@ PYBIND11_MODULE(_core, mod)
 		py::call_guard<py::gil_scoped_release>(),
 		py::arg("pack"));	//VidBgPack
 
-	/// struct TokenProcessorPack<HighlightBubblesAlgo>
-	py::class_<TokenProcessorPack<HighlightBubblesAlgo>>(mod, "HighlightBubblesPack")
+	/// struct TokenProcessorPack<HighlightObjectsAlgo>
+	py::class_<TokenProcessorPack<HighlightObjectsAlgo>>(mod, "HighlightObjectsPack")
 		.def(py::init<cv::Mat,
 				cv::Mat,
 				const int,
@@ -84,21 +84,21 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("min_size_threshold"),
 				py::arg("width_border"));
 
-	/// struct TokenProcessorPack<AssignBubblesAlgo>
-	py::class_<TokenProcessorPack<AssignBubblesAlgo>>(mod, "AssignBubblesPack")
+	/// struct TokenProcessorPack<AssignObjectsAlgo>
+	py::class_<TokenProcessorPack<AssignObjectsAlgo>>(mod, "AssignObjectsPack")
 		.def(py::init<py::function,
 				py::dict>(),
 				"Expected signature of input func: \
-				f(frame_bw, f, bubbles_prev, bubbles_archive, ID_curr, args) \
+				f(frame_bw, f, objects_prev, objects_archive, ID_curr, args) \
 				note: 'args' should be a python dictionary",
 				py::arg("function"),
 				py::arg("args"));
 
-	/// struct VidBubbleTrackPack
-	py::class_<VidBubbleTrackPack>(mod, "VidBubbleTrackPack")
+	/// struct VidObjectTrackPack
+	py::class_<VidObjectTrackPack>(mod, "VidObjectTrackPack")
 		.def(py::init<const std::string,
-				TokenProcessorPack<HighlightBubblesAlgo>,
-				TokenProcessorPack<AssignBubblesAlgo>,
+				TokenProcessorPack<HighlightObjectsAlgo>,
+				TokenProcessorPack<AssignObjectsAlgo>,
 				const int,
 				const long long,
 				const bool,
@@ -110,8 +110,8 @@ PYBIND11_MODULE(_core, mod)
 				const int,
 				const bool>(),
 				py::arg("vid_path"),
-				py::arg("highlightbubbles_pack"),
-				py::arg("assignbubbles_pack"),
+				py::arg("highlight_objects_pack"),
+				py::arg("assign_objects_pack"),
 				py::arg("max_threads") = -1,			// only set to limit how many threads can be used
 				py::arg("frame_limit") = -1,
 				py::arg("grayscale") = false,
@@ -120,12 +120,12 @@ PYBIND11_MODULE(_core, mod)
 				py::arg("crop_y") = 0,
 				py::arg("crop_width") = 0,
 				py::arg("crop_height") = 0,
-				py::arg("token_storage_limit") = -1,
+				py::arg("token_storage_limit") = 10,
 				py::arg("print_timing_report") = false);
 
-	/// funct TrackBubbles()
-	mod.def("TrackBubbles", &TrackBubbles, "Track bubbles in an OpenCV video.",
-		py::arg("pack"));	//VidBubbleTrackPack
+	/// funct TrackObjects()
+	mod.def("TrackObjects", &TrackObjects, "Track objects in an OpenCV video.",
+		py::arg("pack"));	//VidObjectTrackPack
 }
 
 

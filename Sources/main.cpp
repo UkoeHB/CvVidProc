@@ -2,7 +2,7 @@
 
 //local headers
 #include "cv_vid_bg_helpers.h"
-#include "highlight_bubbles_algo.h"
+#include "highlight_objects_algo.h"
 #include "main.h"
 #include "project_config.h"
 #include "rand_tests.h"
@@ -28,7 +28,7 @@ const char* g_commandline_params =
 	"{ grayscale        |  false  | Treat the video as grayscale [optimization] (true/false) }"
 	"{ vid_is_grayscale |  false  | Video is already grayscale [optimization] (true/false) }"
 	"{ bg_algo          |   hist  | Algorithm for getting background image (hist/tri) }"
-	"{ bg_frame_lim     |    -1   | Max number of frames to analyze for background image }"
+	"{ frame_lim        |    -1   | Max number of frames to analyze for image }"
 	"{ timer_report     |   true  | Collect timings for background processing and report them }";
 
 int GetAdditionalThreads(int min_threads, int extra_threads, int max_threads)
@@ -81,7 +81,7 @@ CommandLinePack HandleCLArgs(cv::CommandLineParser &cl_args)
 	pack.bg_algo = cl_args.get<cv::String>("bg_algo");
 
 	// get frame limit
-	pack.bg_frame_lim = static_cast<long long>(cl_args.get<double>("bg_frame_lim"));
+	pack.bg_frame_lim = static_cast<long long>(cl_args.get<double>("frame_lim"));
 
 	// get timer report setting
 	pack.print_timing_report = cl_args.get<bool>("timer_report");
@@ -139,12 +139,12 @@ int main(int argc, char* argv[])
 		std::cerr << "Background frame created was malformed, unexpectedly!\n";
 
 
-	//rand_tests::test_bubblehighlighting(background_frame, cl_pack, true);
+	//rand_tests::test_objecthighlighting(background_frame, cl_pack, true);
 	//rand_tests::test_embedded_python();
 	//rand_tests::test_timing_numpyconverter(2000, true);
 	//rand_tests::test_exception_assert();
 
-	rand_tests::demo_trackbubbles(cl_pack, background_frame);
+	rand_tests::demo_trackobjects(cl_pack, background_frame);
 
 	return 0;
 }

@@ -1,11 +1,11 @@
-// helper functions for executing bubble tracking
+// helpers for object tracking
 
-#ifndef CV_VID_BUBBLETRACK_HELPERS_4738498_H
-#define CV_VID_BUBBLETRACK_HELPERS_4738498_H
+#ifndef CV_VID_OBJECTTRACK_HELPERS_4738498_H
+#define CV_VID_OBJECTTRACK_HELPERS_4738498_H
 
 //local headers
-#include "assign_bubbles_algo.h"
-#include "highlight_bubbles_algo.h"
+#include "assign_objects_algo.h"
+#include "highlight_objects_algo.h"
 
 //third party headers
 #include <pybind11/pybind11.h>
@@ -17,16 +17,16 @@
 #include <vector>
 
 
-/// settings necessary to track bubbles in a video
-struct __attribute__ ((visibility("hidden"))) VidBubbleTrackPack
+/// settings necessary to track objects in a video
+struct __attribute__ ((visibility("hidden"))) VidObjectTrackPack
 {
 	// path to video
 	const std::string vid_path{};
 
-	// pack of variables for HighlightBubblesAlgo
-	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack;
-	// pack of variables for AssignBubblesAlgo
-	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack;
+	// pack of variables for HighlightObjectsAlgo
+	TokenProcessorPack<HighlightObjectsAlgo> highlight_objects_pack;
+	// pack of variables for AssignObjectsAlgo
+	TokenProcessorPack<AssignObjectsAlgo> assign_objects_pack;
 
 	// max number of threads allowed
 	const int max_threads{-1};
@@ -54,15 +54,15 @@ struct __attribute__ ((visibility("hidden"))) VidBubbleTrackPack
 	const bool print_timing_report{false};
 };
 
-/// encapsulates call to async tokenized bubble tracking analysis
-std::unique_ptr<py::dict> TrackBubblesProcess(cv::VideoCapture &vid,
-	const VidBubbleTrackPack &trackbubble_pack,
-	std::vector<TokenProcessorPack<HighlightBubblesAlgo>> &highlightbubbles_packs,
-	std::vector<TokenProcessorPack<AssignBubblesAlgo>> &assignbubbles_packs);
+/// encapsulates call to async tokenized object tracking analysis
+std::unique_ptr<py::dict> TrackObjectsProcess(cv::VideoCapture &vid,
+	const VidObjectTrackPack &track_objects_pack,
+	std::vector<TokenProcessorPack<HighlightObjectsAlgo>> &highlight_objects_packs,
+	std::vector<TokenProcessorPack<AssignObjectsAlgo>> &assign_objects_packs);
 
-/// track bubbles in a video and return record of bubbles tracked
+/// track objects in a video and return record of objects tracked
 /// WARNING: can only be called when the python GIL is held
-py::dict TrackBubbles(const VidBubbleTrackPack &trackbubble_pack);
+py::dict TrackObjects(const VidObjectTrackPack &trackbubble_pack);
 
 
 #endif //header guard

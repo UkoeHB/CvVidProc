@@ -1,11 +1,11 @@
 // random tests
 
 //local headers
-#include "assign_bubbles_algo.h"
+#include "assign_objects_algo.h"
 #include "cv_vid_bg_helpers.h"
-#include "cv_vid_bubbletrack_helpers.h"
+#include "cv_vid_objecttrack_helpers.h"
 #include "exception_assert.h"
-#include "highlight_bubbles_algo.h"
+#include "highlight_objects_algo.h"
 #include "main.h"
 #include "ndarray_converter.h"
 #include "project_config.h"
@@ -31,13 +31,13 @@ using namespace py::literals;
 namespace rand_tests
 {
 
-// test bubble highlighting
-void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack, bool add_test_bubbletracking)
+// test object highlighting
+void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &cl_pack, bool add_test_objecttracking)
 {
 	// for test video 'bubble_15000fps.mp4'
 
 	// set parameters
-	TokenProcessorPack<HighlightBubblesAlgo> bubbles_pack{
+	TokenProcessorPack<HighlightObjectsAlgo> objects_pack{
 		background_frame,
 		cv::getStructuringElement(cv::MorphShapes::MORPH_ELLIPSE, cv::Size{4, 4}),
 		14,
@@ -49,7 +49,7 @@ void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &c
 	};
 
 	// create algo object for processing frames (highlighting bubbles)
-	HighlightBubblesAlgo highlight_bubbles{bubbles_pack};
+	HighlightObjectsAlgo highlight_objects{objects_pack};
 
 	// get 10th frame of video
 	cv::VideoCapture vid{cl_pack.vid_path};
@@ -66,10 +66,10 @@ void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &c
 	std::unique_ptr<cv::Mat> frame{std::make_unique<cv::Mat>(modified_frame)};
 
 	// insert to algo (processes the frame)
-	highlight_bubbles.Insert(std::move(frame));
+	highlight_objects.Insert(std::move(frame));
 
 	// get the processed result out
-	frame = highlight_bubbles.TryGetResult();
+	frame = highlight_objects.TryGetResult();
 
 	// display the highlighted bubbles
 	if (frame && frame->data && !frame->empty())
@@ -82,9 +82,9 @@ void test_bubblehighlighting(cv::Mat &background_frame, const CommandLinePack &c
 	else
 		std::cerr << "Bubbles frame created was malformed, unexpectedly!\n";
 
-	if (add_test_bubbletracking)
+	if (add_test_objecttracking)
 	{
-		test_assignbubbles(*frame);
+		test_assignobjects(*frame);
 	}
 }
 
@@ -135,8 +135,8 @@ void test_embedded_python()
 }
 
 /// note: assumes test_frame contains highlighted bubbles
-/// this test is just to see if the AssignBubblesAlgo works with one input frame
-void test_assignbubbles(cv::Mat &test_frame)
+/// this test is just to see if the AssignObjectsAlgo works with one input frame
+void test_assignobjects(cv::Mat &test_frame)
 {
 	// create Python interpreter
 	std::cout << "Starting Python interpreter...\n";
@@ -150,8 +150,8 @@ void test_assignbubbles(cv::Mat &test_frame)
 	path.attr("insert")(0, lib_dir.c_str());
 
 	// get the function to track bubbles with as functor
-	py::module_ bubbletracking_mod = py::module_::import("cvimproc.improc");
-	py::function assignbubbles_func = bubbletracking_mod.attr("assign_bubbles");
+	py::module_ objecttracking_mod = py::module_::import("cvimproc.improc");
+	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles");
 
 	// set parameters
 	/*
@@ -166,8 +166,8 @@ void test_assignbubbles(cv::Mat &test_frame)
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'
-	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
-		assignbubbles_func,
+	TokenProcessorPack<AssignObjectsAlgo> assignobjects_pack{
+		assignobjects_func,
 		py::dict{"flow_dir"_a=flow_dir, 	// +x direction (?)
 		"fps"_a=3,		// not useful here...?
 		"pix_per_um"_a=4,
@@ -179,36 +179,36 @@ void test_assignbubbles(cv::Mat &test_frame)
 	};
 
 	// create new scope so the GIL can be released
-	std::unique_ptr<py::dict> bubbles_archive{nullptr};
+	std::unique_ptr<py::dict> objects_archive{nullptr};
 	{
-		// release GIL (will be acquired by AssignBubblesAlgo)
+		// release GIL (will be acquired by AssignObjectsAlgo)
 		py::gil_scoped_release nogil;
 
 		// create algo object for processing frames (highlighting bubbles)
-		AssignBubblesAlgo assign_bubbles{assignbubbles_pack};
+		AssignObjectsAlgo assign_objects{assignobjects_pack};
 
 		// convert format
 		std::vector<cv::Mat> vec_temp;
 		vec_temp.emplace_back(test_frame.clone());
-		std::unique_ptr<std::vector<cv::Mat>> highlighted_bubbles{std::make_unique<std::vector<cv::Mat>>(std::move(vec_temp))};
+		std::unique_ptr<std::vector<cv::Mat>> highlighted_objects{std::make_unique<std::vector<cv::Mat>>(std::move(vec_temp))};
 
 		// insert to algo (processes the frame)
-		assign_bubbles.Insert(std::move(highlighted_bubbles));
+		assign_objects.Insert(std::move(highlighted_objects));
 
 		// no more frames to insert (tells the algo to finalize a result)
-		assign_bubbles.NotifyNoMoreTokens();
+		assign_objects.NotifyNoMoreTokens();
 
-		bubbles_archive = assign_bubbles.TryGetResult();
+		objects_archive = assign_objects.TryGetResult();
 	}
 
 	// print result
-	if (bubbles_archive)
-		py::print(*bubbles_archive);
+	if (objects_archive)
+		py::print(*objects_archive);
 	else
-		py::print("assign bubbles returned no archive");
+		py::print("assign objects returned no archive");
 }
 
-//TODO: it's not clear if this is working as intended... need to test with a sample object simpler than AssignBubblesAlgo
+//TODO: it's not clear if this is working as intended... need to test with a sample object simpler than AssignObjectsAlgo
 void test_timing_numpyconverter(const int num_rounds, const bool include_conversion)
 {
 	// test python interpreter
@@ -309,8 +309,8 @@ void test_exception_assert()
 	}
 }
 
-/// demo the TrackBubbles function
-void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
+/// demo the TrackObjects function
+void demo_trackobjects(CommandLinePack &cl_pack, cv::Mat &background_frame)
 {
 	// create Python interpreter
 	std::cout << "Starting Python interpreter...\n";
@@ -324,11 +324,11 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	path.attr("insert")(0, lib_dir.c_str());
 
 	// get the function to track bubbles with as functor
-	py::module_ bubbletracking_mod = py::module_::import("cvimproc.improc");
-	py::function assignbubbles_func = bubbletracking_mod.attr("assign_bubbles");
+	py::module_ objecttracking_mod = py::module_::import("cvimproc.improc");
+	py::function assignobjects_func = objecttracking_mod.attr("assign_bubbles");
 
 	// create template highlightbubbles pack
-	TokenProcessorPack<HighlightBubblesAlgo> highlightbubbles_pack{
+	TokenProcessorPack<HighlightObjectsAlgo> highlightobjects_pack{
 		background_frame.clone(),
 		cv::getStructuringElement(cv::MorphShapes::MORPH_ELLIPSE, cv::Size{4, 4}),
 		14,
@@ -344,8 +344,8 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	py::array flow_dir{static_cast<py::ssize_t>(flow_dir_vec.size()), flow_dir_vec.data()};
 
 	using namespace pybind11::literals;		// for '_a'
-	TokenProcessorPack<AssignBubblesAlgo> assignbubbles_pack{
-		assignbubbles_func,
+	TokenProcessorPack<AssignObjectsAlgo> assignobjects_pack{
+		assignobjects_func,
 		py::dict{"flow_dir"_a=flow_dir, 	// +x direction (?)
 		"fps"_a=3,		// not useful here...?
 		"pix_per_um"_a=4,
@@ -357,9 +357,9 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	};
 
 	// create parameter pack
-	VidBubbleTrackPack trackbubble_pack{cl_pack.vid_path,
-		highlightbubbles_pack,
-		assignbubbles_pack,
+	VidObjectTrackPack trackbubble_pack{cl_pack.vid_path,
+		highlightobjects_pack,
+		assignobjects_pack,
 		cl_pack.max_threads,
 		cl_pack.bg_frame_lim,
 		cl_pack.grayscale,
@@ -380,7 +380,7 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 
 	// run the process
 	std::cout << "\nTracking bubbles...\n";
-	py::dict bubbles_archive{TrackBubbles(trackbubble_pack)};
+	py::dict objects_archive{TrackObjects(trackbubble_pack)};
 
 	// end the timer and print results
 	timer.AddInterval(start_time);
@@ -390,8 +390,8 @@ void demo_trackbubbles(CommandLinePack &cl_pack, cv::Mat &background_frame)
 	std::cout << "Bubbles tracked in: " << interval_s_float << " seconds\n";
 
 	// print info about results
-	if (static_cast<bool>(bubbles_archive))
-		std::cout << "Number of bubbles: " << bubbles_archive.size() << '\n';
+	if (static_cast<bool>(objects_archive))
+		std::cout << "Number of bubbles: " << objects_archive.size() << '\n';
 	else
 		std::cout << "No bubbles tracked!\n";
 }

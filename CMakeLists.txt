@@ -31,7 +31,7 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 project(cvvidproc
     DESCRIPTION "get background of a video"
     LANGUAGES CXX
-    VERSION 0.10.2)
+    VERSION 0.11.0)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
@@ -121,8 +121,8 @@ if (NOT SKBUILD)
     include (FetchContent)
     FetchContent_Declare(
         bubbletracking
-        GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
-        GIT_TAG 5452d5282e342ab512ad275a271073a7d5fb93b1
+        GIT_REPOSITORY https://github.com/UkoeHB/bubbletracking_koe
+        GIT_TAG c34eb72382969214da4ae35d5a496418bd4d11f5
     )
     FetchContent_Populate(bubbletracking)
 endif ()
@@ -154,8 +154,8 @@ include_directories(${GENERATED_FILES})
 # common sources
 set(COMMON_SRC Sources/main.cpp
         Sources/cv_vid_bg_helpers.cpp
-        Sources/cv_vid_bubbletrack_helpers.cpp
-        Sources/ProcessorAlgos/highlight_bubbles_algo.cpp
+        Sources/cv_vid_objecttrack_helpers.cpp
+        Sources/ProcessorAlgos/highlight_objects_algo.cpp
         Sources/Utility/cv_util.cpp
         Sources/Utility/ndarray_converter.cpp
         Sources/Utility/exception_assert.cpp

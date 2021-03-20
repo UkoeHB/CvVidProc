@@ -1,7 +1,7 @@
-// highlights bubbles in an image
+// highlights objects in an image
 
 //local headers
-#include "highlight_bubbles_algo.h"
+#include "highlight_objects_algo.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>
@@ -12,13 +12,13 @@
 #include <vector>
 
 
-void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
+void HighlightObjectsAlgo::HighlightObjects(cv::Mat &frame)
 {
 	/*
 		first performs a low threshold and
-	    high minimum size to get faint, large bubbles, and then performs a higher
+	    high minimum size to get faint, large objects, and then performs a higher
 	    hysteresis threshold with a low minimum size to get distinct, small
-	    bubbles.
+	    objects.
     */
 
 	//im_diff = cv2.absdiff(bkgd, frame)
@@ -28,27 +28,26 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
     ///////////////////// THRESHOLD AND HIGH MIN SIZE /////////////////////
     // thresholds image to become black-and-white
     //thresh_bw_1 = thresh_im(im_diff, th)
-	cv::Mat thresh_bw_1{thresh_im(im_diff, m_pack.threshold)};
+	cv::Mat thresh_bw_1{ThresholdImage(im_diff, m_pack.threshold)};
 
     // smooths out thresholded image
     //closed_bw_1 = cv2.morphologyEx(thresh_bw_1, cv2.MORPH_OPEN, selem)
 	cv::morphologyEx(thresh_bw_1, thresh_bw_1, cv::MorphTypes::MORPH_OPEN, m_pack.struct_element);
 
     // removes small objects
-    //                                                     min_size=min_size_th)
     //bubble_bw_1 = remove_small_objects(closed_bw_1, min_size_th)
-	remove_small_objects_find(thresh_bw_1, m_pack.min_size_threshold);
+	RemoveSmallObjects(thresh_bw_1, m_pack.min_size_threshold);
 
     // fills enclosed holes with white, but leaves open holes black
     //bubble_1 = basic.fill_holes(bubble_bw_1)
-	fill_holes(thresh_bw_1);
+	FillHoles(thresh_bw_1);
 
     ///////////////////// HYSTERESIS THRESHOLD AND LOW MIN SIZE /////////////////////
     // thresholds image to become black-and-white
     // thresh_bw_2 = skimage.filters.apply_hysteresis_threshold(\
     //                     im_diff, th_lo, th_hi)
     //thresh_bw_2 = hysteresis_threshold(im_diff, th_lo, th_hi)
-	cv::Mat thresh_bw_2{hysteresis_threshold(im_diff, m_pack.threshold_lo, m_pack.threshold_hi)};
+	cv::Mat thresh_bw_2{ThresholdImageWithHysteresis(im_diff, m_pack.threshold_lo, m_pack.threshold_hi)};
 
     //thresh_bw_2 = basic.cvify(thresh_bw_2)
 	// not needed
@@ -59,12 +58,12 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
 
     // removes small objects
     //bubble_bw_2 = remove_small_objects(closed_bw_2, min_size_hyst)
-	remove_small_objects_find(thresh_bw_2, m_pack.min_size_hyst);
+	RemoveSmallObjects(thresh_bw_2, m_pack.min_size_hyst);
 
     // fills in holes that might be cut off at border
     //bubble_2 = frame_and_fill(bubble_part_filled, width_border)
 	// why do fill_holes() before this? why not just do frame_and_fill() in the first place
-	frame_and_fill(thresh_bw_2, m_pack.width_border);
+	FrameAndFill(thresh_bw_2, m_pack.width_border);
 
     // merges images to create final image
     //bubble = np.logical_or(bubble_1, bubble_2)
@@ -72,7 +71,7 @@ void HighlightBubblesAlgo::HighlightBubbles(cv::Mat &frame)
 }
 
 /// C++ implementation of thresh_im()
-cv::Mat HighlightBubblesAlgo::thresh_im(cv::Mat &image, const int threshold)
+cv::Mat HighlightObjectsAlgo::ThresholdImage(cv::Mat &image, const int threshold)
 {
 	/*
     	Applies a threshold to the image and returns black-and-white result.
@@ -98,7 +97,7 @@ cv::Mat HighlightBubblesAlgo::thresh_im(cv::Mat &image, const int threshold)
 }
 
 /// C++ implementation of hysteresis_threshold()
-cv::Mat HighlightBubblesAlgo::hysteresis_threshold(cv::Mat &image, const int threshold_lo, const int threshold_hi)
+cv::Mat HighlightObjectsAlgo::ThresholdImageWithHysteresis(cv::Mat &image, const int threshold_lo, const int threshold_hi)
 {
 	/*
 	    Applies a hysteresis threshold using only OpenCV methods to replace the
@@ -137,7 +136,7 @@ cv::Mat HighlightBubblesAlgo::hysteresis_threshold(cv::Mat &image, const int thr
 	return thresh_lower;
 }
 
-void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int min_size_threshold)
+void HighlightObjectsAlgo::RemoveSmallObjects(cv::Mat &image, const int min_size_threshold)
 {
 	/*
 	    Removes small objects in image with OpenCV's findContours.
@@ -174,7 +173,7 @@ void HighlightBubblesAlgo::remove_small_objects_find(cv::Mat &image, const int m
 	// return by reference
 }
 
-void HighlightBubblesAlgo::fill_holes(cv::Mat &image)
+void HighlightObjectsAlgo::FillHoles(cv::Mat &image)
 {
 	/*
 	    Fills holes in image solely using OpenCV to replace
@@ -203,7 +202,7 @@ void HighlightBubblesAlgo::fill_holes(cv::Mat &image)
     // return by reference
 }
 
-void HighlightBubblesAlgo::frame_and_fill(cv::Mat &image, const int width_border)
+void HighlightObjectsAlgo::FrameAndFill(cv::Mat &image, const int width_border)
 {
 	/*
 	    Frames image with border to fill in holes cut off at the edge. Without
@@ -251,7 +250,7 @@ void HighlightBubblesAlgo::frame_and_fill(cv::Mat &image, const int width_border
     // open space is not completely bounded)
     //im_filled = basic.fill_holes(im_framed)
 	// fills holes
-	fill_holes(image);
+	FillHoles(image);
 
     //image = mask_im(im_filled, np.logical_not(mask_frame_sides))
 	// cuts out sides

@@ -1,7 +1,7 @@
-// highlights bubbles in an image
+// highlights objects in an image
 
-#ifndef HIGHLIGHT_BUBBLES_ALGO_6787878_H
-#define HIGHLIGHT_BUBBLES_ALGO_6787878_H
+#ifndef HIGHLIGHT_OBJECTS_ALGO_6787878_H
+#define HIGHLIGHT_OBJECTS_ALGO_6787878_H
 
 //local headers
 #include "token_processor_algo.h"
@@ -15,11 +15,11 @@
 
 
 /// processor algorithm type declaration
-class HighlightBubblesAlgo;
+class HighlightObjectsAlgo;
 
 /// specialization of variable pack
 template <>
-struct TokenProcessorPack<HighlightBubblesAlgo> final
+struct TokenProcessorPack<HighlightObjectsAlgo> final
 {
 	cv::Mat background{};
 	cv::Mat struct_element{};
@@ -32,29 +32,28 @@ struct TokenProcessorPack<HighlightBubblesAlgo> final
 };
 
 ////
-// C++ implementation for algorithm: highlight_bubble_hyst_thresh()
-// obtains a cv::Mat image and uses heuristics to process the image so bubble-like objects are highlighted
+// uses heuristics to process a cv::Mat image so objects are highlighted
 ///
-class HighlightBubblesAlgo final : public TokenProcessorAlgo<HighlightBubblesAlgo, cv::Mat, cv::Mat>
+class HighlightObjectsAlgo final : public TokenProcessorAlgo<HighlightObjectsAlgo, cv::Mat, cv::Mat>
 {
 public:
 //constructors
 	/// default constructor: disabled
-	HighlightBubblesAlgo() = delete;
+	HighlightObjectsAlgo() = delete;
 
 	/// normal constructor
-	HighlightBubblesAlgo(TokenProcessorPack<HighlightBubblesAlgo> processor_pack) : TokenProcessorAlgo{std::move(processor_pack)}
+	HighlightObjectsAlgo(TokenProcessorPack<HighlightObjectsAlgo> processor_pack) : TokenProcessorAlgo{std::move(processor_pack)}
 	{}
 
 	/// copy constructor: disabled
-	HighlightBubblesAlgo(const HighlightBubblesAlgo&) = delete;
+	HighlightObjectsAlgo(const HighlightObjectsAlgo&) = delete;
 
 //destructor: not needed (final class)
 
 //overloaded operators
 	/// copy assignment operators: disabled
-	HighlightBubblesAlgo& operator=(const HighlightBubblesAlgo&) = delete;
-	HighlightBubblesAlgo& operator=(const HighlightBubblesAlgo&) const = delete;
+	HighlightObjectsAlgo& operator=(const HighlightObjectsAlgo&) = delete;
+	HighlightObjectsAlgo& operator=(const HighlightObjectsAlgo&) const = delete;
 
 //member functions
 	/// insert an element to be processed
@@ -65,7 +64,7 @@ public:
 		if (!in_mat || !in_mat->data || in_mat->empty())
 			return;
 
-		HighlightBubbles(*in_mat);
+		HighlightObjects(*in_mat);
 
 		m_result = std::move(in_mat);
 	}
@@ -93,22 +92,22 @@ public:
 	}
 
 	/// C++ implementation of highlight_bubbles()
-	void HighlightBubbles(cv::Mat &frame);
+	void HighlightObjects(cv::Mat &frame);
 
 	/// C++ implementation of thresh_im()
-	cv::Mat thresh_im(cv::Mat &image, const int threshold);
+	cv::Mat ThresholdImage(cv::Mat &image, const int threshold);
 
 	/// C++ implementation of hysteresis_threshold()
-	cv::Mat hysteresis_threshold(cv::Mat &image, const int threshold_lo, const int threshold_hi);
+	cv::Mat ThresholdImageWithHysteresis(cv::Mat &image, const int threshold_lo, const int threshold_hi);
 
 	/// C++ implementation of remove_small_objects_find()
-	void remove_small_objects_find(cv::Mat &image, const int min_size_threshold);
+	void RemoveSmallObjects(cv::Mat &image, const int min_size_threshold);
 
 	/// C++ implementation of fill_holes()
-	void fill_holes(cv::Mat &image);
+	void FillHoles(cv::Mat &image);
 
 	/// C++ implementation of frame_and_fill()
-	void frame_and_fill(cv::Mat &image, const int width_border);
+	void FrameAndFill(cv::Mat &image, const int width_border);
 
 
 private:
