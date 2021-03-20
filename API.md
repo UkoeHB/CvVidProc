@@ -18,18 +18,18 @@ Structures/Classes:
 - `VidBgPack`
 	- Parameters (with default values):
 		- `vid_path`: *String*, Full system path to video that should be analyzed
-		- `bg_algo` = "hist": *String*, Algorithm for obtaining background image; available algorithms:
+		- `bg_algo = 'hist'`: *String*, Algorithm for obtaining background image; available algorithms:
 			- `hist`: Histogram-based median of pixel values (per-channel median).
-		- `max_threads` = -1: *Int*, Maximum number of threads to use while computing background image
-		- `frame_limit` = -1: *Int*, Maximum number of frames in video to use while computing background image
-		- `grayscale` = false: *Bool*, Whether to interpret the video has grayscale
-		- `vid_is_grayscale` = false: *Bool*, Whether the video should be treated as already grayscale (optimization)
-		- `crop_x` = 0: *Int*, Horizontal position of upper left corner of crop-view
-		- `crop_y` = 0: *Int*, Vertical position of upper left corner of crop-view
-		- `crop_width` = 0: *Int*, Width of crop-view
-		- `crop_height` = 0: *Int*, Height of crop-view
-		- `token_storage_limit` = 10: *Int*, Maximum number of frames to store at a time (use lower values if program is using too much RAM, otherwise ignore)
-		- `print_timing_report` = false: *Bool*, Whether to print a timing report about the algorithm's performance
+		- `max_threads = -1`: *Int*, Maximum number of threads to use while computing background image
+		- `frame_limit = -1`: *Int*, Maximum number of frames in video to use while computing background image
+		- `grayscale = false`: *Bool*, Whether to interpret the video has grayscale
+		- `vid_is_grayscale = false`: *Bool*, Whether the video should be treated as already grayscale (optimization)
+		- `crop_x = 0`: *Int*, Horizontal position of upper left corner of crop-view
+		- `crop_y = 0`: *Int*, Vertical position of upper left corner of crop-view
+		- `crop_width = 0`: *Int*, Width of crop-view
+		- `crop_height = 0`: *Int*, Height of crop-view
+		- `token_storage_limit = 10`: *Int*, Maximum number of frames to store at a time (use lower values if program is using too much RAM, otherwise ignore)
+		- `print_timing_report = false`: *Bool*, Whether to print a timing report about the algorithm's performance
 
 
 ### Example Use
@@ -54,17 +54,7 @@ def compute_bkgd_med_thread(vid_path, vid_is_grayscale, num_frames=100,
         crop_height = crop_height, #(default = 0)
         print_timing_report = True)
 
-    print('getting video background')
-    start_time = time.time()
-
     bkgd_med = cvvidproc.GetVideoBackground(vidpack)
-
-    end_time = time.time()
-    print('video background obtained ({0:f} s)'.format(end_time - start_time))
-
-    # takes value channel if color image provided
-    if len(bkgd_med.shape) == 3:
-        bkgd_med = get_val_channel(bkgd_med)
 
     return bkgd_med
 ```
@@ -87,16 +77,16 @@ Structures/Classes:
 		- `vid_path`: *String*, Full system path to video that should be analyzed
 		- `highlight_objects_pack`: *HighlightObjectsPack*, Variable pack for highlighting objects
 		- `assign_objects_pack`: *AssignObjectsPack*, Variable pack for assigning objects
-		- `max_threads` = -1: *Int*, Maximum number of threads to use
-		- `frame_limit` = -1: *Int*, Maximum number of frames in video to use
-		- `grayscale` = false: *Bool*, Whether to interpret the video has grayscale
-		- `vid_is_grayscale` = false: *Bool*, Whether the video should be treated as already grayscale (optimization)
-		- `crop_x` = 0: *Int*, Horizontal position of upper left corner of crop-view
-		- `crop_y` = 0: *Int*, Vertical position of upper left corner of crop-view
-		- `crop_width` = 0: *Int*, Width of crop-view
-		- `crop_height` = 0: *Int*, Height of crop-view
-		`token_storage_limit` = 10: *Int*, Maximum number of frames to store at a time (use lower values if program is using too - much RAM, otherwise ignore)
-		- `print_timing_report` = false: *Bool*, Whether to print a timing report about the algorithm's performance
+		- `max_threads = -1`: *Int*, Maximum number of threads to use
+		- `frame_limit = -1`: *Int*, Maximum number of frames in video to use
+		- `grayscale = false`: *Bool*, Whether to interpret the video has grayscale
+		- `vid_is_grayscale = false`: *Bool*, Whether the video should be treated as already grayscale (optimization)
+		- `crop_x = 0`: *Int*, Horizontal position of upper left corner of crop-view
+		- `crop_y = 0`: *Int*, Vertical position of upper left corner of crop-view
+		- `crop_width = 0`: *Int*, Width of crop-view
+		- `crop_height = 0`: *Int*, Height of crop-view
+		`token_storage_limit = 10`: *Int*, Maximum number of frames to store at a time (use lower values if program is using too - much RAM, otherwise ignore)
+		- `print_timing_report = false`: *Bool*, Whether to print a timing report about the algorithm's performance
 
 - `HighlightObjectsPack`
 	- Parameters (no defaults):
