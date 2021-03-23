@@ -31,7 +31,7 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 project(cvvidproc
     DESCRIPTION "get background of a video"
     LANGUAGES CXX
-    VERSION 0.12.0)
+    VERSION 0.12.1)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)

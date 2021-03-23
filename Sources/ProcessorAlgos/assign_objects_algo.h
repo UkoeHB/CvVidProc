@@ -30,8 +30,8 @@ struct __attribute__ ((visibility("hidden"))) TokenProcessorPack<AssignObjectsAl
 {
 	////
 	// expected function signature:
-	// next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)
-	// bkgd_frame: black/white frame
+	// next_ID = func(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)
+	// bw_frame: black/white frame
 	// frames_processed: number of frames processed so far
 	// objects_prev: python Dictionary of active objects
 	// objects_archive: python Dictionary of all objects encountered
@@ -122,7 +122,7 @@ public:
 			// process the Mat
 			// - python call
 			using namespace pybind11::literals;		// for '_a'
-			m_next_id = m_pack.object_tracking_function("bkgd_frame"_a = image,
+			m_next_id = m_pack.object_tracking_function("bw_frame"_a = image,
 				"frames_processed"_a = m_num_processed,
 				"objects_prev"_a = *m_objects_active,
 				"objects_archive"_a = *m_objects_archive,

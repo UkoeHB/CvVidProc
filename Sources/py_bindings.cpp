@@ -89,7 +89,7 @@ PYBIND11_MODULE(_core, mod)
 		.def(py::init<py::function,
 				py::dict>(),
 				"Expected signature/behavior of input func: \
-				next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs) \
+				next_ID = func(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs) \
 				note: 'kwargs' should be a python dictionary",
 				py::arg("function"),
 				py::arg("kwargs"));

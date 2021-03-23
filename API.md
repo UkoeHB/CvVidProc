@@ -102,8 +102,8 @@ Structures/Classes:
 - `AssignObjectsPack`
 	- Parameters (no defaults):
 		- `function`: *functor*, Python function object for assigning objects in highlighted frames; expected signature/behavior:
-			- `next_ID = func(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)`
-		- `args`: *Dictionary*, Dictionary of args to forward to function
+			- `next_ID = func(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs)`
+		- `kwargs`: *Dictionary*, Dictionary of args to forward to function
 
 ### Example Use
 
@@ -111,10 +111,10 @@ Structures/Classes:
 import cvvidproc
 
 
-def assign_bubbles_cvvidproc(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs):
+def assign_bubbles_cvvidproc(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs):
     # wrapper on assign_bubbles() to meet cvvidproc API expectation
 
-    return assign_bubbles(bkgd_frame, frames_processed, objects_prev, objects_archive, next_ID, **kwargs)
+    return assign_bubbles(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, **kwargs)
 
 
 def track_bubble_cvvidproc(track_kwargs, highlight_kwargs, assignbubbles_kwargs):
