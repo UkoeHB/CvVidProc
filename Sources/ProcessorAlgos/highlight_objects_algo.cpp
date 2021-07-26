@@ -63,7 +63,10 @@ void HighlightObjectsAlgo::HighlightObjects(cv::Mat &frame)
     // fills in holes that might be cut off at border
     //bubble_2 = frame_and_fill(bubble_part_filled, width_border)
 	// why do fill_holes() before this? why not just do frame_and_fill() in the first place
-	FrameAndFill(thresh_bw_2, m_pack.width_border);
+	// FrameAndFill gets buggy if an object passes through the seed point (currently the origin)
+	//FrameAndFill(thresh_bw_2, m_pack.width_border);
+	//just fill holes instead--this may lose the center of some objects that are on the border
+	FillHoles(thresh_bw_2);
 
     // merges images to create final image
     //bubble = np.logical_or(bubble_1, bubble_2)
