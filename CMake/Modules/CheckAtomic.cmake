@@ -45,9 +45,9 @@
 # MODIFIED 02/27/21 to support checking for 128-bit atomics
 
 # - outputs
-# NEED_ATOMICS  		- normal atomics
-# NEED_ATOMICS_FOR_64 	- atomics with 64-bit variables
-# NEED_ATOMICS_FOR_128 	- atomics with 128-bit variables
+# NEED_ATOMICS          - normal atomics
+# NEED_ATOMICS_FOR_64   - atomics with 64-bit variables
+# NEED_ATOMICS_FOR_128  - atomics with 128-bit variables
 #
 # - if need atomics, then check if it is available
 # HAVE_CXX_ATOMICS_WITH_LIB
@@ -61,108 +61,108 @@ INCLUDE(CheckCXXSourceCompiles)
 # the platform doesn't support lock-free atomics.
 
 function(check_working_cxx_atomics varname)
-	set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-	CHECK_CXX_SOURCE_COMPILES("
-		#include <atomic>
-		std::atomic<int> x;
-		int main()
-		{
-			return std::atomic_is_lock_free(&x);
-		}
-		" ${varname}
-	)
-	set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+    CHECK_CXX_SOURCE_COMPILES("
+        #include <atomic>
+        std::atomic<int> x;
+        int main()
+        {
+            return std::atomic_is_lock_free(&x);
+        }
+        " ${varname}
+    )
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endfunction(check_working_cxx_atomics)
 
 function(check_working_cxx_atomics64 varname)
-	set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-	CHECK_CXX_SOURCE_COMPILES("
-		#include <atomic>
-		#include <cstdint>
-		std::atomic<uint64_t> x (0);
-		int main()
-		{
-			uint64_t i = x.load(std::memory_order_relaxed);
-			return std::atomic_is_lock_free(&x);
-		}
-		" ${varname}
-	)
-	set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+    CHECK_CXX_SOURCE_COMPILES("
+        #include <atomic>
+        #include <cstdint>
+        std::atomic<uint64_t> x (0);
+        int main()
+        {
+            uint64_t i = x.load(std::memory_order_relaxed);
+            return std::atomic_is_lock_free(&x);
+        }
+        " ${varname}
+    )
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endfunction(check_working_cxx_atomics64)
 
 # test to resolve [undefined reference to `__atomic_load_16'] and related
 function(check_working_cxx_atomics128 varname)
-	set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-	CHECK_CXX_SOURCE_COMPILES("
-		#include <atomic>
-		#include <cstdint>
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+    CHECK_CXX_SOURCE_COMPILES("
+        #include <atomic>
+        #include <cstdint>
 
-		struct Atomic128
-		{
-			std::uint64_t a{1};
-			std::uint64_t b{2};
-		};
+        struct Atomic128
+        {
+            std::uint64_t a{1};
+            std::uint64_t b{2};
+        };
 
-		int main()
-		{
-			std::atomic<Atomic128> x;
-			uint64_t i = x.load(std::memory_order_relaxed).a;
+        int main()
+        {
+            std::atomic<Atomic128> x;
+            uint64_t i = x.load(std::memory_order_relaxed).a;
 
-			return std::atomic_is_lock_free(&x);
-		}
-		" ${varname}
-	)
-	set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+            return std::atomic_is_lock_free(&x);
+        }
+        " ${varname}
+    )
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
 endfunction(check_working_cxx_atomics128)
 
 
 # This isn't necessary on MSVC, so avoid command-line switch annoyance
 # by only running on GCC-like hosts.
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
-	# First check if atomics work without the library.
-	check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
-	# If not check if atomics work with it (will also fail if libatomic not present)
-	# note: previous version of this file tested
-	#  check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
-	# however it threw errors if language 'C' was not specified
-	#TODO: test if 'C' is available first, then call check_library_exists, or fixme
-	if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
-		list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-		check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
-		if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
-			message(WARNING "Host compiler does not support std::atomic!")
-		endif()
-	endif()
+    # First check if atomics work without the library.
+    check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
+    # If not check if atomics work with it (will also fail if libatomic not present)
+    # note: previous version of this file tested
+    #  check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
+    # however it threw errors if language 'C' was not specified
+    #TODO: test if 'C' is available first, then call check_library_exists, or fixme
+    if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
+        list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+        check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
+        if (NOT HAVE_CXX_ATOMICS_WITH_LIB)
+            message(WARNING "Host compiler does not support std::atomic!")
+        endif()
+    endif()
 else ()
-	set(HAVE_CXX_ATOMICS_WITHOUT_LIB 1)
+    set(HAVE_CXX_ATOMICS_WITHOUT_LIB 1)
 endif()
 
 # set output variable
 if (NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
-	set(NEED_ATOMICS 1)
+    set(NEED_ATOMICS 1)
 endif ()
 
 # Check for 64 bit atomic operations.
 if(MSVC)
-	set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
+    set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
 else()
-	check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
+    check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
 endif()
 
 # If not, check if the library exists, and atomics work with it.
 if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-	list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-	check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
-	if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
-		message(WARNING "Host compiler does not support std::atomic with 64-bit vars!")
-	endif()
+    list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+    check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
+    if (NOT HAVE_CXX_ATOMICS64_WITH_LIB)
+        message(WARNING "Host compiler does not support std::atomic with 64-bit vars!")
+    endif()
 endif()
 
 if (NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-	set(NEED_ATOMICS_FOR_64 1)
+    set(NEED_ATOMICS_FOR_64 1)
 endif ()
 
 # Check 128-bit atomics
@@ -171,15 +171,15 @@ check_working_cxx_atomics128(HAVE_CXX_ATOMICS128_WITHOUT_LIB)
 
 # then if they aren't, see if adding 'atomic' helps
 if(NOT HAVE_CXX_ATOMICS128_WITHOUT_LIB)
-	list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-	check_working_cxx_atomics128(HAVE_CXX_ATOMICS128_WITH_LIB)
-	if (NOT HAVE_CXX_ATOMICS128_WITH_LIB)
-		message(WARNING "Host compiler does not support std::atomic with 128-bit vars!")
-	endif()
+    list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+    check_working_cxx_atomics128(HAVE_CXX_ATOMICS128_WITH_LIB)
+    if (NOT HAVE_CXX_ATOMICS128_WITH_LIB)
+        message(WARNING "Host compiler does not support std::atomic with 128-bit vars!")
+    endif()
 endif()
 
 if (NOT HAVE_CXX_ATOMICS128_WITHOUT_LIB)
-	set(NEED_ATOMICS_FOR_128 1)
+    set(NEED_ATOMICS_FOR_128 1)
 endif ()
 
 

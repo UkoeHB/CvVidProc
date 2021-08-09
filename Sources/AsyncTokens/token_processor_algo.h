@@ -26,44 +26,44 @@ class TokenProcessorAlgo
 {
 public:
 //member types
-	using token_type = TokenT;
-	using result_type = ResultT;
+    using token_type = TokenT;
+    using result_type = ResultT;
 
 //constructors
-	/// default constructor: disabled
-	TokenProcessorAlgo() = delete;
+    /// default constructor: disabled
+    TokenProcessorAlgo() = delete;
 
-	/// normal constructor
-	TokenProcessorAlgo(TokenProcessorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
-	{}
+    /// normal constructor
+    TokenProcessorAlgo(TokenProcessorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
+    {}
 
-	/// copy constructor: disabled
-	TokenProcessorAlgo(const TokenProcessorAlgo&) = delete;
+    /// copy constructor: disabled
+    TokenProcessorAlgo(const TokenProcessorAlgo&) = delete;
 
 //destructor
-	virtual ~TokenProcessorAlgo() = default;
+    virtual ~TokenProcessorAlgo() = default;
 
 //overloaded operators
-	/// copy assignment operators: disabled
-	TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) = delete;
-	TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) const = delete;
+    /// copy assignment operators: disabled
+    TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) = delete;
+    TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) const = delete;
 
 //member functions
-	/// insert an element to be processed
-	virtual void Insert(std::unique_ptr<TokenT>) = 0;
+    /// insert an element to be processed
+    virtual void Insert(std::unique_ptr<TokenT>) = 0;
 
-	/// try to get a processing result; should return empty ptr on failure
-	virtual std::unique_ptr<ResultT> TryGetResult() = 0;
+    /// try to get a processing result; should return empty ptr on failure
+    virtual std::unique_ptr<ResultT> TryGetResult() = 0;
 
-	/// get notified there won't be any more tokens
-	virtual void NotifyNoMoreTokens() = 0;
+    /// get notified there won't be any more tokens
+    virtual void NotifyNoMoreTokens() = 0;
 
-	/// tell handler if the processor still wants to return results
-	virtual bool HasResults() = 0;
+    /// tell handler if the processor still wants to return results
+    virtual bool HasResults() = 0;
 
 protected:
 //member variables
-	TokenProcessorPack<AlgoT> m_pack{};
+    TokenProcessorPack<AlgoT> m_pack{};
 };
 
 

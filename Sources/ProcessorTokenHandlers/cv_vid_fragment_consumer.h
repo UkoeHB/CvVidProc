@@ -9,7 +9,7 @@
 #include "token_batch_consumer.h"
 
 //third party headers
-#include <opencv2/opencv.hpp>	//for video manipulation (mainly)
+#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
 #include <cassert>
@@ -26,109 +26,109 @@ class CvVidFragmentConsumer final : public TokenBatchConsumer<cv::Mat, std::list
 {
 public:
 //constructors
-	/// default constructor: disabled
-	CvVidFragmentConsumer() = delete;
+    /// default constructor: disabled
+    CvVidFragmentConsumer() = delete;
 
-	/// normal constructor
-	CvVidFragmentConsumer(const int batch_size,
-			const bool collect_timings,
-			const int horizontal_buffer_pixels,
-			const int vertical_buffer_pixels,
-			const int frame_width,
-			const int frame_height) : 
-		TokenBatchConsumer{batch_size, collect_timings},
-		m_horizontal_buffer_pixels{horizontal_buffer_pixels},
-		m_vertical_buffer_pixels{vertical_buffer_pixels},
-		m_frame_width{frame_width},
-		m_frame_height{frame_height}
-	{
-		// sanity checks
-		EXCEPTION_ASSERT(m_horizontal_buffer_pixels >= 0);
-		EXCEPTION_ASSERT(m_vertical_buffer_pixels >= 0);
-		EXCEPTION_ASSERT(m_frame_width > 0);
-		EXCEPTION_ASSERT(m_frame_height > 0);
+    /// normal constructor
+    CvVidFragmentConsumer(const int batch_size,
+            const bool collect_timings,
+            const int horizontal_buffer_pixels,
+            const int vertical_buffer_pixels,
+            const int frame_width,
+            const int frame_height) : 
+        TokenBatchConsumer{batch_size, collect_timings},
+        m_horizontal_buffer_pixels{horizontal_buffer_pixels},
+        m_vertical_buffer_pixels{vertical_buffer_pixels},
+        m_frame_width{frame_width},
+        m_frame_height{frame_height}
+    {
+        // sanity checks
+        EXCEPTION_ASSERT(m_horizontal_buffer_pixels >= 0);
+        EXCEPTION_ASSERT(m_vertical_buffer_pixels >= 0);
+        EXCEPTION_ASSERT(m_frame_width > 0);
+        EXCEPTION_ASSERT(m_frame_height > 0);
 
-		m_fragments.resize(GetBatchSize());
-	}
+        m_fragments.resize(GetBatchSize());
+    }
 
-	/// copy constructor: disabled
-	CvVidFragmentConsumer(const CvVidFragmentConsumer&) = delete;
+    /// copy constructor: disabled
+    CvVidFragmentConsumer(const CvVidFragmentConsumer&) = delete;
 
 //destructor: not needed
 
 //overloaded operators
-	/// asignment operator: disabled
-	CvVidFragmentConsumer& operator=(const CvVidFragmentConsumer&) = delete;
-	CvVidFragmentConsumer& operator=(const CvVidFragmentConsumer&) const = delete;
+    /// asignment operator: disabled
+    CvVidFragmentConsumer& operator=(const CvVidFragmentConsumer&) = delete;
+    CvVidFragmentConsumer& operator=(const CvVidFragmentConsumer&) const = delete;
 
 protected:
 //member functions
-	/// consume an image fragment
-	/// WARNING: tied to implementation of fragment generator
-	virtual void ConsumeTokenImpl(std::unique_ptr<token_type> intermediate_result, const std::size_t index_in_batch) override
-	{
-		assert(index_in_batch < GetBatchSize());
+    /// consume an image fragment
+    /// WARNING: tied to implementation of fragment generator
+    virtual void ConsumeTokenImpl(std::unique_ptr<token_type> intermediate_result, const std::size_t index_in_batch) override
+    {
+        assert(index_in_batch < GetBatchSize());
 
-		m_fragments[index_in_batch].emplace_back(std::move(*intermediate_result));
+        m_fragments[index_in_batch].emplace_back(std::move(*intermediate_result));
 
-		// check if a full image can be assembled
-		for (const auto &frag_list : m_fragments)
-		{
-			if (frag_list.empty())
-				return;
-		}
+        // check if a full image can be assembled
+        for (const auto &frag_list : m_fragments)
+        {
+            if (frag_list.empty())
+                return;
+        }
 
-		// add result
-		// pull out a full image
-		std::vector<cv::Mat> img_frags{};
-		img_frags.resize(GetBatchSize());
+        // add result
+        // pull out a full image
+        std::vector<cv::Mat> img_frags{};
+        img_frags.resize(GetBatchSize());
 
-		for (std::size_t batch_index{0}; batch_index < GetBatchSize(); batch_index++)
-		{
-			img_frags[batch_index] = std::move(m_fragments[batch_index].front());
-			m_fragments[batch_index].pop_front();
-		}
+        for (std::size_t batch_index{0}; batch_index < GetBatchSize(); batch_index++)
+        {
+            img_frags[batch_index] = std::move(m_fragments[batch_index].front());
+            m_fragments[batch_index].pop_front();
+        }
 
-		// combine result fragments
-		cv::Mat result_img{};
-		if (!cv_mat_from_chunks(result_img,
-				img_frags,
-				static_cast<int>(GetBatchSize()),
-				1,
-				m_frame_width,
-				m_frame_height,
-				m_horizontal_buffer_pixels,
-				m_vertical_buffer_pixels)
-			)
-			std::cerr << "Combining img fragments into image failed unexpectedly!\n";
+        // combine result fragments
+        cv::Mat result_img{};
+        if (!cv_mat_from_chunks(result_img,
+                img_frags,
+                static_cast<int>(GetBatchSize()),
+                1,
+                m_frame_width,
+                m_frame_height,
+                m_horizontal_buffer_pixels,
+                m_vertical_buffer_pixels)
+            )
+            std::cerr << "Combining img fragments into image failed unexpectedly!\n";
 
-		if (!m_results)
-			m_results = std::make_unique<final_result_type>();
+        if (!m_results)
+            m_results = std::make_unique<final_result_type>();
 
-		m_results->emplace_back(std::move(result_img));
-	}
+        m_results->emplace_back(std::move(result_img));
+    }
 
-	/// get final result (list of reassembled cv::Mat imgs, aged oldest to youngest)
-	virtual std::unique_ptr<final_result_type> GetFinalResult() override
-	{
-		return std::move(m_results);
-	}
+    /// get final result (list of reassembled cv::Mat imgs, aged oldest to youngest)
+    virtual std::unique_ptr<final_result_type> GetFinalResult() override
+    {
+        return std::move(m_results);
+    }
 
 private:
 //member variables
-	/// horizontal buffer (pixels) on edge of each chunk (overlap region)
-	const int m_horizontal_buffer_pixels{};
-	/// vertical buffer (pixels) on edge of each chunk (overlap region)
-	const int m_vertical_buffer_pixels{};
-	/// width of each resulting frame (pixels)
-	const int m_frame_width{};
-	/// height of each resulting frame (pixels)
-	const int m_frame_height{};
+    /// horizontal buffer (pixels) on edge of each chunk (overlap region)
+    const int m_horizontal_buffer_pixels{};
+    /// vertical buffer (pixels) on edge of each chunk (overlap region)
+    const int m_vertical_buffer_pixels{};
+    /// width of each resulting frame (pixels)
+    const int m_frame_width{};
+    /// height of each resulting frame (pixels)
+    const int m_frame_height{};
 
-	/// store image fragments until they are ready to be used
-	std::vector<std::list<token_type>> m_fragments{};
-	/// store assembled images
-	std::unique_ptr<final_result_type> m_results{};
+    /// store image fragments until they are ready to be used
+    std::vector<std::list<token_type>> m_fragments{};
+    /// store assembled images
+    std::unique_ptr<final_result_type> m_results{};
 };
 
 

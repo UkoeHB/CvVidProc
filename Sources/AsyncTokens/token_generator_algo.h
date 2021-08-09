@@ -26,35 +26,35 @@ class TokenGeneratorAlgo
 {
 public:
 //member types
-	using token_type = TokenT;
-	using token_set_type = typename TokenBatchGenerator<TokenT>::token_set_type;
+    using token_type = TokenT;
+    using token_set_type = typename TokenBatchGenerator<TokenT>::token_set_type;
 
 //constructors
-	/// default constructor: disabled
-	TokenGeneratorAlgo() = delete;
+    /// default constructor: disabled
+    TokenGeneratorAlgo() = delete;
 
-	/// normal constructor
-	TokenGeneratorAlgo(TokenGeneratorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
-	{}
+    /// normal constructor
+    TokenGeneratorAlgo(TokenGeneratorPack<AlgoT> processor_pack) : m_pack{std::move(processor_pack)}
+    {}
 
-	/// copy constructor: disabled
-	TokenGeneratorAlgo(const TokenGeneratorAlgo&) = delete;
+    /// copy constructor: disabled
+    TokenGeneratorAlgo(const TokenGeneratorAlgo&) = delete;
 
 //destructor
-	virtual ~TokenGeneratorAlgo() = default;
+    virtual ~TokenGeneratorAlgo() = default;
 
 //overloaded operators
-	/// copy assignment operators: disabled
-	TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) = delete;
-	TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) const = delete;
+    /// copy assignment operators: disabled
+    TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) = delete;
+    TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) const = delete;
 
 //member functions
-	/// try to get a token set
-	virtual token_set_type GetTokenSet() = 0;
+    /// try to get a token set
+    virtual token_set_type GetTokenSet() = 0;
 
 protected:
 //member variables
-	TokenGeneratorPack<AlgoT> m_pack{};
+    TokenGeneratorPack<AlgoT> m_pack{};
 };
 
 

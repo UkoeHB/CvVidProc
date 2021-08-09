@@ -7,20 +7,20 @@
 #include "cv_vid_bg_helpers.h"
 
 //third party headers
-#include <opencv2/opencv.hpp>	//for video manipulation (mainly)
+#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
 
 
 struct CommandLinePack
 {
-	cv::String vid_path{};
-	int max_threads{};
-	bool grayscale{};
-	bool vid_is_grayscale{};
-	long long bg_frame_lim{};
-	cv::String bg_algo{};
-	bool print_timing_report{};
+    cv::String vid_path{};
+    int max_threads{};
+    bool grayscale{};
+    bool vid_is_grayscale{};
+    long long bg_frame_lim{};
+    cv::String bg_algo{};
+    bool print_timing_report{};
 };
 
 /// get number of additional threads available above min_threads, plus extra_threads, but not more than max_threads

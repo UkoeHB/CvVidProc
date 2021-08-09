@@ -10,9 +10,9 @@ Dependencies:
 - Python3
 - scikit-build (`pip3 install scikit-build`)
 - OpenCV (>= 4.2.0)
-	- MacOS: `brew install opencv`
-	- Windows: [tutorial](https://docs.opencv.org/master/d3/d52/tutorial_windows_install.html)
-	- Linux: [Installing OpenCV on Ubuntu](#Installing-OpenCV-on-Ubuntu)
+    - MacOS: `brew install opencv`
+    - Windows: [tutorial](https://docs.opencv.org/master/d3/d52/tutorial_windows_install.html)
+    - Linux: [Installing OpenCV on Ubuntu](#Installing-OpenCV-on-Ubuntu)
 - NumPy (`pip3 install numpy`)
 - pybind11 (`pip3 install pybind11`)
 
@@ -40,13 +40,13 @@ pip3 install .
 
 For manually installed OpenCV, you must define these environment variables:
 ```
-CV_DIR=path/to/location/of/opencv/library	// e.g. ~/MyLibs/
-CV_INSTALL_DIR=path/to/opencv/installation 	// e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
+CV_DIR=path/to/location/of/opencv/library   // e.g. ~/MyLibs/
+CV_INSTALL_DIR=path/to/opencv/installation  // e.g. ~/MyLibs/OpenCV/opencv-1.2.3/release/
 
 # full call for installing python module
 CV_DIR=~/MyLibs/ \
-	CV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/ \
-	pip3 install .
+    CV_INSTALL_DIR=~/MyLibs/OpenCV/opencv-1.2.3/release/ \
+    pip3 install .
 ```
 
 - Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).

@@ -1,14 +1,14 @@
 def testfunc(mydict, key, data):
-	print('testing dictionary')
-	print(type(mydict))
+    print('testing dictionary')
+    print(type(mydict))
 
-	mydict[key] = data
-	if "num" in mydict:
-		mydict["num"] = mydict["num"] + 1
-	else:
-		mydict["num"] = 1
+    mydict[key] = data
+    if "num" in mydict:
+        mydict["num"] = mydict["num"] + 1
+    else:
+        mydict["num"] = 1
 
-	print(mydict)
+    print(mydict)
 
 def spinfunc(mat, num):
-	return num + 1
+    return num + 1

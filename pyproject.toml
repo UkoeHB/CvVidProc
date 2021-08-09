@@ -7,7 +7,7 @@ requires = [
     "pybind11~=2.6.0",
     "cmake",
     "ninja",
-    "numpy",	# necessary for scikit-build to work
+    "numpy",    # necessary for scikit-build to work
     "scikit-build",
 ]
 
