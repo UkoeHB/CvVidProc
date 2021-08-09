@@ -262,8 +262,9 @@ bool cv_mat_to_std_vector_uchar(const cv::Mat &mat_input, std::vector<unsigned c
 	}
 	else
 	{
-		for (int i = 0; i < mat_input.rows; ++i) {
-		    vec_output.insert(vec_output.end(), mat_input.ptr<unsigned char>(i), mat_input.ptr<unsigned char>(i) + mat_input.cols*mat_input.channels());
+		for (int i = 0; i < mat_input.rows; ++i)
+		{
+			vec_output.insert(vec_output.end(), mat_input.ptr<unsigned char>(i), mat_input.ptr<unsigned char>(i) + mat_input.cols*mat_input.channels());
 		}
 	}
 
