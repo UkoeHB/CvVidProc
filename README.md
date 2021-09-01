@@ -162,4 +162,4 @@ sudo apt-get install libgtk-3-0
 
 ## License
 
-[MIT license](https://opensource.org/licenses/MIT)
+[MIT license](LICENSE)
