@@ -3,8 +3,15 @@
 # ifndef __NDARRAY_CONVERTER_H__
 # define __NDARRAY_CONVERTER_H__
 
+//local headers
+
+//third party headers
+#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 #include <Python.h>
-#include <opencv2/core/core.hpp>
+
+//standard headers
+
+//forward declarations
 
 
 class NDArrayConverter {

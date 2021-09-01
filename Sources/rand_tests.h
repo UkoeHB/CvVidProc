@@ -7,9 +7,12 @@
 #include "main.h"
 
 //third party headers
-#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
+
+//forward declarations
+namespace cv {class Mat;}
+
 
 namespace rand_tests
 {

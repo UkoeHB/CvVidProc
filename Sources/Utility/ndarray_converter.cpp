@@ -3,7 +3,16 @@
 // borrowed in spirit from https://github.com/yati-sagade/opencv-ndarray-conversion
 // MIT License
 
+//paired header
 #include "ndarray_converter.h"
+
+//local headers
+
+//third party headers
+#include <Python.h>
+
+//standard headers
+
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/ndarrayobject.h>

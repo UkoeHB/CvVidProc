@@ -1,14 +1,15 @@
 // opencv utility functions
 
-//local headers
+//paired header
 #include "cv_util.h"
+
+//local headers
 #include "exception_assert.h"
 
 //third party headers
 #include <opencv2/opencv.hpp>	//for video manipulation (mainly)
 
 //standard headers
-#include <array>
 #include <vector>
 
 

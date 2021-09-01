@@ -9,12 +9,14 @@
 
 //third party headers
 #include <pybind11/pybind11.h>
-#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
 #include <memory>
 #include <string>
 #include <vector>
+
+//forward declarations
+namespace cv {class VideoCapture;}
 
 
 /// settings necessary to track objects in a video

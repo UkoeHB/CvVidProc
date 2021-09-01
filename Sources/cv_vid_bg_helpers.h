@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+//forward declarations
+
 
 /// background algorithms available
 enum class BGAlgo

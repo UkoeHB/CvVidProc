@@ -1,9 +1,11 @@
 // main for async video stream project
 
+//paired header
+#include "main.h"
+
 //local headers
 #include "cv_vid_bg_helpers.h"
 #include "highlight_objects_algo.h"
-#include "main.h"
 #include "project_config.h"
 #include "rand_tests.h"
 #include "ts_interval_timer.h"

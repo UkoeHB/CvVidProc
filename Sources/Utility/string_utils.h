@@ -10,6 +10,8 @@
 //standard headers
 #include <string>
 
+//forward declarations
+
 
 /// maximum size of conversion buffer
 static const int CONVERSION_BUFFER_LENGTH = 128;

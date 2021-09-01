@@ -6,11 +6,13 @@
 //local headers
 
 //third party headers
-#include <opencv2/opencv.hpp>	//for video manipulation (mainly)
+#include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
-#include <array>
 #include <vector>
+
+//forward declarations
+
 
 ////
 // split Mat into row_divisor*col_divisor chunks

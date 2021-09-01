@@ -1,7 +1,9 @@
 // exception-based assert
 
-//local headers
+//paired header
 #include "exception_assert.h"
+
+//local headers
 #include "project_config.h"
 #include "string_utils.h"
 

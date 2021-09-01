@@ -10,6 +10,8 @@
 //standard headers
 #include <string>
 
+//forward declarations
+
 
 /// wrapper around main exception assert
 void exception_assert(std::string expr, std::string func, std::string file, int line);

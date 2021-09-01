@@ -10,6 +10,9 @@
 #include <opencv2/opencv.hpp>   //for video manipulation (mainly)
 
 //standard headers
+#include <string>
+
+//forward declarations
 
 
 struct CommandLinePack

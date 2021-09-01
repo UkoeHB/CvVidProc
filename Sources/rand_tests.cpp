@@ -1,5 +1,8 @@
 // random tests
 
+//paired header
+#include "rand_tests.h"
+
 //local headers
 #include "assign_objects_algo.h"
 #include "cv_vid_bg_helpers.h"
@@ -9,7 +12,6 @@
 #include "main.h"
 #include "ndarray_converter.h"
 #include "project_config.h"
-#include "rand_tests.h"
 #include "string_utils.h"
 #include "ts_interval_timer.h"
 

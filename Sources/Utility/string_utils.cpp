@@ -1,7 +1,9 @@
 // string utility functions
 
-//local headers
+//paired header
 #include "string_utils.h"
+
+//local headers
 
 //third party headers
 
