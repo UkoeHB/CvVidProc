@@ -33,7 +33,7 @@ struct BorderedChunk
 	int original_height{};
 };
 
-bool get_bordered_chunks(
+static bool get_bordered_chunks(
 	std::vector<BorderedChunk> &ret,
 	const int original_width,
 	const int original_height,

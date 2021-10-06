@@ -1,7 +1,7 @@
 # README
 
 <!-- must update setup.py and cmake versions as well -->
-version 0.12.1
+Version: 1.0.0
 
 Dependencies:
 
@@ -17,18 +17,21 @@ Dependencies:
 - pybind11 (`pip3 install pybind11`)
 
 
+
 ## Table Of Contents
 
 - [About](#About)
 - [Install Python Module](#Install-Python-module-`cvvidproc`)
-- [Using Demo Program](#Building-and-Running-as-standalone-program)
+- [Using Demo Program](#Building-and-Running-as-standalone-demo-program)
 - [Installing OpenCV on Ubuntu](#Installing-OpenCV-on-Ubuntu)
 - [License](#License)
+
 
 
 ## About
 
 `cvvidproc` is a small library with utilities for processing OpenCV videos. It was developed to support [Andy Ylitalo](https://github.com/andylitalo)'s bubble-tracking project with faster implementations of video processing than can be achieved in pure Python. See [API.md](./API.md) for the Python API.
+
 
 
 ## Install Python module `cvvidproc`
@@ -52,7 +55,8 @@ CV_DIR=~/MyLibs/ \
 - Rerunning this command after files are changed will update the installation. E.g. `git pull origin master` -> `git merge origin/master` -> `pip3 install .`. Use `git remote add upstream 'upstream repo url'` to connect local repo with upstream/origin (upstream is developer repo, origin is remote clone e.g. in Github).
 
 
-## Building and Running as standalone program
+
+## Building and Running as standalone demo program
 
 Generate the build system:
 
@@ -83,6 +87,7 @@ Execute program:
 Notes:
 - place videos in `Videos/` directory to make them easily findable by program, or pass the entire video path to `--vid_path=path/to/vid/your_vid.vid_ext`
 - use tag `--help` to learn command line options
+
 
 
 ## Installing OpenCV on Ubuntu
@@ -158,6 +163,7 @@ Ubuntu users may need to download and set up an 'X server for Windows' by follow
 ```
 sudo apt-get install libgtk-3-0
 ```
+
 
 
 ## License

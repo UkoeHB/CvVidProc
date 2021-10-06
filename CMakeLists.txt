@@ -31,7 +31,7 @@ set(CV_INSTALL_DIR "" CACHE STRING "Path to OpenCV installation, e.g. '~/MyLibs/
 project(cvvidproc
     DESCRIPTION "get background of a video"
     LANGUAGES CXX
-    VERSION 0.12.1)
+    VERSION 1.0.0)
 
 # C++14 required
 set(CMAKE_CXX_STANDARD 14)
@@ -118,13 +118,18 @@ endif ()
 # currently only used by the C++ executable
 #TODO: this pollutes the build directory a bit, could be simpler
 if (NOT SKBUILD)
+    set (bubbletracking_git_repository "https://github.com/andylitalo/bubbletracking_koe")
+    set (bubbletracking_git_tag "085e4fbc45ccddd5752e08e65e98e4a19629cd2d")
+
     include (FetchContent)
     FetchContent_Declare(
         bubbletracking
-        GIT_REPOSITORY https://github.com/andylitalo/bubbletracking_koe
-        GIT_TAG 7936e621d5d50b8ac2c7e9762e0d10cce3364263
+        GIT_REPOSITORY "${bubbletracking_git_repository}"
+        GIT_TAG "${bubbletracking_git_tag}"
     )
     FetchContent_Populate(bubbletracking)
+
+    message(STATUS "Acquired bubbletracking library: ${bubbletracking_git_repository}/${bubbletracking_git_tag}")
 endif ()
 
 

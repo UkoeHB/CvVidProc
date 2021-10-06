@@ -53,7 +53,7 @@ def get_cmake_args():
 
 setup(
     name="cvvidproc",
-    version="0.12.1",
+    version="1.0.0",
     description="C++ bindings for multithreaded opencv video processing",
     author="koe",
     license="MIT",

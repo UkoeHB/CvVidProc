@@ -141,6 +141,7 @@ int main(int argc, char* argv[])
         std::cerr << "Background frame created was malformed, unexpectedly!\n";
 
 
+    // TODO: test with proper unit testing framework, instead of ad hoc like this
     //rand_tests::test_objecthighlighting(background_frame, cl_pack, true);
     //rand_tests::test_embedded_python();
     //rand_tests::test_timing_numpyconverter(2000, true);
@@ -150,18 +151,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
