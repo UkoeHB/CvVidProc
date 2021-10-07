@@ -56,7 +56,7 @@ CV_DIR=~/MyLibs/ \
 
 
 
-## Building and Running as standalone demo program
+## Building and Running as Standalone Demo Program
 
 Generate the build system:
 

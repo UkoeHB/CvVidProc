@@ -34,7 +34,7 @@ Structures/Classes:
 
 ### Example Use
 
-```
+```PY
 import cvvidproc
 
 def compute_bkgd_med_thread(vid_path, vid_is_grayscale, num_frames=100, 
@@ -107,41 +107,40 @@ Structures/Classes:
 
 ### Example Use
 
-```
+```PY
 import cvvidproc
 
 
-def assign_bubbles_cvvidproc(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs):
-    # wrapper on assign_bubbles() to meet cvvidproc API expectation
+def assign_objects(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, kwargs):
 
-    return assign_bubbles(bw_frame, frames_processed, objects_prev, objects_archive, next_ID, **kwargs)
+    # update {frames_processed, objects_prev, objects_archive, next_ID}
 
 
-def track_bubble_cvvidproc(track_kwargs, highlight_kwargs, assignbubbles_kwargs):
+def track_obj_cvvidproc(track_kwargs, highlight_kwargs, assign_objects_kwargs):
     highlightpack = cvvidproc.HighlightObjectsPack(
-        background=track_kwargs['bkgd'],
-        struct_element=highlight_kwargs['selem'],
-        threshold=highlight_kwargs['th'],
-        threshold_lo=highlight_kwargs['th_lo'],
-        threshold_hi=highlight_kwargs['th_hi'],
-        min_size_hyst=highlight_kwargs['min_size_hyst'],
-        min_size_threshold=highlight_kwargs['min_size_th'],
-        width_border=highlight_kwargs['width_border'])
+        background = track_kwargs['bkgd'],
+        struct_element = highlight_kwargs['selem'],
+        threshold = highlight_kwargs['th'],
+        threshold_lo = highlight_kwargs['th_lo'],
+        threshold_hi = highlight_kwargs['th_hi'],
+        min_size_hyst = highlight_kwargs['min_size_hyst'],
+        min_size_threshold = highlight_kwargs['min_size_th'],
+        width_border = highlight_kwargs['width_border'])
 
     assignpack = cvvidproc.AssignObjectsPack(
-        assign_bubbles_cvvidproc,     # pass in function name as functor (not string)
-        assignbubbles_kwargs)
+        assign_objects,     # pass in function name as functor (not string)
+        assign_objects_kwargs)
 
     # fields not defined will be defaulted
     trackpack = cvvidproc.VidObjectTrackPack(
-        vid_path=track_kwargs['vid_path'],
-        highlight_objects_pack=highlightpack,
-        assign_objects_pack=assignpack,
-        frame_limit=track_kwargs['end']-track_kwargs['start'],
-        vid_is_grayscale=True,
-        crop_y=assignbubbles_kwargs['row_lo'],
-        crop_height=assignbubbles_kwargs['row_hi']-assignbubbles_kwargs['row_lo'],
-        print_timing_report=True)
+        vid_path = track_kwargs['vid_path'],
+        highlight_objects_pack = highlightpack,
+        assign_objects_pack = assignpack,
+        frame_limit = track_kwargs['end'] - track_kwargs['start'],
+        vid_is_grayscale = True,
+        crop_y = assign_objects_kwargs['row_lo'],
+        crop_height = assign_objects_kwargs['row_hi'] - assign_objects_kwargs['row_lo'],
+        print_timing_report = True)
 
     objects_archive = cvvidproc.TrackObjects(trackpack)
 
