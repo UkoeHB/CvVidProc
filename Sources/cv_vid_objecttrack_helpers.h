@@ -33,6 +33,9 @@ struct __attribute__ ((visibility("hidden"))) VidObjectTrackPack
     // max number of threads allowed
     const int max_threads{-1};
 
+    // frame number to start analysis from
+    const long long start_frame{0};
+
     // max number of frames to analyze (<= 0 means use all frames in video)
     const long long frame_limit{-1};
     // whether to convert frames to grayscale before analyzing them

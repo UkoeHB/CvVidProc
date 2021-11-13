@@ -101,6 +101,7 @@ PYBIND11_MODULE(_core, mod)
                 TokenProcessorPack<AssignObjectsAlgo>,
                 const int,
                 const long long,
+                const long long,
                 const bool,
                 const bool,
                 const int,
@@ -113,6 +114,7 @@ PYBIND11_MODULE(_core, mod)
                 py::arg("highlight_objects_pack"),
                 py::arg("assign_objects_pack"),
                 py::arg("max_threads") = -1,            // only set to limit how many threads can be used
+                py::arg("start_frame") = 0,
                 py::arg("frame_limit") = -1,
                 py::arg("grayscale") = false,
                 py::arg("vid_is_grayscale") = false,

@@ -78,6 +78,7 @@ Structures/Classes:
         - `highlight_objects_pack`: *HighlightObjectsPack*, Variable pack for highlighting objects
         - `assign_objects_pack`: *AssignObjectsPack*, Variable pack for assigning objects
         - `max_threads = -1`: *Int*, Maximum number of threads to use
+        - `start_frame = 0`: *Int*, Frame number to start analysis from
         - `frame_limit = -1`: *Int*, Maximum number of frames in video to use
         - `grayscale = false`: *Bool*, Whether to interpret the video has grayscale
         - `vid_is_grayscale = false`: *Bool*, Whether the video should be treated as already grayscale (optimization)
