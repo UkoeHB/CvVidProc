@@ -74,8 +74,8 @@ std::unique_ptr<py::dict> TrackObjectsProcess(cv::VideoCapture &vid,
         batch_size,
         1,  // frames are not chunked
         track_objects_pack.vid_path,
-        0,
-        num_frames,
+        track_objects_pack.start_frame, // first frame to grab for analysis (0-indexed)
+        track_objects_pack.start_frame + num_frames, // last frame index not to process
         frame_dimensions,
         track_objects_pack.grayscale,
         track_objects_pack.vid_is_grayscale,

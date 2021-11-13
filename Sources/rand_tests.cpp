@@ -363,6 +363,7 @@ void demo_trackobjects(CommandLinePack &cl_pack, cv::Mat &background_frame)
         highlightobjects_pack,
         assignobjects_pack,
         cl_pack.max_threads,
+        0, // start frame
         cl_pack.bg_frame_lim,
         cl_pack.grayscale,
         cl_pack.vid_is_grayscale,
