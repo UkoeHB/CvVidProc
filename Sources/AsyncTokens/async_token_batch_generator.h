@@ -52,7 +52,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     AsyncTokenBatchGenerator& operator=(const AsyncTokenBatchGenerator&) = delete;
-    AsyncTokenBatchGenerator& operator=(const AsyncTokenBatchGenerator&) const = delete;
 
 //member functions
     /// reset the token generator so it can be reused

@@ -58,9 +58,8 @@ public:
 //destructor: not needed (final class)
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     HistogramMedianAlgo& operator=(const HistogramMedianAlgo&) = delete;
-    HistogramMedianAlgo& operator=(const HistogramMedianAlgo&) const = delete;
 
 //member functions
     /// insert an element to be processed

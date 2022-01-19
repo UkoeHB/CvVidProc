@@ -43,7 +43,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     TokenBatchGenerator& operator=(const TokenBatchGenerator&) = delete;
-    TokenBatchGenerator& operator=(const TokenBatchGenerator&) const = delete;
 
 //member functions
     /// get batch size (number of tokens in each batch)

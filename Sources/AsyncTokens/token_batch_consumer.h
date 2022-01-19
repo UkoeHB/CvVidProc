@@ -40,7 +40,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     TokenBatchConsumer& operator=(const TokenBatchConsumer&) = delete;
-    TokenBatchConsumer& operator=(const TokenBatchConsumer&) const = delete;
 
 //member functions
     /// get batch size (number of tokens in each batch)

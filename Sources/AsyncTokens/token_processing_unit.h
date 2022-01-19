@@ -69,7 +69,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     TokenProcessingUnit& operator=(const TokenProcessingUnit&) = delete;
-    TokenProcessingUnit& operator=(const TokenProcessingUnit&) const = delete;
 
 //member functions
     /// start the unit's thread; unit can be restarted once cleaned up properly (ShutDown() called and TryStop() returns true)

@@ -61,7 +61,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     TSIntervalTimer& operator=(const TSIntervalTimer&) = delete;
-    TSIntervalTimer& operator=(const TSIntervalTimer&) const = delete;
 
 //member functions
     /// get current time

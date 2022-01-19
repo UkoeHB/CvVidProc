@@ -44,9 +44,8 @@ public:
     virtual ~TokenGeneratorAlgo() = default;
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) = delete;
-    TokenGeneratorAlgo& operator=(const TokenGeneratorAlgo&) const = delete;
 
 //member functions
     /// try to get a token set

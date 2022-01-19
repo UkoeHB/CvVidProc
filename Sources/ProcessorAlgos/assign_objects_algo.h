@@ -85,9 +85,8 @@ public:
     }
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     AssignObjectsAlgo& operator=(const AssignObjectsAlgo&) = delete;
-    AssignObjectsAlgo& operator=(const AssignObjectsAlgo&) const = delete;
 
 //member functions
     /// inserts frames to algo

@@ -44,7 +44,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     TokenProcessIntermediary& operator=(const TokenProcessIntermediary&) = delete;
-    TokenProcessIntermediary& operator=(const TokenProcessIntermediary&) const = delete;
 
 //member functions
     /// consume a token from first process; should call AddNextBatch() periodically

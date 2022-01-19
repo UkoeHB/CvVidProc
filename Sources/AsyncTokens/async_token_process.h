@@ -89,7 +89,6 @@ public:
 //overloaded operators
     /// asignment operator: disabled
     AsyncTokenProcess& operator=(const AsyncTokenProcess&) = delete;
-    AsyncTokenProcess& operator=(const AsyncTokenProcess&) const = delete;
 
 //member functions
     /// run the async token process

@@ -45,9 +45,8 @@ public:
 //destructor: not needed (final class)
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     TokenQueue& operator=(const TokenQueue&) = delete;
-    TokenQueue& operator=(const TokenQueue&) const = delete;
 
 //member functions
     /// indicate the queue is shutting down (no more tokens to be added)

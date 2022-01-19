@@ -51,9 +51,8 @@ public:
 //destructor: not needed (final class)
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     HighlightObjectsAlgo& operator=(const HighlightObjectsAlgo&) = delete;
-    HighlightObjectsAlgo& operator=(const HighlightObjectsAlgo&) const = delete;
 
 //member functions
     /// insert an element to be processed

@@ -44,9 +44,8 @@ public:
     virtual ~TokenProcessorAlgo() = default;
 
 //overloaded operators
-    /// copy assignment operators: disabled
+    /// copy assignment operator: disabled
     TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) = delete;
-    TokenProcessorAlgo& operator=(const TokenProcessorAlgo&) const = delete;
 
 //member functions
     /// insert an element to be processed
