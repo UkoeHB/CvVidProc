@@ -11,6 +11,8 @@
 #include <memory>
 #include <vector>
 
+#include <string>
+
 
 void HighlightObjectsAlgo::HighlightObjects(cv::Mat &frame)
 {
@@ -22,8 +24,10 @@ void HighlightObjectsAlgo::HighlightObjects(cv::Mat &frame)
     */
 
     //im_diff = cv2.absdiff(bkgd, frame)
-    cv::Mat im_diff{cv::Size{frame.cols, frame.rows}, frame.type()};
-    cv::absdiff(m_pack.background, frame, im_diff);
+    cv::Mat im_diff{cv::Size{frame.cols, frame.rows}, CV_16S}; //frame.type()};
+    im_diff = m_pack.background - frame;
+    im_diff.convertTo(im_diff, CV_8U);
+    // cv::absdiff(m_pack.background, frame, im_diff);
 
     ///////////////////// THRESHOLD AND HIGH MIN SIZE /////////////////////
     // thresholds image to become black-and-white
@@ -192,7 +196,18 @@ void HighlightObjectsAlgo::FillHoles(cv::Mat &image)
     // fills bkgd with white (assuming origin is contiguously connected with bkgd)
     //cv2.floodFill(im_floodfill, None, (0,0), 255)
     // (ignores return val)
-    cv::floodFill(im_floodfill, cv::Point{0,0}, cv::Scalar{255});
+    // bug fix: previously filled obj instead of bkgd if object included seed pt (0,0)
+    // now if object includes (0,0), switches seed pt to opposite corner of image
+    uint8_t* pixelPtr = (uint8_t*)im_floodfill.data;
+    cv::Point pt;
+    if (pixelPtr[0] == 255) {
+        pt = cv::Point{0,0};
+    } else {
+        int n_rows = im_floodfill.rows;
+        int n_cols = im_floodfill.cols;
+        pt = cv::Point{n_cols-1, n_rows-1}; // cv::Point takes (x,y) coords = (col, row)
+    }
+    cv::floodFill(im_floodfill, pt, cv::Scalar{255});
 
     // inverts image (black -> white and white -> black)
     //im_inv = cv2.bitwise_not(im_floodfill)
